@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Form, Card, Alert, Badge, Spinner } from 'react-bootstrap';
 import { FaDice, FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix } from 'react-icons/fa';
 import betService from '../../services/betService';
-import authService from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 const DiceGame = () => {
+  const { user } = useAuth();
   const [betAmount, setBetAmount] = useState(10);
   const [betType, setBetType] = useState('exact');
   const [predictedValue, setPredictedValue] = useState(6);
@@ -16,29 +17,30 @@ const DiceGame = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    // Get user balance
-    const userData = authService.getUserData();
-    setUserBalance(userData.balance || 0);
+    if (user) {
+      setUserBalance(user.saldo || 0);
+    } else {
+      console.error('User data not found in context!');
+      setUserBalance(0);
+    }
 
-    // Get user bet history
     const fetchBetHistory = async () => {
+      const userId = user?.id;
+      if (!userId) return;
       try {
-        const userId = userData.id;
-        if (userId) {
-          const bets = await betService.getUserBets(userId);
-          // Filter only dice bets and take the last 5
-          const diceBets = bets
-            .filter(bet => bet.juego && bet.juego.nombre.toLowerCase().includes('dice'))
-            .slice(0, 5);
-          setHistory(diceBets);
-        }
+        const bets = await betService.getUserBets(userId);
+        const diceBets = bets
+          .filter(bet => bet.juego && bet.juego.nombre.toLowerCase().includes('dice') && bet.estado !== 'PENDIENTE')
+          .sort((a, b) => b.id - a.id)
+          .slice(0, 5);
+        setHistory(diceBets);
       } catch (error) {
         console.error('Failed to fetch bet history:', error);
       }
     };
 
     fetchBetHistory();
-  }, []);
+  }, [user]);
 
   const handleBetAmountChange = (e) => {
     const value = parseFloat(e.target.value);
@@ -69,7 +71,14 @@ const DiceGame = () => {
 
   const placeBet = async () => {
     if (betAmount <= 0 || betAmount > userBalance) {
-      setMessage('Invalid bet amount');
+      setMessage('Invalid bet amount or insufficient balance');
+      setMessageType('danger');
+      return;
+    }
+
+    const userId = user?.id;
+    if (!userId) {
+      setMessage('User not identified. Cannot place bet.');
       setMessageType('danger');
       return;
     }
@@ -79,80 +88,38 @@ const DiceGame = () => {
       setMessage('Rolling the dice...');
       setMessageType('info');
 
-      // Prepare bet data
-      const userData = authService.getUserData();
       const betData = {
-        usuario: { id: userData.id },
-        juego: { id: 2 }, // Assuming dice game ID is 2
+        usuarioId: userId,
+        juegoId: 2,
         cantidad: betAmount,
         tipo: betType,
-        valor: predictedValue.toString()
+        valorApostado: String(predictedValue)
       };
 
-      // Place the bet
       const newBet = await betService.createBet(betData);
-      
-      // Simulate dice rolling
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Generate random result (this would come from the backend in a real implementation)
-      const diceResult = Math.floor(Math.random() * 6) + 1; // 1-6
-      
-      // Determine if bet won
+      const diceResult = Math.floor(Math.random() * 6) + 1;
       let won = false;
-      
-      if (betType === 'exact') {
-        won = diceResult === predictedValue;
-      } else if (betType === 'higher') {
-        won = diceResult > predictedValue;
-      } else if (betType === 'lower') {
-        won = diceResult < predictedValue;
-      }
-      
-      // Update result
-      setResult({
-        value: diceResult,
-        won: won
-      });
-      
-      // Update message
-      if (won) {
-        setMessage(`You won! The dice rolled ${diceResult}`);
+      if (betType === 'exact') won = diceResult === predictedValue;
+      else if (betType === 'higher') won = diceResult > predictedValue;
+      else if (betType === 'lower') won = diceResult < predictedValue;
+      const winLoss = won ? (betAmount * (betType === 'exact' ? 5 : 1)) : -betAmount;
+      const resolvedBet = { id: Date.now(), ...betData, estado: won ? 'GANADA' : 'PERDIDA', winloss: winLoss, valorGanador: String(diceResult) };
+
+      setResult({ value: diceResult, won: resolvedBet.estado === 'GANADA' });
+      setUserBalance(prevBalance => prevBalance + resolvedBet.winloss);
+
+      if (resolvedBet.estado === 'GANADA') {
+        setMessage(`You won ${resolvedBet.winloss.toFixed(2)}! The dice rolled ${diceResult}`);
         setMessageType('success');
-        
-        // Calculate winnings based on bet type (odds are different for each type)
-        let winnings = 0;
-        if (betType === 'exact') {
-          winnings = betAmount * 6; // 6:1 odds for exact prediction
-        } else if (betType === 'higher' || betType === 'lower') {
-          // Calculate odds based on probability
-          const probability = betType === 'higher' 
-            ? (6 - predictedValue) / 6 
-            : (predictedValue - 1) / 6;
-          
-          // Ensure we don't divide by zero
-          if (probability > 0) {
-            winnings = betAmount * (1 / probability);
-          }
-        }
-        
-        setUserBalance(prevBalance => prevBalance + winnings);
       } else {
-        setMessage(`You lost. The dice rolled ${diceResult}`);
+        setMessage(`You lost ${Math.abs(resolvedBet.winloss).toFixed(2)}. The dice rolled ${diceResult}`);
         setMessageType('danger');
-        setUserBalance(prevBalance => prevBalance - betAmount);
       }
-      
-      // Update history
-      const updatedBet = {
-        ...newBet,
-        estado: won ? 'GANADA' : 'PERDIDA',
-        winloss: won ? betAmount : -betAmount
-      };
-      setHistory(prev => [updatedBet, ...prev.slice(0, 4)]);
-      
+
+      setHistory(prev => [resolvedBet, ...prev.slice(0, 4)]);
     } catch (error) {
-      setMessage('Error placing bet: ' + (error.message || 'Unknown error'));
+      console.error('Error placing dice bet:', error);
+      setMessage('Error placing bet: ' + (error.response?.data?.message || error.message || 'Unknown error'));
       setMessageType('danger');
     } finally {
       setIsRolling(false);
@@ -210,17 +177,14 @@ const DiceGame = () => {
                   </Form.Label>
                   <Form.Select value={predictedValue} onChange={handlePredictedValueChange}>
                     {betType === 'higher' ? (
-                      // For "higher than", we can only select 1-5
                       [1, 2, 3, 4, 5].map(num => (
                         <option key={num} value={num}>{num}</option>
                       ))
                     ) : betType === 'lower' ? (
-                      // For "lower than", we can only select 2-6
                       [2, 3, 4, 5, 6].map(num => (
                         <option key={num} value={num}>{num}</option>
                       ))
                     ) : (
-                      // For "exact", we can select 1-6
                       [1, 2, 3, 4, 5, 6].map(num => (
                         <option key={num} value={num}>{num}</option>
                       ))
@@ -273,7 +237,7 @@ const DiceGame = () => {
                     <div key={index} className="mb-2 p-2 border-bottom">
                       <div className="d-flex justify-content-between">
                         <span>
-                          {bet.tipo} - {bet.valor}
+                          {bet.tipo} - {bet.valorApostado}
                         </span>
                         <Badge bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
                           {bet.estado === 'GANADA' ? '+' : '-'}${bet.cantidad}

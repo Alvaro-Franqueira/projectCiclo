@@ -4,17 +4,47 @@ const BET_ENDPOINTS = {
   CREATE_BET: '/apuestas',
   GET_USER_BETS: (userId) => `/apuestas/usuario/${userId}`,
   GET_GAME_BETS: (gameId) => `/apuestas/juego/${gameId}`,
+  GET_USER_GAME_BETS: (userId, gameId) => `/apuestas/usuario/${userId}/juego/${gameId}`,
   GET_BET_BY_ID: (betId) => `/apuestas/${betId}`,
+  PLACE_ROULETTE_BET: '/juegos/ruleta/jugar',
+  PLACE_DICE_BET: '/juegos/dados/jugar', 
 };
 
 const betService = {
-  // Create a new bet
+  // Create a new bet (generic)
   createBet: async (betData) => {
     try {
       const response = await api.post(BET_ENDPOINTS.CREATE_BET, betData);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to place bet' };
+    }
+  },
+
+  // Place a game-specific bet
+  placeGameBet: async (gameType, betData) => {
+    try {
+      let endpoint;
+      
+      // Select the appropriate endpoint based on game type
+      switch (gameType.toLowerCase()) {
+        case 'ruleta':
+        case 'roulette':
+          endpoint = BET_ENDPOINTS.PLACE_ROULETTE_BET;
+          break;
+        case 'dados':
+        case 'dice':
+          endpoint = BET_ENDPOINTS.PLACE_DICE_BET;
+          break;
+        default:
+          // Fall back to generic bet creation
+          return betService.createBet(betData);
+      }
+      
+      const response = await api.post(endpoint, betData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: `Failed to place ${gameType} bet` };
     }
   },
 
@@ -45,6 +75,16 @@ const betService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch bet details' };
+    }
+  },
+  
+  // Get bets for a specific user in a specific game
+  getUserGameBets: async (userId, gameId) => {
+    try {
+      const response = await api.get(BET_ENDPOINTS.GET_USER_GAME_BETS(userId, gameId));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch user game bets' };
     }
   }
 };

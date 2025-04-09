@@ -2,9 +2,9 @@ import api from './api';
 import { jwtDecode } from 'jwt-decode';
 
 const AUTH_ENDPOINTS = {
-  LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
-  CURRENT_USER: '/usuarios/me',
+  LOGIN: 'api/usuarios/login',
+  REGISTER: 'api/usuarios/registrar',
+  CURRENT_USER: 'api/usuarios/me',
 };
 
 // Helper to store user data in localStorage
@@ -45,11 +45,40 @@ const authService = {
   // Get current authenticated user
   getCurrentUser: async () => {
     try {
-      const response = await api.get(AUTH_ENDPOINTS.CURRENT_USER);
+      // Get user ID from stored user data
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!userData.id) {
+        throw new Error('User not authenticated');
+      }
+      
+      const response = await api.get(`${AUTH_ENDPOINTS.CURRENT_USER}?userId=${userData.id}`);
       return response.data;
     } catch (error) {
       clearUserData();
       throw error;
+    }
+  },
+
+  // Update user balance in localStorage
+  updateUserBalance: (newBalance) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!userData.id) {
+        console.error('Cannot update balance: User not authenticated');
+        return false;
+      }
+      
+      // Update the balance in the user data
+      userData.saldo = newBalance;
+      
+      // Save updated user data back to localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log('User balance updated in localStorage:', newBalance);
+      return true;
+    } catch (error) {
+      console.error('Error updating user balance in localStorage:', error);
+      return false;
     }
   },
 

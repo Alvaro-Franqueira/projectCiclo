@@ -4,11 +4,8 @@ import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.SaldoInsuficienteException;
 import udaw.casino.model.Apuesta;
 import udaw.casino.model.Juego;
-import udaw.casino.model.RankingType;
 import udaw.casino.model.Usuario;
 import udaw.casino.repository.ApuestaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -24,15 +21,11 @@ public class ApuestaService {
 
     private final ApuestaRepository apuestaRepository;
     private final UsuarioService usuarioService;
-    private final RankingService rankingService; // Inject RankingService
-
-    // Use @Lazy on one side if a circular dependency between ApuestaService <-> RankingService occurs
-    // (e.g., if RankingService needed to calculate scores based on Apuesta data fetched via ApuestaService)
-    @Autowired
-    public ApuestaService(ApuestaRepository apuestaRepository, UsuarioService usuarioService, @Lazy RankingService rankingService) {
+    private final JuegoService juegoService;
+    public ApuestaService(ApuestaRepository apuestaRepository, UsuarioService usuarioService, JuegoService juegoService) {
+        this.juegoService = juegoService; 
         this.apuestaRepository = apuestaRepository;
         this.usuarioService = usuarioService;
-        this.rankingService = rankingService;
     }
 
     /**
@@ -80,8 +73,7 @@ public class ApuestaService {
 
     /**
      * Resolves a pending bet based on whether the user won or lost.
-     * Updates user balance, sets bet state (GANADA/PERDIDA), calculates win/loss amount,
-     * and triggers ranking updates.
+     * Updates user balance, sets bet state (GANADA/PERDIDA), calculates win/loss amount.
      *
      * @param apuestaId The ID of the bet to resolve.
      * @param gano      true if the user won the bet, false otherwise.
@@ -95,58 +87,102 @@ public class ApuestaService {
 
         if (!"PENDIENTE".equals(apuesta.getEstado())) {
              log.warn("Attempted to resolve an already resolved bet (ID: {}, Status: {})", apuestaId, apuesta.getEstado());
-             return apuesta; // Or throw exception
+             return apuesta; 
         }
 
-        Usuario usuario = apuesta.getUsuario(); // Get user from the bet
-        Juego juego = apuesta.getJuego(); // Get game from the bet
+        Usuario usuario = apuesta.getUsuario();
+        Juego juego = apuesta.getJuego(); // Needed for win calculation
         double cantidadApostada = apuesta.getCantidad();
-        double ganancia = 0.0;
+        double gananciaTotal = 0.0; // Total amount returned to player if won (original bet + winnings)
+        double netWinLoss = 0.0; // Net change in balance
 
         if (gano) {
-            // Simple double-or-nothing payout for now. Refine if needed based on game/bet type.
-            ganancia = cantidadApostada * 2;
+            gananciaTotal = calcularGananciaTotal(apuesta); // Calculate total return based on game/type
+            netWinLoss = gananciaTotal - cantidadApostada; // Calculate net win
             apuesta.setEstado("GANADA");
-            apuesta.setWinloss(cantidadApostada); // Net win is the amount bet (since they get original back + winnings)
-            // Update user balance
-            usuarioService.actualizarSaldoUsuario(usuario.getId(), usuario.getBalance() + ganancia);
-            log.info("User {} won bet {}. Added {} to balance. New balance: {}", usuario.getUsername(), apuestaId, ganancia, usuario.getBalance() + ganancia);
+            apuesta.setWinloss(netWinLoss); // Set the net win amount
+
+            // Update user balance with the total amount returned
+            // Note: Need to fetch the latest balance before updating
+            Usuario usuarioActualizado = usuarioService.obtenerUsuarioPorId(usuario.getId());
+            usuarioService.actualizarSaldoUsuario(usuario.getId(), usuarioActualizado.getBalance() + gananciaTotal);
+            log.info("User {} won bet {}. Returning {} (Net Win: {}). New balance approx: {}", 
+                     usuario.getUsername(), apuestaId, gananciaTotal, netWinLoss, usuarioActualizado.getBalance() + gananciaTotal);
 
         } else {
+            gananciaTotal = 0.0; // No return on loss
+            netWinLoss = -cantidadApostada; // Net loss is the amount bet
             apuesta.setEstado("PERDIDA");
-            apuesta.setWinloss(-cantidadApostada); // Net loss is the amount bet
-            // Balance was already deducted when bet was placed, no change needed on loss.
-            log.info("User {} lost bet {}. Balance remains: {}", usuario.getUsername(), apuestaId, usuario.getBalance());
+            apuesta.setWinloss(netWinLoss);
+            // Balance was already deducted when bet was placed, no balance change needed on loss.
+            log.info("User {} lost bet {}. Net loss: {}. Balance remains: {}", 
+                     usuario.getUsername(), apuestaId, netWinLoss, usuario.getBalance());
         }
 
         // Save the updated bet status and win/loss amount
         Apuesta apuestaResuelta = apuestaRepository.save(apuesta);
-
-        // --- Trigger Ranking Updates ---
-        // Update rankings that are affected by any bet resolution
-        try {
-            // Fetch the latest user state after potential balance update
-            Usuario usuarioActualizado = usuarioService.obtenerUsuarioPorId(usuario.getId());
-
-            // Update global rankings (no specific game)
-            rankingService.actualizarRankingParaUsuario(usuarioActualizado, RankingType.OVERALL_PROFIT, null);
-            rankingService.actualizarRankingParaUsuario(usuarioActualizado, RankingType.TOTAL_BETS_AMOUNT, null);
-
-            // Update game-specific rankings if applicable (e.g., wins per game)
-            // Note: BY_GAME_WINS calculation in RankingService needs implementation
-            if (juego != null) {
-                 rankingService.actualizarRankingParaUsuario(usuarioActualizado, RankingType.BY_GAME_WINS, juego);
-            }
-
-        } catch (Exception e) {
-            // Log error but don't let ranking update failure rollback the bet resolution
-             log.error("Failed to update rankings for User ID: {} after resolving Bet ID: {}",
-                      (usuario != null ? usuario.getId() : "null"), apuestaId, e);
-        }
-
+        log.info("Bet {} resolved. Status: {}, Win/Loss: {}", apuestaId, apuestaResuelta.getEstado(), apuestaResuelta.getWinloss());
+ 
         return apuestaResuelta;
     }
 
+    /**
+     * Calculates the total amount to be returned to the player for a winning bet,
+     * based on the game type and bet type.
+     *
+     * @param apuesta The winning Apuesta object.
+     * @return The total amount (original bet + winnings).
+     */
+    private double calcularGananciaTotal(Apuesta apuesta) {
+        String gameName = apuesta.getJuego().getNombre().toLowerCase();
+        String betType = apuesta.getTipo().toLowerCase();
+        double amountBet = apuesta.getCantidad();
+        double payoutMultiplier = 1.0; // Default: return original bet if type unknown
+
+        log.debug("Calculating winnings for Bet ID: {}, Game: {}, Type: {}, Amount: {}", 
+                  apuesta.getId(), gameName, betType, amountBet);
+
+        switch (gameName) {
+            case "ruleta":
+                switch (betType) {
+                    case "numero": payoutMultiplier = 36.0; break; // 35:1 + original
+                    case "color": payoutMultiplier = 2.0; break;  // 1:1 + original
+                    case "paridad": payoutMultiplier = 2.0; break; // 1:1 + original (par/impar)
+                    case "docena": payoutMultiplier = 3.0; break;  // 2:1 + original
+                    case "columna": payoutMultiplier = 3.0; break; // 2:1 + original
+                    // Assuming 'alto_bajo' or similar for 1-18/19-36 type bets
+                    case "alto_bajo": 
+                    case "mitad": // Adding 'mitad' as potential alias
+                         payoutMultiplier = 2.0; break; // 1:1 + original
+                    default:
+                        log.warn("Unknown or unsupported Roulette bet type: '{}' for Bet ID: {}. Returning original bet.", betType, apuesta.getId());
+                        payoutMultiplier = 1.0; 
+                }
+                break;
+                
+            case "dados": // Assuming game name is "dados"
+                 switch (betType) {
+                    case "numero": 
+                        // Assuming standard 6-sided die win payout 5:1
+                        payoutMultiplier = 6.0; break; // 5:1 + original 
+                    case "parimpar": // Assuming odd/even bet
+                    case "paridad": // Allow alias
+                        payoutMultiplier = 2.0; break; // 1:1 + original
+                    default:
+                        log.warn("Unknown or unsupported Dice bet type: '{}' for Bet ID: {}. Returning original bet.", betType, apuesta.getId());
+                        payoutMultiplier = 1.0; 
+                }
+                break;
+                
+            default:
+                 log.warn("Unsupported game name: '{}' for win calculation (Bet ID: {}). Returning original bet.", gameName, apuesta.getId());
+                 payoutMultiplier = 1.0; // Return original bet for unknown games
+        }
+        
+        double totalReturn = amountBet * payoutMultiplier;
+        log.debug("Bet ID: {}. Payout Multiplier: {}. Total Return: {}", apuesta.getId(), payoutMultiplier, totalReturn);
+        return totalReturn;
+    }
 
     /**
      * Retrieves a bet by its ID.
@@ -168,7 +204,12 @@ public class ApuestaService {
      * @return A list of Apuesta objects for the user.
      */
     public List<Apuesta> obtenerApuestasPorUsuario(Long usuarioId) {
-        // Ensure user exists first using UsuarioService
+        try {
+            usuarioService.obtenerUsuarioPorId(usuarioId);
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Usuario", "id", usuarioId);
+        }
+        // Optional: Consider pagination for large result sets
         return apuestaRepository.findByUsuarioIdOrderByFechaApuestaDesc(usuarioId); // Example ordering
     }
 
@@ -180,8 +221,30 @@ public class ApuestaService {
      * @return A list of Apuesta objects for the game.
      */
      public List<Apuesta> obtenerApuestasPorJuego(Long juegoId) {
-        // Optional: Ensure game exists first using JuegoService
+        try {
+             juegoService.obtenerJuegoPorId(juegoId); 
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Juego", "id", juegoId);
+        }
         return apuestaRepository.findByJuegoIdOrderByFechaApuestaDesc(juegoId); // Example ordering
     }
 
+    /**
+     * Retrieves all bets for a specific user in a specific game.
+     * 
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return A list of Apuesta objects for the user in the specified game.
+     * @throws ResourceNotFoundException if the user or game doesn't exist.
+     */
+    public List<Apuesta> obtenerApuestasPorUsuarioYJuego(Long usuarioId, Long juegoId) {
+        try {
+            usuarioService.obtenerUsuarioPorId(usuarioId);
+            juegoService.obtenerJuegoPorId(juegoId);
+        } catch (ResourceNotFoundException e) {
+            throw e; // Re-throw the exception with the original message
+        }
+        
+        return apuestaRepository.findByUsuarioIdAndJuegoIdOrderByFechaApuestaDesc(usuarioId, juegoId);
+    }
 }

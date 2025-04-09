@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 
@@ -13,7 +13,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Game components
 import GameSelection from './pages/GameSelection';
 import RouletteGame from './components/games/Roulette';
-import DiceGame from './components/games/Dice';
+import DiceGame from './components/games/DiceGame';
 
 // Ranking component
 import RankingList from './components/ranking/RankingList';
@@ -25,34 +25,14 @@ import UserManagement from './components/admin/UserManagement';
 import UserProfile from './pages/UserProfile';
 
 // Services
-import authService from './services/authService';
+import { useAuth } from './context/AuthContext';
 
 // CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    // Check authentication status on app load
-    const checkAuth = () => {
-      const authenticated = authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      
-      if (authenticated) {
-        setIsAdmin(authService.isAdmin());
-      }
-    };
-    
-    checkAuth();
-    
-    // Set up interval to periodically check auth status
-    const interval = setInterval(checkAuth, 60000); // Check every minute
-    
-    return () => clearInterval(interval);
-  }, []);
+  const { isAuthenticated, isAdmin } = useAuth();
 
   return (
     <Router>

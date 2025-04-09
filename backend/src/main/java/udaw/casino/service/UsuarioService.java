@@ -5,7 +5,6 @@ import udaw.casino.exception.UsuarioNoEncontradoException;
 import udaw.casino.model.Rol;
 import udaw.casino.model.Usuario;
 import udaw.casino.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,24 +16,13 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
+    private final PasswordEncoder passwordEncoder; 
 
-    @Autowired
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    /**
-     * Registers a new user.
-     * Encodes the password before saving.
-     * Sets the default role to USER.
-     * Checks for existing username and email.
-     *
-     * @param usuario The user object containing registration details.
-     * @return The saved Usuario object.
-     * @throws UsuarioNoEncontradoException if username or email already exists.
-     */
     @Transactional
     public Usuario registrarUsuario(Usuario usuario) {
         // Check if username already exists
@@ -53,54 +41,35 @@ public class UsuarioService {
         if (usuario.getRol() == null) {
             usuario.setRol(Rol.USER);
         }
-        // Ensure default balance and registration date are set (usually handled by model constructor)
 
+        
+        if (usuario.getBalance() == null) {
+            usuario.setBalance(0.0); // Default balance
+        }
+        if (usuario.getFechaRegistro() == null) {
+            usuario.setFechaRegistro(java.time.LocalDateTime.now()); // Default registration date
+        }
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Finds a user by their ID.
-     *
-     * @param id The ID of the user.
-     * @return The found Usuario.
-     * @throws ResourceNotFoundException if user with the ID is not found.
-     */
     public Usuario obtenerUsuarioPorId(Long id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", id));
+                .orElseThrow(() -> new UsuarioNoEncontradoException());
     }
 
-    /**
-     * Finds a user by their username.
-     *
-     * @param username The username to search for.
-     * @return The found Usuario.
-     * @throws ResourceNotFoundException if user with the username is not found.
-     */
+
     public Usuario obtenerUsuarioPorUsername(String username) {
         return usuarioRepository.findByUsername(username) // Now returns Optional
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", username));
     }
 
-     /**
-     * Finds a user by their email.
-     *
-     * @param email The email to search for.
-     * @return The found Usuario.
-     * @throws ResourceNotFoundException if user with the email is not found.
-     */
+
     public Usuario obtenerUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email) // Use Optional-returning method
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "email", email));
     }
 
 
-    /**
-     * Retrieves all users.
-     * Use with caution in production - consider pagination for large numbers of users.
-     *
-     * @return A list of all Usuario objects.
-     */
     public List<Usuario> obtenerTodosLosUsuarios() {
         return usuarioRepository.findAll();
     }
@@ -117,15 +86,23 @@ public class UsuarioService {
      * @throws ResourceNotFoundException if user with the ID is not found.
      */
     @Transactional
-    public Usuario actualizarUsuario(Long id, Usuario usuarioDetails) {
-        Usuario usuario = obtenerUsuarioPorId(id); // Reuse existing method to find or throw exception
-
-        // Update fields - be careful about which fields are allowed to be updated
-        // Consider creating specific DTOs (Data Transfer Objects) for updates
-        usuario.setUsername(usuarioDetails.getUsername()); // Consider username uniqueness check if changed
-        usuario.setEmail(usuarioDetails.getEmail());     // Consider email uniqueness check if changed
+    public Usuario actualizarUsuario(Usuario usuarioDetails) {
+        Usuario usuario = obtenerUsuarioPorId(usuarioDetails.getId()); // throw exception if not exists
+        // Check if username or email already exists (if they are being updated)
+        if (usuarioDetails.getUsername() != null) {
+            if (!usuarioDetails.getUsername().equals(usuario.getUsername()) && usuarioRepository.existsByUsername(usuarioDetails.getUsername())) {
+                throw new UsuarioNoEncontradoException("Username '" + usuarioDetails.getUsername() + "' already exists.");
+            }
+        }
+        if (usuarioDetails.getEmail() != null) {
+            if (!usuarioDetails.getEmail().equals(usuario.getEmail()) && usuarioRepository.existsByEmail(usuarioDetails.getEmail())) {
+                throw new UsuarioNoEncontradoException("Email '" + usuarioDetails.getEmail() + "' already exists.");
+            }
+        }
+        usuario.setUsername(usuarioDetails.getUsername());
+        usuario.setEmail(usuarioDetails.getEmail());     
         usuario.setBalance(usuarioDetails.getBalance());
-        usuario.setRol(usuarioDetails.getRol()); // Update role
+        usuario.setRol(usuarioDetails.getRol()); 
 
         // Avoid updating password here unless explicitly intended and handled securely
         // if (usuarioDetails.getPassword() != null && !usuarioDetails.getPassword().isEmpty()) {

@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios") // Consistent base path
@@ -23,6 +25,54 @@ public class UsuarioController {
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
+
+    /**
+     * Login endpoint.
+     * 
+     * @param loginRequest Login credentials
+     * @return JWT token and user data if authentication is successful
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+        try {
+            String username = loginRequest.get("username");
+            String password = loginRequest.get("password");
+            
+            // In a real implementation, you would validate credentials and generate a JWT token
+            // For now, we'll just fetch the user and return it
+            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+            
+            // Simple password check (in a real app, you'd use a password encoder)
+            if (!usuario.getPassword().equals(password)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid credentials"));
+            }
+            
+            // Create response with token and user data
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", "mock-jwt-token-" + System.currentTimeMillis()); // Replace with real JWT
+            
+            System.out.println("Intentando login con usuario: " + username);
+            System.out.println("Contraseña enviada: " + password);
+
+            Usuario usuario2 = usuarioService.obtenerUsuarioPorUsername(username);
+
+            System.out.println("Contraseña guardada: " + usuario2.getPassword());
+            // Don't return the password
+            usuario.setPassword(null);
+            response.put("user", usuario);
+            
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid credentials"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "An error occurred during login"));
+        }
+    }
+
+
 
     /**
      * Registers a new user.
@@ -116,7 +166,7 @@ public class UsuarioController {
              Usuario currentUser = usuarioService.obtenerUsuarioPorId(id);
              usuarioDetails.setPassword(currentUser.getPassword()); // Keep existing password unless changed via a dedicated mechanism
 
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, usuarioDetails);
+            Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioDetails);
             usuarioActualizado.setPassword(null); // Avoid returning hash
             return ResponseEntity.ok(usuarioActualizado);
         } catch (ResourceNotFoundException e) {

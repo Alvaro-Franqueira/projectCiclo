@@ -3,7 +3,6 @@ package udaw.casino.service;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.model.Juego;
 import udaw.casino.repository.JuegoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -16,7 +15,6 @@ public class JuegoService {
 
     private final JuegoRepository juegoRepository;
 
-    @Autowired
     public JuegoService(JuegoRepository juegoRepository) {
         this.juegoRepository = juegoRepository;
     }

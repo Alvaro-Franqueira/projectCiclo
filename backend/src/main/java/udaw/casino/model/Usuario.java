@@ -1,6 +1,5 @@
 package udaw.casino.model;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -48,8 +47,7 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Apuesta> apuestas;
 
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Ranking> rankings; // A user can appear in multiple rankings
+    // Rankings are now calculated on-demand and not stored in the database
 
     // --- Constructors ---
 

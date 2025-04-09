@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { FaDice, FaCircleNotch } from 'react-icons/fa';
+import { FaDice, FaDiceD6, FaCircleNotch, FaGem } from 'react-icons/fa';
 import { PiPokerChipFill } from "react-icons/pi";
 import gameService from '../services/gameService';
 
@@ -33,14 +33,14 @@ const GameSelection = () => {
     { id: 1, nombre: 'Roulette', descripcion: 'Classic casino roulette game. Place your bets and try your luck!', path: '/games/roulette' },
     { id: 2, nombre: 'Dice', descripcion: 'Roll the dice and win based on your prediction.', path: '/games/dice' }
   ];
+  const displayGames = Array.isArray(games) && games.length > 0 ? games : defaultGames;
 
-  const displayGames = games.length > 0 ? games : defaultGames;
 
   const getGameIcon = (gameName) => {
     const name = gameName.toLowerCase();
-    if (name.includes('roulette')) return <PiPokerChipFill size={40} />;
-    if (name.includes('dice')) return <FaDice size={40} />;
-    return <FaCircleNotch size={40} />;
+    if (name.includes('roulette')) return <PiPokerChipFill size={50} color="#e74c3c" />;
+    if (name.includes('dice')) return <FaDiceD6 size={50} color="#3498db" />;
+    return <FaGem size={50} color="#9b59b6" />;
   };
 
   if (loading) {
@@ -63,11 +63,11 @@ const GameSelection = () => {
           <Col key={game.id} md={6} lg={4}>
             <Card className="h-100 shadow-sm">
               <Card.Body className="d-flex flex-column">
-                <div className="text-center mb-3">
+                <div className="text-center mb-3 game-icon-container">
                   {getGameIcon(game.nombre)}
                 </div>
-                <Card.Title className="text-center">{game.nombre}</Card.Title>
-                <Card.Text className="flex-grow-1">{game.descripcion}</Card.Text>
+                <Card.Title className="text-center text-light">{game.nombre}</Card.Title>
+                <Card.Text className="flex-grow-1 text-light">{game.descripcion}</Card.Text>
                 <Button 
                   variant="primary" 
                   className="w-100 mt-auto"
@@ -80,6 +80,20 @@ const GameSelection = () => {
           </Col>
         ))}
       </Row>
+
+      <style>{`
+        .game-icon-container {
+          background-color: #2c3e50;
+          border-radius: 50%;
+          width: 80px;
+          height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+      `}</style>
     </Container>
   );
 };

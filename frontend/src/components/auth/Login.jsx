@@ -3,7 +3,7 @@ import { Form, Button, Alert, Container, Card } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import authService from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 const loginSchema = Yup.object().shape({
   username: Yup.string().required('Username is required'),
@@ -12,14 +12,14 @@ const loginSchema = Yup.object().shape({
 
 const Login = () => {
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (values, { setSubmitting }) => {
+    setError('');
     try {
-      await authService.login(values);
-      navigate('/games');
+      await login(values);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setSubmitting(false);
     }
@@ -28,10 +28,10 @@ const Login = () => {
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
       <Card className="shadow" style={{ width: '400px' }}>
-        <Card.Body>
+        <Card.Body className="text-white">
           <Card.Title className="text-center mb-4">Login to Casino</Card.Title>
           
-          {error && <Alert variant="danger">{error}</Alert>}
+          {error && <Alert variant="danger" className="text-white">{error}</Alert>}
           
           <Formik
             initialValues={{ username: '', password: '' }}
@@ -91,7 +91,7 @@ const Login = () => {
           </Formik>
           
           <div className="text-center mt-3">
-            <p>Don't have an account? <Link to="/register">Register</Link></p>
+            <p>Don't have an account? <Link to="/register" className="text-yellow">Register</Link></p>
           </div>
         </Card.Body>
       </Card>

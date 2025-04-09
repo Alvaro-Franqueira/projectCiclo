@@ -1,10 +1,10 @@
 import api from './api';
 
 const RANKING_ENDPOINTS = {
-  ALL_RANKINGS: '/rankings',
-  RANKINGS_BY_TYPE: (type) => `/rankings/type/${type}`,
-  RANKINGS_BY_GAME: (gameId) => `/rankings/game/${gameId}`,
-  USER_RANKINGS: (userId) => `/rankings/usuario/${userId}`,
+  ALL_RANKINGS: '/rankings/v2',
+  RANKINGS_BY_TYPE: (type) => `/rankings/v2/tipo/${type}`,
+  RANKINGS_BY_GAME_AND_TYPE: (gameId, type) => `/rankings/v2/juego/${gameId}/tipo/${type}`,
+  USER_RANKINGS: (userId) => `/rankings/v2/usuario/${userId}`,
 };
 
 const rankingService = {
@@ -28,10 +28,10 @@ const rankingService = {
     }
   },
 
-  // Get rankings for a specific game
-  getRankingsByGame: async (gameId) => {
+  // Get rankings for a specific game and type
+  getRankingsByGameAndType: async (gameId, rankingType) => {
     try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME(gameId));
+      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, rankingType));
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch game rankings' };

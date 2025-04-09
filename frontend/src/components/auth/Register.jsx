@@ -48,7 +48,7 @@ const Register = () => {
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-      <Card className="shadow" style={{ width: '400px' }}>
+      <Card className="shadow text-white" style={{ width: '400px' }}>
         <Card.Body>
           <Card.Title className="text-center mb-4">Register for Casino</Card.Title>
           

@@ -6,8 +6,8 @@ import gameService from '../../services/gameService';
 
 const RankingList = () => {
   const [rankingType, setRankingType] = useState('OVERALL_PROFIT');
-  const [rankings, setRankings] = useState([]);
-  const [games, setGames] = useState([]);
+  const [rankings, setRankings] = useState([]); // Initialize as empty array
+  const [games, setGames] = useState([]); // Initialize as empty array
   const [selectedGameId, setSelectedGameId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,12 +16,13 @@ const RankingList = () => {
     const fetchGames = async () => {
       try {
         const gamesData = await gameService.getAllGames();
-        setGames(gamesData);
-        if (gamesData.length > 0) {
+        setGames(gamesData || []); // Ensure it's always an array
+        if (gamesData && gamesData.length > 0) {
           setSelectedGameId(gamesData[0].id);
         }
       } catch (err) {
         console.error('Failed to fetch games:', err);
+        setGames([]); // Ensure games is still an empty array on error
       }
     };
 
@@ -42,10 +43,11 @@ const RankingList = () => {
           rankingsData = await rankingService.getRankingsByType(rankingType);
         }
         
-        setRankings(rankingsData);
+        setRankings(rankingsData || []); // Ensure rankingsData is always an array
       } catch (err) {
         setError('Failed to load rankings. Please try again later.');
         console.error(err);
+        setRankings([]); // Ensure rankings is still an empty array on error
       } finally {
         setLoading(false);
       }
@@ -63,7 +65,6 @@ const RankingList = () => {
   };
 
   const formatValue = (value) => {
-    // Format based on ranking type
     if (rankingType === 'OVERALL_PROFIT') {
       return `$${parseFloat(value).toFixed(2)}`;
     } else if (rankingType === 'TOTAL_BETS_AMOUNT') {
@@ -87,7 +88,8 @@ const RankingList = () => {
       return <Alert variant="danger">{error}</Alert>;
     }
 
-    if (rankings.length === 0) {
+    // Check if rankings is an array before attempting to map
+    if (!Array.isArray(rankings) || rankings.length === 0) {
       return <Alert variant="info">No rankings available yet.</Alert>;
     }
 
@@ -136,7 +138,7 @@ const RankingList = () => {
   };
 
   const renderGameTabs = () => {
-    if (games.length === 0) {
+    if (!Array.isArray(games) || games.length === 0) {
       return <Alert variant="info">No games available.</Alert>;
     }
 

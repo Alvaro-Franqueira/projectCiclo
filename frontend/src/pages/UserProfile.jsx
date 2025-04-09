@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab } from 'react-bootstrap';
 import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy } from 'react-icons/fa';
 import authService from '../services/authService';
@@ -24,11 +24,11 @@ const UserProfile = () => {
         if (user && user.id) {
           // Fetch user bets
           const userBets = await betService.getUserBets(user.id);
-          setBets(userBets);
+          setBets(Array.isArray(userBets) ? userBets : []);
           
           // Fetch user rankings
           const userRankings = await rankingService.getUserRankings(user.id);
-          setRankings(userRankings);
+          setRankings(Array.isArray(userRankings) ? userRankings : []);
         }
         
         setError('');
@@ -44,7 +44,7 @@ const UserProfile = () => {
   }, []);
 
   const calculateStats = () => {
-    if (!bets || bets.length === 0) {
+    if (!Array.isArray(bets) || bets.length === 0) {
       return {
         totalBets: 0,
         totalWagered: 0,
@@ -56,13 +56,13 @@ const UserProfile = () => {
     }
     
     const totalBets = bets.length;
-    const totalWagered = bets.reduce((sum, bet) => sum + bet.cantidad, 0);
+    const totalWagered = bets.reduce((sum, bet) => sum + (bet.cantidad || 0), 0);
     
     const wonBets = bets.filter(bet => bet.estado === 'GANADA');
     const lostBets = bets.filter(bet => bet.estado === 'PERDIDA');
     
-    const totalWon = wonBets.reduce((sum, bet) => sum + bet.winloss, 0);
-    const totalLost = lostBets.reduce((sum, bet) => sum + Math.abs(bet.winloss), 0);
+    const totalWon = wonBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
+    const totalLost = lostBets.reduce((sum, bet) => sum + Math.abs(bet.winloss || 0), 0);
     
     const netProfit = totalWon - totalLost;
     const winRate = totalBets > 0 ? (wonBets.length / totalBets) * 100 : 0;
@@ -240,12 +240,7 @@ const UserProfile = () => {
                                   ranking.valor}
                               </td>
                               <td>
-                                <Badge bg={
-                                  ranking.posicion === 1 ? 'warning' : 
-                                  ranking.posicion === 2 ? 'secondary' : 
-                                  ranking.posicion === 3 ? 'danger' : 
-                                  'info'
-                                }>
+                                <Badge bg={ranking.posicion === 1 ? 'warning' : ranking.posicion === 2 ? 'secondary' : ranking.posicion === 3 ? 'danger' : 'info'}>
                                   #{ranking.posicion}
                                 </Badge>
                               </td>

@@ -2,6 +2,8 @@ package udaw.casino.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import udaw.casino.model.Apuesta; 
@@ -37,6 +39,54 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
      * @param estado  The status of the bet (e.g., "GANADA").
      * @return The count of matching bets.
      */
-    long countByUsuarioAndJuegoAndEstado(Usuario usuario, Juego juego, String estado); // Add count method
+    long countByUsuarioAndJuegoAndEstado(Usuario usuario, Juego juego, String estado);
 
+    /**
+     * Calculates the total amount bet by a user.
+     *
+     * @param usuarioId The ID of the user.
+     * @return The total amount bet.
+     */
+    @Query("SELECT COALESCE(SUM(a.cantidad), 0.0) FROM Apuesta a WHERE a.usuario.id = :usuarioId")
+    Double calculateTotalBetAmountForUser(@Param("usuarioId") Long usuarioId);
+
+    /**
+     * Calculates the total profit for a user (sum of winloss values).
+     *
+     * @param usuarioId The ID of the user.
+     * @return The total profit.
+     */
+    @Query("SELECT COALESCE(SUM(a.winloss), 0.0) FROM Apuesta a WHERE a.usuario.id = :usuarioId")
+    Double calculateTotalProfitForUser(@Param("usuarioId") Long usuarioId);
+
+    /**
+     * Counts the number of winning bets for a user in a specific game.
+     *
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return The number of wins.
+     */
+    @Query("SELECT COUNT(a) FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId AND a.estado = 'GANADA'")
+    Long countWinsByUserAndGame(@Param("usuarioId") Long usuarioId, @Param("juegoId") Long juegoId);
+
+    /**
+     * Finds all distinct games that a user has bet on.
+     *
+     * @param usuarioId The ID of the user.
+     * @return List of games the user has bet on.
+     */
+    @Query("SELECT DISTINCT a.juego FROM Apuesta a WHERE a.usuario.id = :usuarioId")
+    List<Juego> findDistinctJuegosByUsuarioId(@Param("usuarioId") Long usuarioId);
+    
+    /**
+     * Finds all bets placed by a specific user on a specific game, ordered by date descending.
+     *
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return A list of Apuesta objects.
+     */
+    @Query("SELECT a FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId ORDER BY a.fechaApuesta DESC")
+    List<Apuesta> findByUsuarioIdAndJuegoIdOrderByFechaApuestaDesc(
+        @Param("usuarioId") Long usuarioId, 
+        @Param("juegoId") Long juegoId);
 }
