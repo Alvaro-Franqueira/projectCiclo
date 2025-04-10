@@ -12,15 +12,8 @@ const ruletaService = {
      * @returns {Promise<object>} - Promise resolving to { winningNumber (echoed from backend), resolvedBet (processed bet details) }
      */
     jugar: (betData) => {
-        // Log the bet data being sent, now including the winning number
-        console.log('Sending bet to backend with params (including numeroGanador):', betData);
-
-        // Ensure numeroGanador is provided
-        if (betData.numeroGanador === undefined || betData.numeroGanador === null) {
-             console.error('Error: numeroGanador is missing in betData for ruletaService.jugar');
-             return Promise.reject(new Error('El número ganador generado en el frontend no fue proporcionado al servicio.'));
-        }
-
+        // Log the bet data being sent
+        console.log('Sending bet to backend with params:', betData);
         // Backend expects request parameters, not a JSON body
         const params = new URLSearchParams();
         params.append('usuarioId', betData.usuarioId);
@@ -28,7 +21,7 @@ const ruletaService = {
         params.append('tipoApuesta', betData.tipo); // Match backend @RequestParam name
         params.append('valorApuesta', betData.valorApostado); // Match backend @RequestParam name
         params.append('numeroGanador', betData.numeroGanador); // *** ADDED WINNING NUMBER ***
-
+        
         return axios.post(`${API_URL}/jugar`, params, { // Assumes axios instance has baseURL '/api' or similar
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

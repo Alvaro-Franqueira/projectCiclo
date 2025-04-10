@@ -161,17 +161,19 @@ function RouletteGame() {
     setSpinResultNumber(null);
 
     try {
+        // Generate a winning number between 0 and 36
       const winningNumber = Math.floor(Math.random() * 37);
       const winningNumberStr = String(winningNumber);
-      console.log(`Frontend generated winning number: ${winningNumberStr}`);
+
 
       const betPromises = Object.entries(bets).map(([betId, betData]) => {
         const [type, value] = betId.split('-');
         const betPayload = {
           usuarioId: user.id,
           cantidad: betData.number,
-          tipo: type,
-          valorApostado: value,
+          tipo: type, 
+          valorApostado: value, 
+          //numeroGanador: winningNumber removed
           numeroGanador: winningNumber
         };
         console.log("Sending bet:", betPayload);
@@ -186,11 +188,15 @@ function RouletteGame() {
       let finalBalance = userBalance - totalBetAmount;
 
       results.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value?.resolvedBet) {
+        if (result.status === 'fulfilled' && result.value?.resolvedBet && result.value.winningNumber) {
           const resolvedBet = result.value.resolvedBet;
-          console.log(`Bet ${index+1} result:`, resolvedBet);
+          console.log(`Bet ${index+1} result with winning number ${result.value.winningNumber}:`, resolvedBet);
           totalWinLoss += resolvedBet.winloss || 0;
           successfulBets++;
+          //Only update if was not already updated
+          if (spinResultNumber === null) {
+                setSpinResultNumber(String(result.value.winningNumber));
+            }
           finalBalance += resolvedBet.winloss || 0;
         } else {
           const betEntry = Object.entries(bets)[index];
@@ -207,13 +213,20 @@ function RouletteGame() {
       }
 
       const profit = totalWinLoss; // Backend winloss already accounts for stake
-      setMessage({
-        text: `Spin result: ${winningNumberStr}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
-        type: profit > 0 ? 'success' : (profit < 0 ? 'danger' : 'info')
-      });
 
+        //Check if there were successful bets
+      if (spinResultNumber !== null) { // Check if spinResultNumber was updated
+          
 
-      setBetHistory(prev => [winningNumberStr, ...prev.slice(0, 9)]);
+           setMessage({
+            text: `Spin result: ${spinResultNumber}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
+            type: profit > 0 ? 'success' : (profit < 0 ? 'danger' : 'info')
+          });
+          setBetHistory(prev => [spinResultNumber, ...prev.slice(0, 9)]);
+      } else {
+          setMessage({ text: 'Spin failed to determine winning number', type: 'danger' });
+      }
+      
 
       setSpinResultNumber(winningNumberStr);
       setStartSpin(true);
