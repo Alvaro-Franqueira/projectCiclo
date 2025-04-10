@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner } from 'react-bootstrap';
 // Use the components from the library
 import { RouletteTable, RouletteWheel } from 'react-casino-roulette';
-//import 'react-casino-roulette/dist/index.css';
+import 'react-casino-roulette/dist/index.css';
 import './Roulette.css'; // Your custom styles
-import betService from '../../services/betService'; // Assuming this service exists for history
-import ruletaService from '../../services/ruletaService'; // Service for placing roulette bets
+import betService from '../../services/betService'; 
+import ruletaService from '../../services/ruletaService'; 
 import { useAuth } from '../../context/AuthContext';
 
 // Import chips images (ensure paths are correct relative to Roulette.jsx)

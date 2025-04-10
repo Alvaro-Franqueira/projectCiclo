@@ -331,9 +331,12 @@ body.bg-5 {
   padding: 10px;
 }
 
+
+/* Ajustar el tamaño de las fichas apostadas */
 .chip {
-  width: 50px;
-  height: 50px;
+  width: 35px; /* Reducir el ancho */
+  height: 35px; /* Reducir la altura */
+  font-size: 0.7rem; /* Reducir el tamaño de la fuente */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -370,7 +373,7 @@ body.bg-5 {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 15px;
-  min-height: 40px;
+  min-height: 25px;
 }
 
 .placed-bet {
