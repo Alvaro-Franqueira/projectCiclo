@@ -4,18 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import udaw.casino.dto.DiceGameResponseDTO;
-import udaw.casino.dto.PlaceBetRequestDTO;
+import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.SaldoInsuficienteException;
 import udaw.casino.model.Apuesta;
 import udaw.casino.model.Juego;
 import udaw.casino.model.Usuario;
-import udaw.casino.repository.ApuestaRepository;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,84 +20,93 @@ public class DadosService {
     private final ApuestaService apuestaService;
     private final UsuarioService usuarioService;
     private final JuegoService juegoService;
-    private final ApuestaRepository apuestaRepository;
-    private final Random random = new Random();
 
     @Transactional
-    public DiceGameResponseDTO jugar(PlaceBetRequestDTO betRequest) {
-        log.info("Received dice game request: {}", betRequest);
+    public Apuesta jugarDados(Apuesta apuesta, int sumDados) {
+        log.info("Processing dice game with bet: {}", apuesta);
+        log.info("Received dice game request: {}", apuesta);
 
-        // 1. Fetch User and Game
-        Usuario usuario = usuarioService.obtenerUsuarioPorId(betRequest.getUsuarioId());
-        Juego juego = juegoService.obtenerJuegoPorId(betRequest.getJuegoId()); // Assuming game ID 2 is Dice
-
-        // 2. Validate Balance
-        if (usuario.getBalance() < betRequest.getCantidad()) {
-            throw new SaldoInsuficienteException("Insufficient balance to place bet.");
+        // Validation
+        if (apuesta.getCantidad() <= 0) {
+            log.error("Invalid bet amount: {}. Must be greater than 0.", apuesta.getCantidad());
+            throw new IllegalArgumentException("Cantidad de apuesta inválida: " + apuesta.getCantidad() + ". Debe ser mayor que 0.");
         }
+        if (apuesta.getTipoApuesta() == null || apuesta.getValorApostado() == null) {
+            log.error("Bet type or value is null.");
+            throw new IllegalArgumentException("Tipo de apuesta o valor apostado no pueden ser nulos.");
+        }
+        // Fetch user and game
+        Usuario usuario = usuarioService.obtenerUsuarioPorId(apuesta.getUsuario().getId());
+        Juego juego = juegoService.obtenerJuegoPorId(apuesta.getJuego().getId());
+        if (usuario == null || juego == null) {
+            log.error("User or game not found. User ID: {}, Game ID: {}", apuesta.getUsuario().getId(), apuesta.getJuego().getId());
+            throw new ResourceNotFoundException("Usuario o juego no encontrado.");
+        }
+        // Check user balance
+        if (usuario.getBalance() < apuesta.getCantidad()) {
+            log.error("Insufficient balance for user ID: {}. Required: {}, Available: {}", usuario.getId(), apuesta.getCantidad(), usuario.getBalance());
+            throw new SaldoInsuficienteException("Saldo insuficiente para realizar la apuesta.");
+        }
+        // Deduct bet amount from user balance
+        usuario.setBalance(usuario.getBalance() - apuesta.getCantidad());
 
-        // 3. Create Pending Bet
-        Apuesta apuesta = new Apuesta();
-        apuesta.setUsuario(usuario);
-        apuesta.setJuego(juego);
-        apuesta.setCantidad(betRequest.getCantidad());
-        apuesta.setTipo(betRequest.getTipo());
-        apuesta.setValorApostado(betRequest.getValorApostado());
-        apuesta.setFechaApuesta(LocalDateTime.now());
-        apuesta.setEstado("PENDIENTE");
-        apuesta.setWinloss(0.0); // Initialize winloss
+        Apuesta apuestaCreada = apuestaService.crearApuesta(apuesta);
+        log.info("Processing bet based on frontend result: Number={}", sumDados);
 
-        // Deduct bet amount *before* rolling
-        usuarioService.actualizarSaldoUsuario(usuario.getId(), usuario.getBalance() - betRequest.getCantidad());
-        log.info("Deducted {} from user {} balance. New balance approx: {}", betRequest.getCantidad(), usuario.getUsername(), usuario.getBalance() - betRequest.getCantidad());
+        apuestaCreada.setValorGanador(String.valueOf(sumDados));
+        apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, sumDados));
 
-
-        Apuesta pendingApuesta = apuestaRepository.save(apuesta);
-        log.info("Created pending bet with ID: {}", pendingApuesta.getId());
-
-
-        // 4. Roll Dice
-        int die1 = random.nextInt(6) + 1; // 1-6
-        int die2 = random.nextInt(6) + 1; // 1-6
-        int totalSum = die1 + die2;
-        log.info("Dice roll results: {} + {} = {}", die1, die2, totalSum);
-
-        // 5. Determine Win/Loss
-        boolean gano = determinarResultadoApuesta(pendingApuesta, totalSum);
-        log.info("Bet {} result: {}", pendingApuesta.getId(), gano ? "WON" : "LOST");
+        return apuestaService.resolverApuesta(apuestaCreada);
 
 
-        // 6. Resolve Bet (updates state, winloss, and user balance if won)
-        Apuesta resolvedApuesta = apuestaService.resolverApuesta(pendingApuesta.getId(), gano);
-        log.info("Resolved bet {}: State={}, WinLoss={}", resolvedApuesta.getId(), resolvedApuesta.getEstado(), resolvedApuesta.getWinloss());
-
-
-        // 7. Construct and Return Response
-        List<Integer> diceResults = Arrays.asList(die1, die2);
-        return new DiceGameResponseDTO(diceResults, resolvedApuesta);
     }
 
-    private boolean determinarResultadoApuesta(Apuesta apuesta, int totalSum) {
-        String tipo = apuesta.getTipo();
-        String valorApostado = apuesta.getValorApostado();
-
-        switch (tipo.toLowerCase()) {
-            case "parimpar":
-                boolean esPar = totalSum % 2 == 0;
-                return ("par".equalsIgnoreCase(valorApostado) && esPar) ||
-                       ("impar".equalsIgnoreCase(valorApostado) && !esPar);
+    private static final Map<Integer, Double> NUMERO_ODDS = Map.ofEntries(
+        Map.entry(2, 30.0),
+        Map.entry(3, 15.0),
+        Map.entry(4, 10.0),
+        Map.entry(5, 8.0),
+        Map.entry(6, 6.0),
+        Map.entry(7, 5.0),
+        Map.entry(8, 6.0),
+        Map.entry(9, 8.0),
+        Map.entry(10, 10.0),
+        Map.entry(11, 15.0),
+        Map.entry(12, 30.0)
+    );
+    
+    
+    private Double determinarResultadoApuesta(Apuesta apuesta, int totalSum) {
+        String tipo = apuesta.getTipoApuesta().toLowerCase();
+        String valorApostado = apuesta.getValorApostado().toLowerCase();
+        double cantidad = apuesta.getCantidad();
+    
+        switch (tipo) {
             case "numero":
-                try {
-                    int numeroApostado = Integer.parseInt(valorApostado);
-                    return totalSum == numeroApostado;
-                } catch (NumberFormatException e) {
-                    log.error("Invalid number format for 'numero' bet type: {}", valorApostado);
-                    return false; // Invalid bet value
+                int numeroApostado = Integer.parseInt(valorApostado);
+                if (numeroApostado == totalSum) {
+                    double payout = NUMERO_ODDS.getOrDefault(numeroApostado, 0.0);
+                    return cantidad * payout;
+                } else {
+                    return -cantidad;
                 }
-            // Add other dice bet types here if needed (e.g., specific combo, higher/lower than 7)
+    
+            case "mitad":
+                // mitad 1: 2–6, mitad 2: 7–12
+                int mitad = totalSum <= 6 ? 1 : 2;
+                return valorApostado.equals(String.valueOf(mitad)) ? cantidad * 0.95 : -cantidad;
+    
+            case "paridad":
+                boolean esPar = totalSum % 2 == 0;
+                boolean eligioPar = valorApostado.equals("par");
+                return (esPar == eligioPar) ? cantidad * 0.95 : -cantidad;
+    
             default:
-                log.warn("Unknown dice bet type: {}", tipo);
-                return false; // Unknown bet type always loses
+            log.warn("Unknown bet type encountered: {}", tipo);
+                return null; // apuesta inválida
         }
     }
+    
+
 }
+    

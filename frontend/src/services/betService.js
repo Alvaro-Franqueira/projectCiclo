@@ -8,6 +8,7 @@ const BET_ENDPOINTS = {
   GET_BET_BY_ID: (betId) => `/apuestas/${betId}`,
   PLACE_ROULETTE_BET: '/juegos/ruleta/jugar',
   PLACE_DICE_BET: '/juegos/dados/jugar', 
+  GET_BALANCE: (userId) => `/usuarios/balance/${userId}`,
 };
 
 const betService = {
@@ -87,6 +88,16 @@ const betService = {
       throw error.response?.data || { message: 'Failed to fetch user game bets' };
     }
   }
-};
+,
+// Get user balance
+  getUserBalance: async (userId) => {
+    try {
+      const response = await api.get(BET_ENDPOINTS.GET_BALANCE(userId));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch user balance' };
+    }
+  }
+}
 
 export default betService;

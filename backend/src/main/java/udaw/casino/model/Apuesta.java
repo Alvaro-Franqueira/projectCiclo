@@ -14,12 +14,13 @@ public class Apuesta {
     private Long id;
 
     private double cantidad;
+    private String tipoApuesta; // docenas, color, par/impar, etc.
+    private String valorApostado;
+    private String valorGanador; // resultado de la apuesta, puede ser un número o un color 
+
     private LocalDateTime fechaApuesta;
     private String estado; //  no se si tiene sentido
     private double winloss;
-    private String tipo; // docenas, color, par/impar, etc.
-    private String valorApostado; 
-
 
     @ManyToOne // una apuesta pertenece a un usuario y un usuario puede tener muchas apuestas
     @JoinColumn(name = "usuario_id")

@@ -7,7 +7,6 @@ import udaw.casino.service.JuegoService;
 import udaw.casino.service.RankingCalculationService;
 import udaw.casino.service.RankingCalculationService.RankingEntry;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +24,6 @@ public class RankingCalculationController {
     private final RankingCalculationService rankingCalculationService;
     private final JuegoService juegoService;
 
-    @Autowired
     public RankingCalculationController(RankingCalculationService rankingCalculationService, JuegoService juegoService) {
         this.rankingCalculationService = rankingCalculationService;
         this.juegoService = juegoService;

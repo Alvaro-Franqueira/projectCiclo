@@ -3,6 +3,9 @@ package udaw.casino.model;
 import lombok.Data;
 
 import java.util.List;
+
+import org.hibernate.validator.constraints.UniqueElements;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
@@ -17,6 +20,7 @@ public class Juego {
 
     @NotBlank(message = "Game name cannot be blank")
     @Column(nullable = false, unique = true)
+    @UniqueElements // Ensure game names are unique
     private String nombre; // e.g., "Roulette", "Dice"
 
     @Column(length = 500) // Allow for a longer description

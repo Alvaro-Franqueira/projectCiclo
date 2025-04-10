@@ -20,6 +20,7 @@
     "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
     "react-bootstrap": "^2.9.1",
+    "react-casino-roulette": "^1.1.2",
     "react-custom-roulette": "^1.4.1",
     "react-dom": "^19.0.0",
     "react-icons": "^4.12.0",

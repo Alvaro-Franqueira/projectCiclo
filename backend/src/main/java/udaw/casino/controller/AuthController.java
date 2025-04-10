@@ -4,7 +4,6 @@ import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.UsuarioNoEncontradoException;
 import udaw.casino.model.Usuario;
 import udaw.casino.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,26 +12,17 @@ import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Controller for authentication-related endpoints.
- */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UsuarioService usuarioService;
 
-    @Autowired
     public AuthController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
-    /**
-     * Login endpoint.
-     * 
-     * @param loginRequest Login credentials
-     * @return JWT token and user data if authentication is successful
-     */
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         try {

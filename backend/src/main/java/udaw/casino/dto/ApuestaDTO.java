@@ -17,6 +17,7 @@ public class ApuestaDTO {
     private String tipo;
     private String valorApostado;
     private Long juegoId;
+    private Long usuarioId;
     private String juegoNombre;
     
     public ApuestaDTO() {
@@ -28,8 +29,10 @@ public class ApuestaDTO {
         this.fechaApuesta = apuesta.getFechaApuesta();
         this.estado = apuesta.getEstado();
         this.winloss = apuesta.getWinloss();
-        this.tipo = apuesta.getTipo();
+        this.tipo = apuesta.getTipoApuesta();
         this.valorApostado = apuesta.getValorApostado();
+        this.usuarioId = apuesta.getUsuario() != null ? apuesta.getUsuario().getId() : null;
+        this.juegoId = apuesta.getJuego() != null ? apuesta.getJuego().getId() : null;
         
         if (apuesta.getJuego() != null) {
             this.juegoId = apuesta.getJuego().getId();

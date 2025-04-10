@@ -9,4 +9,5 @@ public class PlaceBetRequestDTO {
     private double cantidad;
     private String tipo; // e.g., "parimpar", "numero"
     private String valorApostado; // e.g., "par", "impar", "7"
+    private String valorGanador;
 }

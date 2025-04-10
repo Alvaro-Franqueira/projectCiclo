@@ -131,6 +131,19 @@ public class UsuarioController {
         }
     }
 
+    // gets the user balance
+    @GetMapping("/balance/{id}")
+    public ResponseEntity<Double> obtenerBalancePorId(@PathVariable Long id) {
+        try {
+            Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
+            return ResponseEntity.ok(usuario.getBalance());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
+
     /**
      * Gets all users.
      * Requires ADMIN role (to be enforced by Spring Security later).
