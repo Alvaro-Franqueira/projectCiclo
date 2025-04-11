@@ -3,6 +3,7 @@ import api from './api';
 const GAME_ENDPOINTS = {
   ALL_GAMES: '/juegos',
   GAME_BY_ID: (id) => `/juegos/${id}`,
+  GAME_BY_NAME: (name) => `/juegos/nombre/${name}`
 };
 
 const gameService = {
@@ -24,7 +25,15 @@ const gameService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch game details' };
     }
+  },
+  // get game by name
+  getGameByName: async (gameName) => {
+    try {
+      const response = await api.get(GAME_ENDPOINTS.GAME_BY_NAME(gameName));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch game details' };
+    }
   }
-};
-
+}
 export default gameService;

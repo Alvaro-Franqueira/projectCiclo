@@ -5,14 +5,13 @@ import userService from '../services/userService'; // Import userService for bac
 const AuthContext = createContext(null);
 
 // Mock user data
-const mockUser = {
-  id: 1, // Admin ID from database
-  username: 'admin',
-  nombre: 'Admin',
-  apellidos: 'User',
-  email: 'admin@casino.com',
-  saldo: 5000, // Starting balance from database
-  roles: ['ADMIN'] // Admin role
+const MOCK_USER ={
+  "id": 1,
+  "username": "admin",
+  "password": "admin",
+  "email": "admin@casino.com",
+  "saldo": 5440,
+  "rol": "ADMIN"
 };
 
 export const AuthProvider = ({ children }) => {
@@ -29,7 +28,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
     // Fall back to mock user if localStorage data is not available
-    return mockUser;
+    return MOCK_USER;
   });
   const [loading, setLoading] = useState(false); // Start as not loading
 

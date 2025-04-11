@@ -15,7 +15,7 @@ import jakarta.transaction.Transactional;
 public class RuletaService {
 
     // NAME OF THE GAME
-    private static final String ROULETTE_GAME_NAME = "Roulette"; // Define game name constant
+    private static final String ROULETTE_GAME_NAME = "Ruleta"; // Define game name constant
 
     private static final Logger log = LoggerFactory.getLogger(RuletaService.class);
 

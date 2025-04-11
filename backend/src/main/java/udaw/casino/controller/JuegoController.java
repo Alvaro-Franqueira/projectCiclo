@@ -74,4 +74,15 @@ public class JuegoController {
                 .body(Map.of("message", "Failed to fetch game"));
         }
     }
+
+    //obtener juego by nombre
+    
+    @GetMapping("/nombre/{nombre}")
+    public ResponseEntity<Juego> obtenerJuegoPorNombre(@PathVariable String nombre) {
+        Juego juego = juegoService.obtenerJuegoPorNombre(nombre);
+        if (juego == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(juego);
+    }
 }

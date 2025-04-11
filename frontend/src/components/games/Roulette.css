@@ -532,14 +532,28 @@ body.bg-5 {
 }
 
 @media (max-width: 768px) {
-  .casino-roulette-container {
-    max-width: 200px;
-    height: 200px;
-  }
+
   
   .chip {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+  
+  .roulette-table {
+    font-size: 0.8rem;
+  }
+  
+  .pocket-number {
+    font-size: 10px;
+  }
+}
+@media (max-width: 600px) {
+
+  
+  .chip {
+    width: 22px;
+    height: 22px;
     font-size: 0.8rem;
   }
   

@@ -7,7 +7,7 @@ import './Roulette.css'; // Your custom styles
 import betService from '../../services/betService'; 
 import ruletaService from '../../services/ruletaService'; 
 import { useAuth } from '../../context/AuthContext';
-
+import gameService from '../../services/gameService';
 // Import chips images (ensure paths are correct relative to Roulette.jsx)
 import whiteChip from '../images/white-chip.png';
 import blueChip from '../images/blue-chip.png';
@@ -27,17 +27,23 @@ const defaultChip = 'chip10'; // Default chip to start with
 //change it to american roulette(the one with 0 and 00)
 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
-const getNumberColor = (number) => {
-  if (number === null || number === undefined) return 'grey'; // Default/placeholder color
-  const num = parseInt(number, 10);
-  if (num === 0) return 'green';
-  return redNumbers.includes(num) ? 'red' : 'black';
-};
+
 
 // Function to calculate total bet amount from the bets object
 const calculateTotalBet = (bets) => {
   return Object.values(bets).reduce((acc, bet) => acc + bet.number, 0);
 };
+
+// MOCK USER
+const MOCK_USER ={
+  "id": 1,
+  "username": "admin",
+  "password": "admin",
+  "email": "admin@casino.com",
+  "saldo": 5440,
+  "rol": "ADMIN"
+};
+
 
 // --- Component ---
 
@@ -63,13 +69,17 @@ function RouletteGame() {
   const [gameHistory, setGameHistory] = useState([]); // User's past bet results for this game
 
   // --- Effects ---
-
+console.log(user);
   // Initialize balance from user context
   useEffect(() => {
     if (user) {
       setUserBalance(user.saldo || 0);
     }
   }, [user]);
+
+  const GAME_NAME= 'Ruleta'; // Game name for API calls
+  //const game = gameService.getGameByName(GAME_NAME);
+  //const gameId = game?.id;
 
   // Fetch user's bet history for Roulette (Game ID 1 assumed)
   const fetchUserGameHistory = useCallback(async () => {
@@ -173,15 +183,96 @@ function RouletteGame() {
           cantidad: betData.number,
           tipo: type, 
           valorApostado: value, 
-          //numeroGanador: winningNumber removed
-          numeroGanador: winningNumber
+          numeroGanador: winningNumber,
+          juegoNombre: 'Ruleta' 
         };
         console.log("Sending bet:", betPayload);
         return ruletaService.jugar(betPayload);
       });
 
       const results = await Promise.allSettled(betPromises);
-      console.log("Backend responses:", results);
+      const handleSpinClick = async () => {
+        const totalBetAmount = calculateTotalBet(bets);
+        if (isSpinning || loading || totalBetAmount === 0) {
+          if (totalBetAmount === 0) setMessage({ text: 'Place your bets first!', type: 'warning' });
+          return;
+        }
+        if (totalBetAmount > userBalance) {
+          setMessage({ text: 'Total bet exceeds balance!', type: 'danger' });
+          return;
+        }
+      
+        setLoading(true);
+        setIsSpinning(true);
+        setMessage({ text: 'Spinning...', type: 'info' });
+        setSpinResultNumber(null);
+      
+        try {
+          // Generate a single winning number for all bets
+          const winningNumber = Math.floor(Math.random() * 37);
+          const winningNumberStr = String(winningNumber);
+      
+          // Send each bet separately to the backend
+          const betPromises = Object.entries(bets).map(([betId, betData]) => {
+            const [type, value] = betId.split('-');
+            const betPayload = {
+              usuarioId: user.id,
+              cantidad: betData.number,
+              tipo: type,
+              valorApostado: value,
+              numeroGanador: winningNumber,
+            };
+            console.log("Sending bet:", betPayload);
+            return ruletaService.jugar(betPayload);
+          });
+      
+          const results = await Promise.allSettled(betPromises);
+          console.log("Backend responses:", results);
+      
+          let totalWinLoss = 0;
+          let successfulBets = 0;
+          let finalBalance = userBalance - totalBetAmount;
+      
+          results.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value?.resolvedBet && result.value.winningNumber) {
+              const resolvedBet = result.value.resolvedBet;
+              console.log(`Bet ${index + 1} result with winning number ${result.value.winningNumber}:`, resolvedBet);
+              totalWinLoss += resolvedBet.winloss || 0;
+              successfulBets++;
+              setSpinResultNumber(String(result.value.winningNumber)); // Update spin result
+              finalBalance += resolvedBet.winloss || 0;
+            } else {
+              const betEntry = Object.entries(bets)[index];
+              const betId = betEntry ? betEntry[0] : 'unknown';
+              console.error(`Bet ${betId} failed:`, result.reason || result.value);
+            }
+          });
+      
+          if (updateUserBalance) {
+            updateUserBalance(finalBalance);
+            setUserBalance(finalBalance);
+          } else {
+            setUserBalance(finalBalance);
+          }
+      
+          const profit = totalWinLoss; // Backend win/loss already accounts for stake
+      
+          setMessage({
+            text: `Spin result: ${winningNumberStr}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
+            type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
+          });
+      
+          setBetHistory((prev) => [winningNumberStr, ...prev.slice(0, 9)]);
+          fetchUserGameHistory();
+        } catch (error) {
+          console.error("Error during spin:", error);
+          setMessage({ text: error.response?.data?.message || 'Spin failed. Please try again.', type: 'danger' });
+        } finally {
+          setLoading(false);
+          setIsSpinning(false);
+          setBets({}); // Clear bets after spin
+        }
+      };
 
       let totalWinLoss = 0;
       let successfulBets = 0;
@@ -216,8 +307,6 @@ function RouletteGame() {
 
         //Check if there were successful bets
       if (spinResultNumber !== null) { // Check if spinResultNumber was updated
-          
-
            setMessage({
             text: `Spin result: ${spinResultNumber}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
             type: profit > 0 ? 'success' : (profit < 0 ? 'danger' : 'info')

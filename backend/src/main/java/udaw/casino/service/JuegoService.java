@@ -56,8 +56,6 @@ public class JuegoService {
     public Juego obtenerJuegoPorNombre(String nombre) {
         return juegoRepository.findByNombre(nombre)
                 .orElseThrow(() -> new ResourceNotFoundException("Juego", "nombre", nombre));
-                // Or use the custom JuegoNoEncontradoException:
-                // .orElseThrow(() -> new JuegoNoEncontradoException("Juego no encontrado con nombre: " + nombre));
     }
 
 
