@@ -2,12 +2,10 @@ package udaw.casino.dto;
 
 import java.time.LocalDateTime;
 
-import lombok.Getter;
+import lombok.Data;
 import udaw.casino.model.Apuesta;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 public class ApuestaDTO {
     private Long id;
     private double cantidad;
@@ -19,6 +17,7 @@ public class ApuestaDTO {
     private Long juegoId;
     private Long usuarioId;
     private String juegoNombre;
+    private Double userBalance; // Added to store the user's current balance
     
     public ApuestaDTO() {
     }
@@ -31,8 +30,10 @@ public class ApuestaDTO {
         this.winloss = apuesta.getWinloss();
         this.tipo = apuesta.getTipoApuesta();
         this.valorApostado = apuesta.getValorApostado();
-        this.usuarioId = apuesta.getUsuario() != null ? apuesta.getUsuario().getId() : null;
-        this.juegoId = apuesta.getJuego() != null ? apuesta.getJuego().getId() : null;
+        if (apuesta.getUsuario() != null) {
+            this.usuarioId = apuesta.getUsuario().getId();
+            this.userBalance = apuesta.getUsuario().getBalance(); // Set the user's balance
+        }
         
         if (apuesta.getJuego() != null) {
             this.juegoId = apuesta.getJuego().getId();

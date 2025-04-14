@@ -5,6 +5,8 @@ import lombok.Data;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Data
 public class Apuesta {
@@ -21,11 +23,11 @@ public class Apuesta {
     private LocalDateTime fechaApuesta;
     private String estado; //  no se si tiene sentido
     private double winloss;
-
+    @JsonIgnore
     @ManyToOne // una apuesta pertenece a un usuario y un usuario puede tener muchas apuestas
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
-
+    @JsonIgnore
     @ManyToOne // una apuesta pertenece a un juego y un juego puede tener muchas apuestas
     @JoinColumn(name = "juego_id")
     private Juego juego;

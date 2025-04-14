@@ -9,6 +9,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Data
 @Entity
 @Table(name = "usuarios") // Use plural for table names generally
@@ -45,6 +47,7 @@ public class Usuario {
     private Rol rol = Rol.USER; // Default role is USER
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Apuesta> apuestas;
 
     // Rankings are now calculated on-demand and not stored in the database

@@ -22,15 +22,21 @@ const DiceGame = () => {
   // Initialize balance from context ONCE or when user ID changes
   useEffect(() => {
     if (user?.id) {
-      try {
-        const balance = betService.getUserBalance(user.id);
-        console.log("Initializing balance from user context:", balance);
-        setUserBalance(balance || 0); // Ensure numeric value
-        loadUserBetHistory();
-      } catch (error) {
-        console.error("Error loading user balance:", error);
-        setUserBalance(0);
-      }
+      // Properly handle the Promise returned by getUserBalance
+      betService.getUserBalance(user.id)
+        .then(balance => {
+          console.log("Initializing balance from user context:", balance);
+          // If balance is a number, use it; otherwise, use user.balance or 0
+          const numericBalance = typeof balance === 'number' ? balance : 
+                               (user.balance || 0);
+          setUserBalance(numericBalance);
+          loadUserBetHistory();
+        })
+        .catch(error => {
+          console.error("Error loading user balance:", error);
+          // Fallback to user.balance from context if available
+          setUserBalance(user.balance || 0);
+        });
     } else {
       setUserBalance(0);
       setHistory([]);
@@ -111,19 +117,30 @@ const DiceGame = () => {
     setIsRolling(true);
     setResultMessage({ text: 'Rolling the dice...', type: 'info' });
 
+    // Dice will be rolled by the backend
+    // We'll update the dice display when we get the response
+
     const betData = {
       usuarioId: user.id,
-      juegoId: 2,
+      juegoId: 2, // Hardcoded game ID for Dice game
       cantidad: betAmount,
       tipo: betType,
       valorApostado: betValue,
+      valorGanador: null
     };
+
+    
 
     console.log('Placing bet with data:', betData, `Current local balance: ${currentBalanceBeforeBet}`);
 
+    // Add detailed logging for debugging
+    console.log('API URL being used:', '/juegos/dados/jugar');
+    console.log('Full API URL with base:', 'http://localhost:8080/api/juegos/dados/jugar');
+    
     // Use Promise chain instead of async/await
     diceService.jugar(betData)
       .then(response => {
+        const { diceResults, resolvedBet } = response;
         // Log the RAW response from the backend
         console.log('Backend RAW response:', response);
 
@@ -131,76 +148,95 @@ const DiceGame = () => {
         if (!response || typeof response !== 'object') {
           throw new Error("Invalid response: Backend returned non-object.");
         }
-        const { diceResults, resolvedBet } = response;
         if (!diceResults || !Array.isArray(diceResults) || diceResults.length !== 2) {
           throw new Error("Invalid response: Missing or invalid 'diceResults'.");
         }
         if (!resolvedBet || typeof resolvedBet !== 'object') {
           throw new Error("Invalid response: Missing or invalid 'resolvedBet'.");
         }
-        if (!resolvedBet.usuario || typeof resolvedBet.usuario !== 'object') {
-          throw new Error("Invalid response: Missing or invalid 'resolvedBet.usuario'.");
+        // Check for user data in the DTO
+        if (resolvedBet.usuarioId === undefined) {
+          console.warn("Response missing usuarioId field");
+          throw new Error("Invalid response: Missing user ID in response.");
+        }
+        
+        if (resolvedBet.userBalance === undefined) {
+          console.warn("Response missing userBalance field");
+          throw new Error("Invalid response: Missing user balance in response.");
         }
 
         console.log('Parsed Response:', { diceResults, resolvedBet });
-        console.log('User data within resolvedBet:', resolvedBet.usuario);
+        console.log('User data within resolvedBet - ID:', resolvedBet.usuarioId, 'Balance:', resolvedBet.userBalance);
 
-        // Determine the correct balance property name
-        let backendNewBalance = undefined;
-        if (resolvedBet.usuario.balance !== undefined && resolvedBet.usuario.balance !== null) {
-          backendNewBalance = resolvedBet.usuario.balance;
-          console.log(`Extracted balance using key 'balance': ${backendNewBalance}`);
-        } else if (resolvedBet.usuario.saldo !== undefined && resolvedBet.usuario.saldo !== null) {
-          backendNewBalance = resolvedBet.usuario.saldo;
-          console.log(`Extracted balance using key 'saldo': ${backendNewBalance}`);
-        } else {
-          // Critical error if neither key is found
-          console.error("CRITICAL: Backend response 'resolvedBet.usuario' object is missing BOTH 'balance' and 'saldo' keys!", resolvedBet.usuario);
-          throw new Error("Backend response structure error: Cannot find user balance.");
+        // Use the userBalance field from the ApuestaDTO - this is the authoritative balance from the backend
+        let backendNewBalance = resolvedBet.userBalance;
+        
+        // Get the winloss value directly from the backend response
+        const winlossAmount = resolvedBet.winloss;
+        
+        console.log(`Win/Loss amount from backend: ${winlossAmount}`);
+
+        if (backendNewBalance === undefined || backendNewBalance === null || typeof backendNewBalance !== 'number' || isNaN(backendNewBalance)) {
+            console.error(`CRITICAL: Backend DTO missing or has invalid balance! Value: ${backendNewBalance}`);
+            throw new Error("Backend returned invalid balance value in DTO.");
         }
 
-        // Validate the extracted balance is a number
-        if (typeof backendNewBalance !== 'number' || isNaN(backendNewBalance)) {
-          console.error(`CRITICAL: Extracted balance is not a valid number! Value: ${backendNewBalance}`, resolvedBet.usuario);
-          throw new Error("Backend returned invalid balance value.");
-        }
-
-        console.log(`Balance Check: Before Bet (local) = ${currentBalanceBeforeBet}, After Bet (backend) = ${backendNewBalance}`);
+        console.log(`Balance Check: Before Bet (local) = ${currentBalanceBeforeBet}, After Bet (backend DTO) = ${backendNewBalance}`);
+        console.log(`Win/Loss calculation: ${winlossAmount > 0 ? 'Won' : 'Lost'} ${Math.abs(winlossAmount)}`);
 
         // Update dice display
         setDiceValues(diceResults);
 
-        // Update balance: Local state AND Context
-        // Use the authoritative value FROM THE BACKEND
+        // Update balance: Local state AND Context using backend's authoritative value
         setUserBalance(backendNewBalance);
         if (updateUserBalance) {
-          console.log(`Calling context updateUserBalance with: ${backendNewBalance}`);
-          updateUserBalance(backendNewBalance); // Update the central auth context
+            console.log(`Calling context updateUserBalance with: ${backendNewBalance}`);
+            updateUserBalance(backendNewBalance);
         } else {
-          console.warn("AuthContext does not provide updateUserBalance function!");
+            console.warn("AuthContext does not provide updateUserBalance function!");
         }
 
-        // Prepare result message (using resolvedBet data)
-        const totalResult = diceResults[0] + diceResults[1];
-        const baseMessage = `Rolled: ${diceResults[0]} + ${diceResults[1]} = ${totalResult}. `;
-        const winAmount = resolvedBet.estado === 'GANADA' ? resolvedBet.cantidad : 0; // Profit
-        const returnAmount = resolvedBet.estado === 'GANADA' ? (resolvedBet.cantidad * 2) : 0; // Total returned
+// Update result message (use resolvedBet which is ApuestaDTO)
+const totalResult = diceResults[0] + diceResults[1];
+const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${totalResult}). `;
 
-        if (resolvedBet.estado === 'GANADA') {
-          setResultMessage({
-            text: baseMessage + `You won $${winAmount.toFixed(2)}! (Total return: $${returnAmount.toFixed(2)})`,
-            type: 'success'
-          });
-        } else {
-          // Use betAmount for loss display as resolvedBet.cantidad might be positive
-          setResultMessage({
-            text: baseMessage + `You lost $${betAmount.toFixed(2)}.`,
-            type: 'danger'
-          });
-        }
+// Win/loss amount is now directly in resolvedBet.winloss
+const winLossDisplayAmount = Math.abs(resolvedBet.winloss ?? 0); // Use winloss field
+const betAmount = resolvedBet.cantidad;
 
-        // Refresh history after a short delay
-        setTimeout(loadUserBetHistory, 1500);
+// Add explanation of the payout calculation based on bet type
+let payoutExplanation = '';
+if (resolvedBet.tipo === 'parimpar') {
+    // For even/odd bets, payout is 95% of bet amount
+    payoutExplanation = ` (95% of your $${betAmount} bet)`;
+} else if (resolvedBet.tipo === 'numero') {
+    // For number bets, payout depends on the number (using odds table from backend)
+    const odds = totalResult === 7 ? 5.0 : 
+                 (totalResult === 6 || totalResult === 8) ? 6.0 :
+                 (totalResult === 5 || totalResult === 9) ? 8.0 :
+                 (totalResult === 4 || totalResult === 10) ? 10.0 :
+                 (totalResult === 3 || totalResult === 11) ? 15.0 :
+                 (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
+    payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
+} else if (resolvedBet.tipo === 'mitad') {
+    // For half bets, payout is 95% of bet amount
+    payoutExplanation = ` (95% of your $${betAmount} bet)`;
+}
+
+if (resolvedBet.estado === 'GANADA') {
+    setResultMessage({
+        text: baseMessage + `You won $${winLossDisplayAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
+        type: 'success'
+    });
+} else {
+    setResultMessage({
+        text: baseMessage + `You lost $${betAmount.toFixed(2)}.`, // Display the actual amount lost (betAmount)
+        type: 'danger'
+    });
+}
+
+// Refresh history
+setTimeout(loadUserBetHistory, 1500);
       })
       .catch(error => {
         console.error('CRITICAL ERROR during dice bet:', error);
@@ -220,7 +256,7 @@ const DiceGame = () => {
 
   const getDiceIcon = (value) => {
     // Add a specific color style here
-    const iconStyle = { color: '#333' }; // Example: Dark gray color. Change as needed.
+    const iconStyle = { color: 'white' }; // Example: white
 
     switch (value) {
       case 1: return <FaDiceOne size={50} style={iconStyle} />;
@@ -299,9 +335,9 @@ const DiceGame = () => {
               )}
 
               {/* Bet Form */}
-              <Form onSubmit={(e) => { e.preventDefault(); placeBetAndRoll(); }}>
+              <Form className="text-white" onSubmit={(e) => { e.preventDefault(); placeBetAndRoll(); }}>
                 {/* Bet Amount */}
-                <Form.Group as={Row} className="mb-3 align-items-center">
+                <Form.Group as={Row} className="mb-3 align-items-center ">
                   <Form.Label column sm={4}>Amount:</Form.Label>
                   <Col sm={8}>
                     <InputGroup>
@@ -364,7 +400,7 @@ const DiceGame = () => {
 
         {/* History Area */}
         <Col md={5} lg={4}>
-          <Card>
+          <Card className="text-white">
             <Card.Header><FaHistory className="me-2" />Recent Dice Bets</Card.Header>
             <Card.Body>
               {history.length > 0 ? (
@@ -373,12 +409,12 @@ const DiceGame = () => {
                     <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
                       <div className="d-flex justify-content-between">
                         <span>
-                          {bet.tipo === 'parimpar' ? (bet.valorApostado === 'par' ? 'Even' : 'Odd') : `Sum ${bet.valorApostado}`}
-                          : ${bet.cantidad.toFixed(2)}
+                          {bet.tipo === 'parimpar' ? (bet.valorApostado === 'par' ? 'Even' : 'Odd') : `Número  ${bet.valorApostado} ----> `}
+                          
                         </span>
                         <Badge bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
                           {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
-                          {' '}${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.cantidad.toFixed(2)}
+                          ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.cantidad.toFixed(2)}
                         </Badge>
                       </div>
                       <div className="text-muted" style={{ fontSize: '0.8em' }}>

@@ -47,15 +47,53 @@ public class DadosService {
             log.error("Insufficient balance for user ID: {}. Required: {}, Available: {}", usuario.getId(), apuesta.getCantidad(), usuario.getBalance());
             throw new SaldoInsuficienteException("Saldo insuficiente para realizar la apuesta.");
         }
-        // Deduct bet amount from user balance
-        usuario.setBalance(usuario.getBalance() - apuesta.getCantidad());
-
+        
+        // Get the current balance before any changes
+        double startingBalance = usuario.getBalance();
+        log.info("User balance before bet: {}", startingBalance);
+        
+        // First, deduct the bet amount from the user's balance
+        double balanceAfterBet = startingBalance - apuesta.getCantidad();
+        usuario.setBalance(balanceAfterBet);
+        log.info("Balance after deducting bet: {}", balanceAfterBet);
+        
+        // Create the bet (ApuestaService no longer modifies the balance)
         Apuesta apuestaCreada = apuestaService.crearApuesta(apuesta);
-        log.info("Processing bet based on frontend result: Number={}", sumDados);
+        log.info("Processing bet based on dice roll result: Number={}", sumDados);
 
+        // Set the winning number and calculate win/loss amount
         apuestaCreada.setValorGanador(String.valueOf(sumDados));
-        apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, sumDados));
-
+        
+        // Calculate the win/loss amount
+        // For wins: determinarResultadoApuesta returns a positive amount (the winnings)
+        // For losses: determinarResultadoApuesta returns -cantidad (the negative bet amount)
+        double winAmount = determinarResultadoApuesta(apuestaCreada, sumDados);
+        
+        // Store the winloss value in the bet
+        // For wins: this is the net profit (not including the original bet)
+        // For losses: this is the negative bet amount
+        apuestaCreada.setWinloss(winAmount);
+        
+        // Calculate final balance
+        double finalBalance;
+        if (winAmount > 0) {
+            // If player won, add the winnings AND return the original bet
+            finalBalance = balanceAfterBet + winAmount + apuesta.getCantidad();
+            log.info("User won {}. Returning bet {} plus winnings. New balance: {}", 
+                     winAmount, apuesta.getCantidad(), finalBalance);
+            apuestaCreada.setEstado("GANADA");
+        } else {
+            // If player lost, the bet amount was already deducted
+            finalBalance = balanceAfterBet;
+            log.info("User lost {}. New balance: {}", Math.abs(winAmount), finalBalance);
+            apuestaCreada.setEstado("PERDIDA");
+        }
+        
+        // Update the user's balance
+        usuario.setBalance(finalBalance);
+        usuarioService.actualizarSaldoUsuario(usuario.getId(), finalBalance);
+        
+        // Resolve the bet using the ApuestaService
         return apuestaService.resolverApuesta(apuestaCreada);
 
 
@@ -96,7 +134,7 @@ public class DadosService {
                 int mitad = totalSum <= 6 ? 1 : 2;
                 return valorApostado.equals(String.valueOf(mitad)) ? cantidad * 0.95 : -cantidad;
     
-            case "paridad":
+            case "parimpar":
                 boolean esPar = totalSum % 2 == 0;
                 boolean eligioPar = valorApostado.equals("par");
                 return (esPar == eligioPar) ? cantidad * 0.95 : -cantidad;

@@ -43,16 +43,16 @@ public class ApuestaService {
         if (usuario.getBalance() < apuesta.getCantidad()) {
             throw new SaldoInsuficienteException("Saldo insuficiente para realizar la apuesta. Saldo actual: " + usuario.getBalance());
         }
-        // Deduct bet amount
-        usuarioService.actualizarSaldoUsuario(usuario.getId(), usuario.getBalance() - apuesta.getCantidad());
-        log.info("Deducted {} from user {} balance for bet. New balance: {}", apuesta.getCantidad(), usuario.getUsername(), usuario.getBalance() - apuesta.getCantidad());
+        
+        // IMPORTANT: We no longer deduct the bet amount here
+        // The balance will be updated in the game service based on the winloss result
+        log.info("Creating bet for user {} with amount {}", usuario.getUsername(), apuesta.getCantidad());
 
         // Set initial bet state
         apuesta.setFechaApuesta(LocalDateTime.now());
         apuesta.setEstado("PENDIENTE"); // Initial state
         apuesta.setWinloss(0.0); // No win/loss yet
-        // Fetching it again ensures we have the state after balance update if not using the returned object from updateUserBalance.
-        apuesta.setUsuario(usuarioService.obtenerUsuarioPorId(usuario.getId()));
+        apuesta.setUsuario(usuario);
 
         return apuestaRepository.save(apuesta);
     }
@@ -66,18 +66,17 @@ public class ApuestaService {
              return apuesta; 
         }
 
-        Usuario usuario = apuesta.getUsuario();
-        double gananciaTotal = apuesta.getWinloss();
-    
-
-        if (gananciaTotal > 0) {
+        // Set the status based on winloss
+        if (apuesta.getWinloss() > 0) {
             apuesta.setEstado("GANADA");
-        double nuevoBalance = usuario.getBalance() + gananciaTotal + apuesta.getCantidad();
-        usuario.setBalance(nuevoBalance);
         } else {
-            apuesta.setEstado("PERDIDA");// ya restamos la apuesta al hacerla
+            apuesta.setEstado("PERDIDA");
         }
-        // Save the updated bet status and win/loss amount
+        
+        // IMPORTANT: We no longer modify the balance here
+        // The balance is updated in the game service
+        
+        // Save the updated bet status
         Apuesta apuestaResuelta = apuestaRepository.save(apuesta);
         log.info("Bet {} resolved. Status: {}, Win/Loss: {}", apuestaId, apuestaResuelta.getEstado(), apuestaResuelta.getWinloss());
  

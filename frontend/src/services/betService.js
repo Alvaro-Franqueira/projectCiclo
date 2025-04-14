@@ -6,8 +6,9 @@ const BET_ENDPOINTS = {
   GET_GAME_BETS: (gameId) => `/apuestas/juego/${gameId}`,
   GET_USER_GAME_BETS: (userId, gameId) => `/apuestas/usuario/${userId}/juego/${gameId}`,
   GET_BET_BY_ID: (betId) => `/apuestas/${betId}`,
+  // These paths are relative to the API_BASE_URL which already includes '/api'
   PLACE_ROULETTE_BET: '/juegos/ruleta/jugar',
-  PLACE_DICE_BET: '/juegos/dados/jugar', 
+  PLACE_DICE_BET: '/dados/jugar', 
   GET_BALANCE: (userId) => `/usuarios/balance/${userId}`,
 };
 
