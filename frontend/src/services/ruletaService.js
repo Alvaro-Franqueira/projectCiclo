@@ -19,7 +19,7 @@ const ruletaService = {
         params.append('usuarioId', betData.usuarioId);
         params.append('cantidad', betData.cantidad);
         params.append('tipoApuesta', betData.tipoApuesta); // Match backend @RequestParam name
-        params.append('valorApostado', betData.valorApostado); // Match backend @RequestParam name
+        params.append('valorApuesta', betData.valorApuesta); // Match backend @RequestParam name
         
 
         return axios.post(`${API_URL}/jugar`, params, { // Assumes axios instance has baseURL '/api' or similar
@@ -165,21 +165,5 @@ function sanitizeApuesta(apuesta) {
 }
 
 
-/* // --- REMOVED/COMMENTED OUT ---
-// These functions are no longer needed as the winning number is generated 
-// by the backend server.
-
-function determineWinningNumber(apuesta, originalBet) {
-    // ... (implementation removed) ...
-    console.warn("determineWinningNumber should no longer be called.");
-    return Math.floor(Math.random() * 37); // Fallback if called unexpectedly
-}
-
-function getPossibleWinningNumbers(apuesta, originalBet) {
-    // ... (implementation removed) ...
-    console.warn("getPossibleWinningNumbers should no longer be called.");
-    return [...Array(37).keys()]; // Fallback if called unexpectedly
-}
-*/
 
 export default ruletaService;

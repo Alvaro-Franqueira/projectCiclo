@@ -40,7 +40,7 @@ public class RankingCalculationController {
         
         // Get global rankings for each type
         for (RankingType tipo : RankingType.values()) {
-            if (tipo != RankingType.BY_GAME_WINS) { // Skip game-specific rankings
+            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE) { // Skip game-specific rankings
                 List<RankingEntry> rankings = rankingCalculationService.obtenerRankingPorTipo(tipo);
                 allRankings.put(tipo.name(), rankings);
             }
@@ -99,7 +99,7 @@ public class RankingCalculationController {
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<RankingEntry>> obtenerRankingsDeUsuario(@PathVariable Long usuarioId) {
         try {
-            List<RankingEntry> rankings = rankingCalculationService.obtenerRankingsDeUsuario(usuarioId);
+            List<RankingEntry> rankings = rankingCalculationService.obtenerRankingsDelUsuario(usuarioId);
             return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

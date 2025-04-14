@@ -7,7 +7,19 @@ const RANKING_ENDPOINTS = {
   USER_RANKINGS: (userId) => `/rankings/v2/usuario/${userId}`,
 };
 
+// Ranking types enum to match backend RankingType.java
+const RANKING_TYPES = {
+  BY_GAME_WINS: 'BY_GAME_WINS',
+  TOTAL_BETS_AMOUNT: 'TOTAL_BETS_AMOUNT',
+  OVERALL_PROFIT: 'OVERALL_PROFIT',
+  WIN_RATE: 'WIN_RATE',
+  BY_GAME_WIN_RATE: 'BY_GAME_WIN_RATE'
+};
+
 const rankingService = {
+  // Expose ranking types enum
+  RANKING_TYPES,
+  
   // Get all rankings
   getAllRankings: async () => {
     try {
@@ -18,7 +30,7 @@ const rankingService = {
     }
   },
 
-  // Get rankings by type (OVERALL_PROFIT, TOTAL_BETS_AMOUNT, BY_GAME_WINS)
+  // Get rankings by type (OVERALL_PROFIT, TOTAL_BETS_AMOUNT, WIN_RATE, etc.)
   getRankingsByType: async (rankingType) => {
     try {
       const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_TYPE(rankingType));
@@ -45,6 +57,26 @@ const rankingService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch user rankings' };
+    }
+  },
+  
+  // Get win rate rankings
+  getWinRateRankings: async () => {
+    try {
+      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_TYPE(RANKING_TYPES.WIN_RATE));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch win rate rankings' };
+    }
+  },
+  
+  // Get game-specific win rate rankings
+  getGameWinRateRankings: async (gameId) => {
+    try {
+      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, RANKING_TYPES.BY_GAME_WIN_RATE));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch game win rate rankings' };
     }
   }
 };

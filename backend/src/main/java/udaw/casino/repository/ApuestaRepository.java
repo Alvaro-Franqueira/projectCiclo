@@ -89,4 +89,53 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     List<Apuesta> findByUsuarioIdAndJuegoIdOrderByFechaApuestaDesc(
         @Param("usuarioId") Long usuarioId, 
         @Param("juegoId") Long juegoId);
+        
+    /**
+     * Counts the total number of bets placed by a user.
+     *
+     * @param usuarioId The ID of the user.
+     * @return The total number of bets.
+     */
+    @Query("SELECT COUNT(a) FROM Apuesta a WHERE a.usuario.id = :usuarioId")
+    Long countTotalBetsByUser(@Param("usuarioId") Long usuarioId);
+    
+    /**
+     * Counts the total number of winning bets placed by a user.
+     *
+     * @param usuarioId The ID of the user.
+     * @return The total number of winning bets.
+     */
+    @Query("SELECT COUNT(a) FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.estado = 'GANADA'")
+    Long countWinningBetsByUser(@Param("usuarioId") Long usuarioId);
+    
+    /**
+     * Calculates the win rate for a user (percentage of winning bets).
+     * Returns 0 if the user has no bets.
+     *
+     * @param usuarioId The ID of the user.
+     * @return The win rate as a decimal (e.g., 0.65 for 65%).
+     */
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN CAST(SUM(CASE WHEN a.estado = 'GANADA' THEN 1 ELSE 0 END) AS double) / COUNT(a) ELSE 0 END FROM Apuesta a WHERE a.usuario.id = :usuarioId")
+    Double calculateWinRateForUser(@Param("usuarioId") Long usuarioId);
+    
+    /**
+     * Counts the total number of bets placed by a user on a specific game.
+     *
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return The total number of bets for the specific game.
+     */
+    @Query("SELECT COUNT(a) FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId")
+    Long countTotalBetsByUserAndGame(@Param("usuarioId") Long usuarioId, @Param("juegoId") Long juegoId);
+    
+    /**
+     * Calculates the win rate for a user on a specific game (percentage of winning bets).
+     * Returns 0 if the user has no bets on the game.
+     *
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return The win rate as a decimal (e.g., 0.65 for 65%).
+     */
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN CAST(SUM(CASE WHEN a.estado = 'GANADA' THEN 1 ELSE 0 END) AS double) / COUNT(a) ELSE 0 END FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId")
+    Double calculateWinRateForUserAndGame(@Param("usuarioId") Long usuarioId, @Param("juegoId") Long juegoId);
 }

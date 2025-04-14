@@ -118,7 +118,7 @@ public class RankingCalculationService {
      * @param usuarioId The user ID.
      * @return List of RankingEntry objects for the user.
      */
-    public List<RankingEntry> obtenerRankingsDeUsuario(Long usuarioId) {
+    public List<RankingEntry> obtenerRankingsDelUsuario(Long usuarioId) {
         log.info("Calculating on-demand rankings for user ID: {}", usuarioId);
         
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -188,6 +188,19 @@ public class RankingCalculationService {
                 }
                 Long wins = apuestaRepository.countWinsByUserAndGame(usuario.getId(), juego.getId());
                 return wins != null ? wins : 0.0;
+                
+            case WIN_RATE:
+                // Calculate overall win rate for the user across all games
+                Double winRate = apuestaRepository.calculateWinRateForUser(usuario.getId());
+                return winRate != null ? winRate * 100 : 0.0; // Convert to percentage
+                
+            case BY_GAME_WIN_RATE:
+                if (juego == null) {
+                    throw new IllegalArgumentException("Game cannot be null for BY_GAME_WIN_RATE ranking type");
+                }
+                // Calculate win rate for the user in a specific game
+                Double gameWinRate = apuestaRepository.calculateWinRateForUserAndGame(usuario.getId(), juego.getId());
+                return gameWinRate != null ? gameWinRate * 100 : 0.0; // Convert to percentage
                 
             default:
                 log.error("Unsupported RankingType encountered: {}", tipo);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Tabs, Tab, Alert, Spinner, Badge } from 'react-bootstrap';
-import { FaTrophy, FaCoins, FaGamepad } from 'react-icons/fa';
+import { FaTrophy, FaCoins, FaGamepad, FaPercentage, FaChartLine } from 'react-icons/fa';
 import rankingService from '../../services/rankingService';
 import gameService from '../../services/gameService';
 
@@ -69,6 +69,8 @@ const RankingList = () => {
       return `$${parseFloat(value).toFixed(2)}`;
     } else if (rankingType === 'TOTAL_BETS_AMOUNT') {
       return `$${parseFloat(value).toFixed(2)}`;
+    } else if (rankingType === 'WIN_RATE' || rankingType === 'BY_GAME_WIN_RATE') {
+      return `${parseFloat(value).toFixed(1)}%`;
     } else {
       return value;
     }
@@ -193,11 +195,30 @@ const RankingList = () => {
           </div>
         </Tab>
         <Tab 
+          eventKey="WIN_RATE" 
+          title={<><FaPercentage className="me-1" /> Win Rate</>}
+        >
+          <div className="py-3">
+            <p>Players ranked by their win percentage across all games.</p>
+            {renderRankingTable()}
+          </div>
+        </Tab>
+        <Tab 
           eventKey="BY_GAME_WINS" 
           title={<><FaGamepad className="me-1" /> Game Wins</>}
         >
           <div className="py-3">
             <p>Players ranked by their wins in specific games.</p>
+            {renderGameTabs()}
+            {renderRankingTable()}
+          </div>
+        </Tab>
+        <Tab 
+          eventKey="BY_GAME_WIN_RATE" 
+          title={<><FaChartLine className="me-1" /> Game Win Rate</>}
+        >
+          <div className="py-3">
+            <p>Players ranked by their win percentage in specific games.</p>
             {renderGameTabs()}
             {renderRankingTable()}
           </div>

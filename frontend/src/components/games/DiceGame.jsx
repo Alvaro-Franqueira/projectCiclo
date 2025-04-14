@@ -1,10 +1,11 @@
 // src/components/games/DiceGame.js
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Form, Card, Alert, Badge, Spinner, InputGroup, FormControl } from 'react-bootstrap';
-import { FaDice, FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix, FaHistory, FaDollarSign } from 'react-icons/fa';
+import { FaDice, FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix, FaHistory, FaDollarSign, FaUser, FaChartBar } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext'; // Correct path assumed
 import diceService from '../../services/diceService'; // Correct path assumed
 import betService from '../../services/betService';   // Correct path assumed
+import { Link } from 'react-router-dom';
 
 const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
@@ -302,9 +303,14 @@ setTimeout(loadUserBetHistory, 1500);
   // Component Return (JSX)
   return (
     <Container className="py-4">
-      <h2 className="text-center mb-4">
-        <FaDice className="me-2" /> Casino Dice
-      </h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <FaDice className="me-2" /> Casino Dice
+        </h2>
+        <Link to="/profile" className="btn btn-outline-primary">
+          <FaChartBar className="me-2" /> View My Statistics
+        </Link>
+      </div>
 
       <Row className="justify-content-center">
         {/* Game Area */}
