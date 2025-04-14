@@ -3,6 +3,7 @@ package udaw.casino.service;
 import udaw.casino.model.Apuesta;
 import udaw.casino.model.Juego;
 import udaw.casino.model.Usuario;
+import udaw.casino.repository.UsuarioRepository;
 import udaw.casino.exception.ResourceNotFoundException; 
 import udaw.casino.exception.SaldoInsuficienteException;
 import org.springframework.stereotype.Service;
@@ -22,12 +23,13 @@ public class RuletaService {
     private final ApuestaService apuestaService;
     private final UsuarioService usuarioService;
     private final JuegoService juegoService; 
-   
+    private final UsuarioRepository userRepository; 
     // Constructor remains the same
-    public RuletaService(ApuestaService apuestaService, UsuarioService usuarioService, JuegoService juegoService) {
+    public RuletaService(UsuarioRepository userRepository, ApuestaService apuestaService, UsuarioService usuarioService, JuegoService juegoService) {
         this.apuestaService = apuestaService;
         this.usuarioService = usuarioService;
         this.juegoService = juegoService;
+        this.userRepository = userRepository; // Initialize the user repository
     }
 
     /**
@@ -96,7 +98,10 @@ public class RuletaService {
         
             apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, numeroGanadorFrontend)); // Use the frontend number for result calculation
             log.info("Bet won(maybe)! User: {}, Bet ID: {}, Winning Number: {}", usuario.getUsername(), apuestaCreada.getId(), numeroGanadorFrontend);
-      
+
+            Double balance = usuario.getBalance() + apuestaCreada.getWinloss(); // Calculate new balance based on win/loss
+            
+            userRepository.save(usuarioService.actualizarSaldoUsuario(usuario.getId(), balance)); // Update user balance based on win/loss
 
         // Resolve the bet (updates balance, sets win/loss state, triggers ranking update)
         // Pass the frontend number to be potentially stored with the bet result if needed by resolverApuesta

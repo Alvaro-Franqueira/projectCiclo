@@ -8,11 +8,13 @@ import betService from '../../services/betService';
 import ruletaService from '../../services/ruletaService'; 
 import { useAuth } from '../../context/AuthContext';
 import gameService from '../../services/gameService';
+import userService from '../../services/userService';
 // Import chips images (ensure paths are correct relative to Roulette.jsx)
 import whiteChip from '../images/white-chip.png';
 import blueChip from '../images/blue-chip.png';
 import blackChip from '../images/black-chip.png';
 import cyanChip from '../images/cyan-chip.png';
+
 
 // --- Constants and Helpers ---
 // Chip values and icons
@@ -65,13 +67,10 @@ function RouletteGame() {
   // Initialize balance from user context
   useEffect(() => {
     if (user) {
-      setUserBalance(user.saldo || 0);
+      setUserBalance(userService.getUserBalance(user.id));
     }
   }, [user]);
 
-  const GAME_NAME= 'Roulette'; // Game name for API calls
-  //const game = gameService.getGameByName(GAME_NAME);
-  //const gameId = game?.id;
 
   // Fetch user's bet history for Roulette (Game ID 1 assumed)
   const fetchUserGameHistory = useCallback(async () => {
@@ -162,53 +161,51 @@ const handleSpinClick = async () => {
   setLoading(true);
   setIsSpinning(true);
   setMessage({ text: 'Spinning...', type: 'info' });
-  
+
   try {
     // Send each bet separately to the backend
     const betPromises = Object.entries(bets).map(([betId, betData]) => {
-      // Parse the bet ID to determine the bet type and value
       let tipoApuesta, valorApuesta;
-      
+
       // Handle different bet types according to backend requirements
       if (betId === 'RED' || betId === 'BLACK') {
-        // Color bets
-        tipoApuesta = 'color';
-        valorApuesta = betId.toLowerCase();
+        // Map 'RED' and 'BLACK' to 'color'
+        if (betId === 'RED') {
+          tipoApuesta = 'color';
+          valorApuesta = 'rojo';
+        } else {
+          tipoApuesta = 'color';
+          valorApuesta = 'negro';
+        }
       } else if (betId === 'EVEN' || betId === 'ODD') {
-        // Parity bets
         tipoApuesta = 'paridad';
-        valorApuesta = betId === 'EVEN' ? 'even' : 'odd';
+        valorApuesta = betId === 'EVEN' ? 'par' : 'impar';
       } else if (betId === '1_TO_18' || betId === '19_TO_36') {
-        // Half bets
         tipoApuesta = 'mitad';
-        valorApuesta = betId === '1_TO_18' ? 'primera' : 'segunda';
+        valorApuesta = betId === '1_TO_18' ? '1' : '2';
       } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
-        // Dozen bets
         tipoApuesta = 'docena';
-        valorApuesta = betId === '1ST_DOZEN' ? 'primera' : 
-                      betId === '2ND_DOZEN' ? 'segunda' : 'tercera';
+        valorApuesta = betId === '1ST_DOZEN' ? '1' : 
+                      betId === '2ND_DOZEN' ? '2' : '3';
       } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
-        // Column bets
         tipoApuesta = 'columna';
-        valorApuesta = betId === '1ST_COLUMN' ? 'primera' : 
-                      betId === '2ND_COLUMN' ? 'segunda' : 'tercera';
+        valorApuesta = betId === '1ST_COLUMN' ? '1' : 
+                      betId === '2ND_COLUMN' ? '2' : '3';
       } else if (betId.includes('-')) {
-        // For corner/split bets, handle these as number bets but with special formatting
         tipoApuesta = 'numero';
-        valorApuesta = betId; // Keep the combination as is
+        valorApuesta = betId;
       } else {
-        // For straight number bets (including 0 and 00)
         tipoApuesta = 'numero';
         valorApuesta = betId;
       }
-      
+
       const betPayload = {
         usuarioId: user.id,
         cantidad: betData.number,
-        tipoApuesta: tipoApuesta,  
+        tipoApuesta: tipoApuesta,
         valorApuesta: valorApuesta
       };
-      
+
       console.log("Sending bet:", betPayload);
       return ruletaService.jugar(betPayload);
     });
@@ -218,32 +215,26 @@ const handleSpinClick = async () => {
 
     let totalWinLoss = 0;
     let successfulBets = 0;
-    let finalBalance = userBalance - totalBetAmount;
-    
-    // Get the winning number from the first successful response
+
     let winningNumber = null;
-    
-    // Find the first successful bet to get the winning number
+
     for (const result of results) {
       if (result.status === 'fulfilled' && result.value?.winningNumber) {
         winningNumber = result.value.winningNumber;
         break;
       }
     }
-    
-    // If we didn't get a winning number, we can't continue
+
     if (winningNumber === null) {
       throw new Error("Could not determine winning number from backend");
     }
-    
-    // Process all bet results to calculate total win/loss
+
     results.forEach((result, index) => {
       if (result.status === 'fulfilled' && result.value?.resolvedBet) {
         const resolvedBet = result.value.resolvedBet;
         console.log(`Bet ${index + 1} result with winning number ${winningNumber}:`, resolvedBet);
-        totalWinLoss += resolvedBet.winloss || 0;
+        totalWinLoss = resolvedBet.winloss;
         successfulBets++;
-        finalBalance += resolvedBet.winloss || 0;
       } else {
         const betEntry = Object.entries(bets)[index];
         const betId = betEntry ? betEntry[0] : 'unknown';
@@ -251,33 +242,32 @@ const handleSpinClick = async () => {
       }
     });
 
-    // Update user balance - we do this immediately but don't show results yet
+    const finalBalance = userBalance + totalWinLoss;
+
+    // Update user balance locally
     if (updateUserBalance) {
       updateUserBalance(finalBalance);
     }
     setUserBalance(finalBalance);
 
-    // Store the profit information to use after animation
-    // We'll add this state variable to the component
+    // Fetch the real balance from the backend
+    const updatedUser = await userService.getUserById(user.id);
+    setUserBalance(updatedUser.saldo);
+
     setSpinResults({
       winningNumber: String(winningNumber),
       profit: totalWinLoss,
-      finalBalance: finalBalance
+      finalBalance: updatedUser.saldo
     });
-    
-    // First set the result number so the wheel knows where to stop
+
     setSpinResultNumber(String(winningNumber));
-    
-    // Only after setting the winning number, trigger the wheel animation
     setStartSpin(true);
-    
-    // We'll fetch the game history after the animation finishes
 
   } catch (error) {
     console.error("Error during spin:", error);
-    setMessage({ 
-      text: error.message || error.response?.data?.message || 'Spin failed. Please try again.', 
-      type: 'danger' 
+    setMessage({
+      text: error.message || error.response?.data?.message || 'Spin failed. Please try again.',
+      type: 'danger'
     });
     setIsSpinning(false);
     setLoading(false);
@@ -344,7 +334,7 @@ const [spinResults, setSpinResults] = useState(null);
         <Col>
           <Card className="bg-dark text-light balance-card">
             <Card.Body className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Balance: <span className="text-success fw-bold">${userBalance.toFixed(2)}</span></h5>
+              <h5 className="mb-0">Balance: <span className="text-success fw-bold">${userBalance}</span></h5>
               {totalBetDisplay > 0 && (
                   <div className="text-end">
                       <span className="me-3">Bet: ${totalBetDisplay.toFixed(2)}</span>

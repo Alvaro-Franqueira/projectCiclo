@@ -5,6 +5,7 @@ const USER_ENDPOINTS = {
   USER_BY_ID: (id) => `/usuarios/id/${id}`,
   UPDATE_USER: (id) => `/usuarios/${id}`,
   UPDATE_BALANCE: (id) => `/usuarios/${id}/saldo`, // Changed from 'balance' to 'saldo' to match backend
+  GET_BALANCE: (id) => `/usuarios/balance/${id}` // Changed from 'balance' to 'saldo' to match backend
 };
 
 const userService = {
@@ -55,7 +56,16 @@ const userService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update user balance' };
     }
-  }
+  },
+  // Get user balance
+  getUserBalance: async (userId) => {
+    try {
+      const response = await api.get(USER_ENDPOINTS.GET_BALANCE(userId));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch user balance' };
+    }
+  },
 };
 
 export default userService;
