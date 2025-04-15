@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner } from 'react-bootstrap';
 // Use the components from the library
-import { RouletteTable, RouletteWheel } from 'react-casino-roulette';
-import 'react-casino-roulette/dist/index.css';
+import { RouletteTable, RouletteWheel } from '../../../react-casino-roulette/src';
+import '../../../react-casino-roulette/dist/index.css';
 import './Roulette.css'; // Your custom styles
 import betService from '../../services/betService'; 
 import ruletaService from '../../services/ruletaService'; 
@@ -14,7 +14,9 @@ import whiteChip from '../images/white-chip.png';
 import blueChip from '../images/blue-chip.png';
 import blackChip from '../images/black-chip.png';
 import cyanChip from '../images/cyan-chip.png';
-
+import flyingChips from '../images/flying-chips.png'; // Adjust the path as needed
+import confetti from 'canvas-confetti';
+import bigWin from '../images/bigwin.png'; 
 
 // --- Constants and Helpers ---
 // Chip values and icons
@@ -169,14 +171,8 @@ const handleSpinClick = async () => {
 
       // Handle different bet types according to backend requirements
       if (betId === 'RED' || betId === 'BLACK') {
-        // Map 'RED' and 'BLACK' to 'color'
-        if (betId === 'RED') {
-          tipoApuesta = 'color';
-          valorApuesta = 'rojo';
-        } else {
-          tipoApuesta = 'color';
-          valorApuesta = 'negro';
-        }
+        tipoApuesta = 'color';
+        valorApuesta = betId === 'RED' ? '1' : '2';
       } else if (betId === 'EVEN' || betId === 'ODD') {
         tipoApuesta = 'paridad';
         valorApuesta = betId === 'EVEN' ? 'par' : 'impar';
@@ -282,6 +278,14 @@ const handleSpinEnd = () => {
   if (spinResults) {
     const { winningNumber, profit } = spinResults;
     
+
+    if (profit > 0) {
+      confetti({
+        particleCount: 350,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    }
     // Update UI with result information
     setMessage({
       text: `Spin result: ${winningNumber}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
@@ -290,7 +294,7 @@ const handleSpinEnd = () => {
     
     // Update betting history
     setBetHistory(prev => [winningNumber, ...prev.slice(0, 9)]);
-    
+    fetchUserGameHistory();
     // Update game history from the backend
     fetchUserGameHistory();
     
@@ -338,7 +342,6 @@ const [spinResults, setSpinResults] = useState(null);
               {totalBetDisplay > 0 && (
                   <div className="text-end">
                       <span className="me-3">Bet: ${totalBetDisplay.toFixed(2)}</span>
-                      <span className="text-warning">Remaining: ${(userBalance - totalBetDisplay).toFixed(2)}</span>
                   </div>
               )}
             </Card.Body>
@@ -403,6 +406,7 @@ const [spinResults, setSpinResults] = useState(null);
                 start={startSpin}
                 winningBet={spinResultNumber}
                 onSpinningEnd={handleSpinEnd}
+                
                 />
             </div>
 
@@ -430,12 +434,25 @@ const [spinResults, setSpinResults] = useState(null);
            </div>
 
 
+            {/* Result Message Area */}
             <div className="result-message-area w-100" style={{ minHeight: '50px' }}>
+                
                 {message.text && (
-                <Alert variant={message.type || 'info'} className="text-center">
-                    {message.text}
-                </Alert>
-                )}
+                  <div className="result-message-container mt-3 text-center">
+                    <Alert variant={message.type}>
+                      {message.text}
+                    </Alert>
+                    {message.type === 'success' && (
+                      <img
+                        src={flyingChips}
+                        alt="Winning Chips"
+                        className="winning-image"
+                      />
+                                    
+                                   
+                                    )}
+                                </div>
+                              )} 
             </div>
         </Col>
 
@@ -484,58 +501,7 @@ const [spinResults, setSpinResults] = useState(null);
 
 
       <style>{`
-        .roulette-container {
-            /* Add styles if needed */
-        }
-        .chip-selector-body .chip-container {
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            transition: border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
-             margin-bottom: 5px; /* Add space between chips if they wrap */
-        }
-         .chip-selector-body .chip-container:hover {
-             transform: scale(1.05);
-         }
-        .chip-selector-body .chip-container.active {
-            border-color: #D3A625; /* Gold border for active */
-            transform: scale(1.1);
-        }
-        .chip-image {
-            display: block;
-            margin: 0 auto;
-        }
-         .history-numbers-body {
-             line-height: 1.9; /* Adjust spacing */
-         }
-        .history-number {
-            display: inline-block;
-            width: 30px; /* Slightly larger */
-            height: 30px;
-            line-height: 30px;
-            border-radius: 50%;
-            text-align: center;
-            font-weight: bold;
-            margin: 3px;
-            font-size: 0.9rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .roulette-table-container {
-            width: 100%; /* Make table container take width */
-            max-width: 100%; /* Prevent overflow if library table is large */
-             overflow-x: auto; /* Add scroll if table is wider than container */
-        }
-         .roulette-table-card-body {
-             /* Ensure table has space, prevent stretching */
-             min-height: 200px; /* Adjust as needed */
-         }
-        /* Ensure library table scales reasonably */
-        .roulette-table-container .casino-roulette-table {
-            margin: 0 auto; /* Center the table if library allows */
-            transform: scale(0.9); /* Example: scale down slightly */
-             transform-origin: top center;
-        }
+       
       `}</style>
     </Container>
   );

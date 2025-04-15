@@ -130,17 +130,23 @@ public class RuletaService {
                 try {
                     int numeroApostado = Integer.parseInt(valor);
                     if (numeroApostado == numeroGanador){
-                        return apuesta.getCantidad() * 35; // Winning number pays 35:1, recuerda sumar getCantidad para partir de 0
+                        return apuesta.getCantidad() * 35; 
                     } else {
-                        return -apuesta.getCantidad(); // Losing bet
+                        return -apuesta.getCantidad(); 
                     }
                 } catch (NumberFormatException e) {
                     log.warn("Invalid number format for 'numero' bet: {}", valor);
                     return null; // Invalid bet value
                 }
-            case "color":
+                case "color": // expects 1 for red and 2 for black
                 if (numeroGanador == 0) return -apuesta.getCantidad(); // 0 is not red or black
-                return colorGanador.equals(obtenerColorNumero(Integer.parseInt(valor))) ? apuesta.getCantidad() : -apuesta.getCantidad();
+                if ((colorGanador.equals("rojo") && valor.equals("1")) || 
+                    (colorGanador.equals("negro") && valor.equals("2"))) {
+                    return apuesta.getCantidad(); // Winning bet
+                } else {
+                    return -apuesta.getCantidad(); // Losing bet
+                }
+            
                  
             case "paridad": // Assuming "par" or "impar" from frontend too
                 if (numeroGanador == 0) return -apuesta.getCantidad(); // 0 is neither even nor odd
@@ -193,7 +199,10 @@ public class RuletaService {
     private String obtenerColorNumero(int numero) {
         if (numero == 0) return "verde";
         // Standard American roulette coloring
-        int[] rojos = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36};
+        int[] rojos = {
+            1, 3, 5, 7, 9, 12, 14, 16, 18,
+            19, 21, 23, 25, 27, 30, 32, 34, 36
+        };        
         for (int rojo : rojos) {
             if (numero == rojo) return "rojo";
         }

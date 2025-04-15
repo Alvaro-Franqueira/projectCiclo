@@ -177,31 +177,36 @@ public class RankingCalculationService {
     private Double calcularScore(Usuario usuario, RankingType tipo, Juego juego) {
         switch (tipo) {
             case OVERALL_PROFIT:
+                // Returns Double or 0.0 - SAFE
                 return apuestaRepository.calculateTotalProfitForUser(usuario.getId());
-                
+
             case TOTAL_BETS_AMOUNT:
+                // Returns Double or 0.0 - SAFE
                 return apuestaRepository.calculateTotalBetAmountForUser(usuario.getId());
-                
+
             case BY_GAME_WINS:
-                if (juego == null) {
-                    throw new IllegalArgumentException("Game cannot be null for BY_GAME_WINS ranking type");
+                if (juego == null || juego.getId() == null) { // Added null check for juego.getId() just in case
+                    throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_WINS ranking type");
                 }
+                // Returns Long or 0L - repo method returns Long
                 Long wins = apuestaRepository.countWinsByUserAndGame(usuario.getId(), juego.getId());
-                return wins != null ? wins : 0.0;
-                
+                // Implicit conversion from Long to Double might happen here,
+                // but explicitly converting is safer:
+                return wins != null ? wins.doubleValue() : 0.0; // <--- SUGGESTED CHANGE
+
             case WIN_RATE:
-                // Calculate overall win rate for the user across all games
+                // Returns Double (0.0 to 1.0) or 0.0 - SAFE
                 Double winRate = apuestaRepository.calculateWinRateForUser(usuario.getId());
                 return winRate != null ? winRate * 100 : 0.0; // Convert to percentage
-                
+
             case BY_GAME_WIN_RATE:
-                if (juego == null) {
-                    throw new IllegalArgumentException("Game cannot be null for BY_GAME_WIN_RATE ranking type");
+                if (juego == null || juego.getId() == null) { // Added null check for juego.getId() just in case
+                   throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_WIN_RATE ranking type");
                 }
-                // Calculate win rate for the user in a specific game
+                // Returns Double (0.0 to 1.0) or 0.0 - SAFE
                 Double gameWinRate = apuestaRepository.calculateWinRateForUserAndGame(usuario.getId(), juego.getId());
                 return gameWinRate != null ? gameWinRate * 100 : 0.0; // Convert to percentage
-                
+
             default:
                 log.error("Unsupported RankingType encountered: {}", tipo);
                 throw new IllegalArgumentException("Unsupported ranking type: " + tipo);

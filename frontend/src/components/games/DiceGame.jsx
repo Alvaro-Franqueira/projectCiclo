@@ -6,6 +6,9 @@ import { useAuth } from '../../context/AuthContext'; // Correct path assumed
 import diceService from '../../services/diceService'; // Correct path assumed
 import betService from '../../services/betService';   // Correct path assumed
 import { Link } from 'react-router-dom';
+import flyingChips from '../images/flying-chips.png'; // Adjust the path as needed
+import confetti from 'canvas-confetti';
+import bigWin from '../images/bigwin.png'; 
 
 const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
@@ -17,7 +20,6 @@ const DiceGame = () => {
   const [isRolling, setIsRolling] = useState(false);
   const [resultMessage, setResultMessage] = useState({ text: '', type: '' });
   const [history, setHistory] = useState([]);
-
   // --- Effects ---
 
   // Initialize balance from context ONCE or when user ID changes
@@ -129,43 +131,22 @@ const DiceGame = () => {
       valorApostado: betValue,
       valorGanador: null
     };
-
-    
-
     console.log('Placing bet with data:', betData, `Current local balance: ${currentBalanceBeforeBet}`);
 
-    // Add detailed logging for debugging
-    console.log('API URL being used:', '/juegos/dados/jugar');
-    console.log('Full API URL with base:', 'http://localhost:8080/api/juegos/dados/jugar');
-    
     // Use Promise chain instead of async/await
     diceService.jugar(betData)
       .then(response => {
         const { diceResults, resolvedBet } = response;
         // Log the RAW response from the backend
         console.log('Backend RAW response:', response);
+        // Check if the response is valid
+        if (!response || !resolvedBet) {
+          console.error('Invalid response from backend:', response);
+          setResultMessage({ text: 'Invalid response from backend.', type: 'danger' });
+          return;
+        }
 
-        // Defensive checks for response structure
-        if (!response || typeof response !== 'object') {
-          throw new Error("Invalid response: Backend returned non-object.");
-        }
-        if (!diceResults || !Array.isArray(diceResults) || diceResults.length !== 2) {
-          throw new Error("Invalid response: Missing or invalid 'diceResults'.");
-        }
-        if (!resolvedBet || typeof resolvedBet !== 'object') {
-          throw new Error("Invalid response: Missing or invalid 'resolvedBet'.");
-        }
         // Check for user data in the DTO
-        if (resolvedBet.usuarioId === undefined) {
-          console.warn("Response missing usuarioId field");
-          throw new Error("Invalid response: Missing user ID in response.");
-        }
-        
-        if (resolvedBet.userBalance === undefined) {
-          console.warn("Response missing userBalance field");
-          throw new Error("Invalid response: Missing user balance in response.");
-        }
-
         console.log('Parsed Response:', { diceResults, resolvedBet });
         console.log('User data within resolvedBet - ID:', resolvedBet.usuarioId, 'Balance:', resolvedBet.userBalance);
 
@@ -225,6 +206,13 @@ if (resolvedBet.tipo === 'parimpar') {
 }
 
 if (resolvedBet.estado === 'GANADA') {
+  // Trigger confetti animation
+  confetti({
+    particleCount: 200,
+    spread: 100,
+    origin: { y: 0.6 },
+  });
+  
     setResultMessage({
         text: baseMessage + `You won $${winLossDisplayAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
         type: 'success'
@@ -330,15 +318,35 @@ setTimeout(loadUserBetHistory, 1500);
                   <div key={index} style={{ opacity: isRolling ? 0.5 : 1, transition: 'opacity 0.2s' }}>
                     {getDiceIcon(value)}
                   </div>
-                ))}
+                ))}                
               </div>
 
               {/* Result Message */}
-              {resultMessage.text && (
-                <Alert variant={resultMessage.type} className="mt-3 text-center">
-                  {resultMessage.text}
-                </Alert>
-              )}
+                  {resultMessage.text && (
+                    <div className="result-message-container mt-3 text-center">
+                      {resultMessage.type === 'success' && (
+                        <>
+                          {betType === 'numero' ? (
+                            <img
+                              src={bigWin}
+                              alt="Big Win"
+                              className="winning-image"
+                            />
+                          ) : (
+                            <img
+                              src={flyingChips}
+                              alt="Winning Chips"
+                              className="winning-image"
+                            />
+                          )}
+                        </>
+                      )}
+                      <Alert variant={resultMessage.type}>
+                        {resultMessage.text}
+                      </Alert>
+                      
+                    </div>
+                  )}
 
               {/* Bet Form */}
               <Form className="text-white" onSubmit={(e) => { e.preventDefault(); placeBetAndRoll(); }}>

@@ -394,6 +394,31 @@ body.bg-5 {
   line-height: 1;
 }
 
+.winning-image {
+  width: 200px; /* Final width */
+  height: auto; /* Maintain aspect ratio */
+  margin-top: 10px;
+  margin-bottom: 20px;
+  animation: flyIn 1s ease-in-out;
+}
+.confetti-container {
+  position: relative;
+  z-index: 10;
+}
+@keyframes flyIn {
+  0% {
+    transform: scale(3) translateY(-50px); /* Start very big */
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.5) translateY(10px); /* Intermediate size */
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0); /* Final size */
+    opacity: 1;
+  }
+}
 /* Spin button styling */
 .spin-button {
   width: 100%;
@@ -564,4 +589,55 @@ body.bg-5 {
   .pocket-number {
     font-size: 10px;
   }
+
+}
+
+.chip-selector-body .chip-container {
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+   margin-bottom: 5px; /* Add space between chips if they wrap */
+}
+.chip-selector-body .chip-container:hover {
+   transform: scale(1.05);
+}
+.chip-selector-body .chip-container.active {
+  border-color: #D3A625; /* Gold border for active */
+  transform: scale(1.1);
+}
+.chip-image {
+  display: block;
+  margin: 0 auto;
+}
+.history-numbers-body {
+   line-height: 1.9; /* Adjust spacing */
+}
+.history-number {
+  display: inline-block;
+  width: 30px; /* Slightly larger */
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  text-align: center;
+  font-weight: bold;
+  margin: 3px;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.roulette-table-container {
+  width: 100%; /* Make table container take width */
+  max-width: 100%; /* Prevent overflow if library table is large */
+   overflow-x: auto; /* Add scroll if table is wider than container */
+}
+.roulette-table-card-body {
+   /* Ensure table has space, prevent stretching */
+   min-height: 200px; /* Adjust as needed */
+}
+/* Ensure library table scales reasonably */
+.roulette-table-container .casino-roulette-table {
+  margin: 0 auto; /* Center the table if library allows */
+  transform: scale(0.9); /* Example: scale down slightly */
+   transform-origin: top center;
 }
