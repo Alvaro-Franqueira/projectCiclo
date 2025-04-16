@@ -2,9 +2,9 @@ import api from './api';
 import { jwtDecode } from 'jwt-decode';
 
 const AUTH_ENDPOINTS = {
-  LOGIN: 'api/usuarios/login',
-  REGISTER: 'api/usuarios/registrar',
-  CURRENT_USER: 'api/usuarios/me',
+  LOGIN: '/usuarios/login',
+  REGISTER: '/usuarios/registrar',
+  CURRENT_USER: '/usuarios/me',
 };
 
 // Helper to store user data in localStorage
@@ -45,13 +45,7 @@ const authService = {
   // Get current authenticated user
   getCurrentUser: async () => {
     try {
-      // Get user ID from stored user data
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!userData.id) {
-        throw new Error('User not authenticated');
-      }
-      
-      const response = await api.get(`${AUTH_ENDPOINTS.CURRENT_USER}?userId=${userData.id}`);
+      const response = await api.get(AUTH_ENDPOINTS.CURRENT_USER);
       return response.data;
     } catch (error) {
       clearUserData();
@@ -68,17 +62,69 @@ const authService = {
         return false;
       }
       
+      // Ensure newBalance is a number
+      const numericBalance = Number(newBalance);
+      if (isNaN(numericBalance)) {
+        console.error('Invalid balance value:', newBalance);
+        return false;
+      }
+      
       // Update the balance in the user data
-      userData.saldo = newBalance;
+      userData.balance = numericBalance;
       
       // Save updated user data back to localStorage
       localStorage.setItem('user', JSON.stringify(userData));
       
-      console.log('User balance updated in localStorage:', newBalance);
+      console.log('User balance updated in localStorage:', numericBalance);
       return true;
     } catch (error) {
       console.error('Error updating user balance in localStorage:', error);
       return false;
+    }
+  },
+
+  // Get user balance from localStorage or from server if needed
+  getUserBalance: async (userId) => {
+    try {
+      // First try to get from localStorage
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // If we have a valid balance in localStorage, return it
+      if (userData.balance !== undefined && userData.balance !== null && typeof userData.balance !== 'object') {
+        return Number(userData.balance);
+      }
+      
+      // If we have saldo in localStorage, return it
+      if (userData.saldo !== undefined && userData.saldo !== null && typeof userData.saldo !== 'object') {
+        return Number(userData.saldo);
+      }
+      
+      // If we don't have a valid balance in localStorage, fetch from server
+      if (userId) {
+        try {
+          const response = await api.get(`/usuarios/${userId}`);
+          const user = response.data;
+          
+          // Update localStorage with the fetched user data
+          if (user) {
+            const balanceValue = user.balance || user.saldo || 0;
+            const numericBalance = Number(balanceValue);
+            
+            // Update the user data in localStorage
+            userData.balance = numericBalance;
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+            return numericBalance;
+          }
+        } catch (error) {
+          console.error('Error fetching user balance from server:', error);
+        }
+      }
+      
+      return 0; // Default to 0 if we couldn't get a valid balance
+    } catch (error) {
+      console.error('Error getting user balance:', error);
+      return 0;
     }
   },
 
@@ -128,3 +174,4 @@ const authService = {
 };
 
 export default authService;
+ 

@@ -1,11 +1,10 @@
 import api from './api';
 
 const USER_ENDPOINTS = {
-  ALL_USERS: '/usuarios',
+  ALL_USERS: '/usuarios/admin/users',
   USER_BY_ID: (id) => `/usuarios/id/${id}`,
   UPDATE_USER: (id) => `/usuarios/${id}`,
-  UPDATE_BALANCE: (id) => `/usuarios/${id}/saldo`, // Changed from 'balance' to 'saldo' to match backend
-  GET_BALANCE: (id) => `/usuarios/balance/${id}` // Changed from 'balance' to 'saldo' to match backend
+  GET_BALANCE: (id) => `/usuarios/balance/${id}`
 };
 
 const userService = {
@@ -39,24 +38,25 @@ const userService = {
     }
   },
 
-  // Update user balance (admin only)
+  // Update user balance
   updateUserBalance: async (userId, amount) => {
     try {
-      // First get the current user data
-      const userData = await userService.getUserById(userId);
+      // Create a balance update object instead of sending the entire user object
+      const balanceUpdate = {
+        balance: Number(amount)
+      };
       
-      // Update only the saldo field
-      userData.saldo = amount;
-      
-      // Use the main update endpoint instead of a dedicated balance endpoint
-      const response = await api.put(USER_ENDPOINTS.UPDATE_USER(userId), userData);
+      // Use the main update endpoint
+      const response = await api.put(USER_ENDPOINTS.UPDATE_USER(userId), balanceUpdate);
       
       console.log('Balance update response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Error updating balance:', error);
       throw error.response?.data || { message: 'Failed to update user balance' };
     }
   },
+  
   // Get user balance
   getUserBalance: async (userId) => {
     try {

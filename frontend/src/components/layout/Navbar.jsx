@@ -11,23 +11,57 @@ import neonFavicon from '../images/neonfavicon.png';
 
 const AppNavbar = () => {
   const navigate = useNavigate();
-  const isAuthenticated = authService.isAuthenticated();
-  const isAdmin = authService.isAdmin();
-  const userData = authService.getUserData();
-  const { user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [balance, setBalance] = useState(0);
   
-  // Update balance from auth context when it changes
   useEffect(() => {
-    if (user && user.saldo !== undefined) {
-      setBalance(user.saldo);
-    } else if (userData && userData.balance !== undefined) {
-      setBalance(userData.balance);
-    }
-  }, [user, userData]);
+    const updateBalance = async () => {
+      if (!user || !user.id) return;
+      
+      try {
+        // Try to get balance directly from user object first
+        let balanceValue = 0;
+        
+        // Check if user has a balance property that's not a Promise
+        if (user.balance !== undefined && user.balance !== null && typeof user.balance !== 'object') {
+          balanceValue = user.balance;
+        } 
+        // Check if user has a saldo property that's not a Promise
+        else if (user.saldo !== undefined && user.saldo !== null && typeof user.saldo !== 'object') {
+          balanceValue = user.saldo;
+        }
+        // If we couldn't get a valid balance from the user object, try to fetch it from the server
+        else {
+          try {
+            // Get the current user's balance from the server
+            const userBalance = await authService.getUserBalance(user.id);
+            if (userBalance !== undefined && userBalance !== null) {
+              balanceValue = userBalance;
+            }
+          } catch (error) {
+            console.error('Error fetching user balance:', error);
+          }
+        }
+        
+        // Convert to number and validate
+        const numericBalance = Number(balanceValue);
+        if (!isNaN(numericBalance)) {
+          setBalance(numericBalance);
+        } else {
+          console.warn(`Invalid balance value: ${balanceValue}. Setting to 0.`);
+          setBalance(0);
+        }
+      } catch (error) {
+        console.error('Error in updateBalance:', error);
+        setBalance(0);
+      }
+    };
+    
+    updateBalance();
+  }, [user]);
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
     navigate('/login');
   };
 
@@ -74,7 +108,7 @@ const AppNavbar = () => {
                 <Nav.Link as={Link} to="/rankings">
                   <FaTrophy className="me-1" /> Rankings
                 </Nav.Link>
-                {isAdmin && (
+                {user && user.rol === 'ADMIN' && (
                   <Nav.Link as={Link} to="/admin">
                     <FaUserCog className="me-1" /> Admin Panel
                   </Nav.Link>
@@ -84,16 +118,16 @@ const AppNavbar = () => {
           </Nav>
           
           <Nav>
-            {isAuthenticated ? (
+            {isAuthenticated && user ? (
               <>
                 <Nav.Item className="d-flex align-items-center me-3">
                   <FaCoins className="text-warning me-1" />
                   <Badge bg="warning" text="dark" className="py-1 px-2">
-                    ${balance.toFixed(2) || '0.00'}
+                    ${balance.toFixed(2)}
                   </Badge>
                 </Nav.Item>
                 <Nav.Link as={Link} to="/profile" className="me-2 d-flex align-items-center">
-                  <FaUser className="me-1" /> {userData.username || 'Profile'}
+                  <FaUser className="me-1" /> {user.username || 'Profile'}
                 </Nav.Link>
                 <Button variant="outline-light" size="sm" onClick={handleLogout} className="d-flex align-items-center">
                   <FaSignOutAlt className="me-1" /> Logout

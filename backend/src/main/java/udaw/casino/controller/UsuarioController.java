@@ -3,10 +3,16 @@ package udaw.casino.controller;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.UsuarioNoEncontradoException;
 import udaw.casino.model.Usuario;
+import udaw.casino.security.JwtUtils;
 import udaw.casino.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,10 +26,16 @@ import java.util.Map;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
     @Autowired
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService, 
+                            AuthenticationManager authenticationManager,
+                            JwtUtils jwtUtils) {
         this.usuarioService = usuarioService;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
     }
 
     /**
@@ -38,32 +50,30 @@ public class UsuarioController {
             String username = loginRequest.get("username");
             String password = loginRequest.get("password");
             
-            // In a real implementation, you would validate credentials and generate a JWT token
-            // For now, we'll just fetch the user and return it
-            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+            // Authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+            );
             
-            // Simple password check (in a real app, you'd use a password encoder)
-            if (!usuario.getPassword().equals(password)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid credentials"));
-            }
+            // Set authentication in security context
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            // Generate JWT token
+            String token = jwtUtils.generateToken(username);
+            
+            // Get user details
+            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
             
             // Create response with token and user data
             Map<String, Object> response = new HashMap<>();
-            response.put("token", "mock-jwt-token-" + System.currentTimeMillis()); // Replace with real JWT
+            response.put("token", token);
             
-            System.out.println("Intentando login con usuario: " + username);
-            System.out.println("Contraseña enviada: " + password);
-
-            Usuario usuario2 = usuarioService.obtenerUsuarioPorUsername(username);
-
-            System.out.println("Contraseña guardada: " + usuario2.getPassword());
             // Don't return the password
             usuario.setPassword(null);
             response.put("user", usuario);
             
             return ResponseEntity.ok(response);
-        } catch (ResourceNotFoundException e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Invalid credentials"));
         } catch (Exception e) {
@@ -71,8 +81,6 @@ public class UsuarioController {
                 .body(Map.of("message", "An error occurred during login"));
         }
     }
-
-
 
     /**
      * Registers a new user.
@@ -89,11 +97,12 @@ public class UsuarioController {
             Usuario nuevoUsuario = usuarioService.registrarUsuario(usuario);
             // Avoid returning the password hash in the response
             nuevoUsuario.setPassword(null); // Or use a DTO
-            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
-        } catch (UsuarioNoEncontradoException e) { // Catch specific exception for existing user/email
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) { // Catch other potential errors
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during registration.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
+        } catch (UsuarioNoEncontradoException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "An error occurred during registration"));
         }
     }
 
@@ -104,10 +113,10 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/id/{id}")
-    public ResponseEntity<Usuario> obtenerUsuarioPorId(@PathVariable Long id) {
+    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable Long id) {
         try {
             Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-            usuario.setPassword(null); // Avoid returning password hash
+            usuario.setPassword(null); // Don't return the password
             return ResponseEntity.ok(usuario);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -121,19 +130,18 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/username/{username}")
-    public ResponseEntity<Usuario> obtenerUsuarioPorUsername(@PathVariable String username) {
-         try {
+    public ResponseEntity<?> obtenerUsuarioPorUsername(@PathVariable String username) {
+        try {
             Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
-            usuario.setPassword(null); // Avoid returning password hash
+            usuario.setPassword(null); // Don't return the password
             return ResponseEntity.ok(usuario);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // gets the user balance
     @GetMapping("/balance/{id}")
-    public ResponseEntity<Double> obtenerBalancePorId(@PathVariable Long id) {
+    public ResponseEntity<?> obtenerBalancePorId(@PathVariable Long id) {
         try {
             Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
             return ResponseEntity.ok(usuario.getBalance());
@@ -142,16 +150,13 @@ public class UsuarioController {
         }
     }
 
-
-
     /**
      * Gets all users.
      * Requires ADMIN role (to be enforced by Spring Security later).
      *
      * @return ResponseEntity with a list of all users.
      */
-    @GetMapping("/")
-    // @PreAuthorize("hasRole('ADMIN')") // Add this once Spring Security is configured
+    @GetMapping("/admin/users")
     public ResponseEntity<List<Usuario>> obtenerTodosLosUsuarios() {
         List<Usuario> usuarios = usuarioService.obtenerTodosLosUsuarios();
         // Avoid returning password hashes
@@ -168,16 +173,35 @@ public class UsuarioController {
      * @return ResponseEntity with the updated user or an error.
      */
     @PutMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id") // Example Security
     public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuarioDetails) {
-        // Important: This currently allows updating any field, including role and balance.
-        // Use DTOs and specific service methods for controlled updates (e.g., separate endpoint for balance/role changes by admin).
-        // Also, handle password updates separately and securely.
         try {
-             // Ensure password isn't accidentally updated to null or an unencoded value
-             // Fetch existing user to preserve password if not explicitly changed
-             Usuario currentUser = usuarioService.obtenerUsuarioPorId(id);
-             usuarioDetails.setPassword(currentUser.getPassword()); // Keep existing password unless changed via a dedicated mechanism
+            // Check if the authenticated user is allowed to update this user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+            
+            Usuario currentUser = usuarioService.obtenerUsuarioPorUsername(currentUsername);
+            
+            // Only allow admins or the user themselves to update their profile
+            boolean isAdmin = currentUser.getRol().name().equals("ADMIN");
+            boolean isSameUser = currentUser.getId().equals(id);
+            
+            if (!isAdmin && !isSameUser) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "You are not authorized to update this user"));
+            }
+            
+            // Ensure password isn't accidentally updated to null or an unencoded value
+            // Fetch existing user to preserve password if not explicitly changed
+            Usuario existingUser = usuarioService.obtenerUsuarioPorId(id);
+            usuarioDetails.setPassword(existingUser.getPassword()); // Keep existing password
+            
+            // Set the ID to ensure we're updating the correct user
+            usuarioDetails.setId(id);
+            
+            // Only admins can update roles
+            if (!isAdmin) {
+                usuarioDetails.setRol(existingUser.getRol());
+            }
 
             Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioDetails);
             usuarioActualizado.setPassword(null); // Avoid returning hash
@@ -198,8 +222,7 @@ public class UsuarioController {
      * @param id The ID of the user to delete.
      * @return ResponseEntity with status NO_CONTENT or an error.
      */
-    @DeleteMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN')") // Add this once Spring Security is configured
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
          try {
             usuarioService.eliminarUsuario(id);
@@ -209,6 +232,27 @@ public class UsuarioController {
         } catch (Exception e) {
              // Log the exception
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
+     * Gets the currently authenticated user's information.
+     * 
+     * @return ResponseEntity with the user details or 401 Unauthorized.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            
+            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+            usuario.setPassword(null); // Don't return the password
+            
+            return ResponseEntity.ok(usuario);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Not authenticated"));
         }
     }
 }

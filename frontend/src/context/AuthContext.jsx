@@ -4,87 +4,163 @@ import userService from '../services/userService'; // Import userService for bac
 
 const AuthContext = createContext(null);
 
-// Mock user data
-const MOCK_USER ={
-  "id": 1,
-  "username": "admin",
-  "password": "admin",
-  "email": "admin@casino.com",
-  "saldo": 5440,
-  "rol": "ADMIN"
-};
-
 export const AuthProvider = ({ children }) => {
-  // Initialize state to authenticated with mock user or localStorage data
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [user, setUser] = useState(() => {
-    // Try to get user data from localStorage first
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        return JSON.parse(savedUser);
-      } catch (e) {
-        console.error('Error parsing user data from localStorage:', e);
-      }
-    }
-    // Fall back to mock user if localStorage data is not available
-    return MOCK_USER;
+  // Initialize state from localStorage data if available
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return authService.isAuthenticated();
   });
-  const [loading, setLoading] = useState(false); // Start as not loading
+  
+  const [user, setUser] = useState(() => {
+    // Try to get user data from localStorage
+    return authService.getUserData();
+  });
+  
+  const [loading, setLoading] = useState(false);
 
-  // Save initial user data to localStorage if not already there
+  // Effect to check authentication status on mount
   useEffect(() => {
-    if (!localStorage.getItem('user')) {
-      localStorage.setItem('user', JSON.stringify(user));
-      console.log('Initial user data saved to localStorage');
-    }
-  }, []);
+    const checkAuthStatus = async () => {
+      if (isAuthenticated) {
+        try {
+          // Refresh user data from the server
+          await refreshUserData();
+        } catch (error) {
+          console.error('Error refreshing user data:', error);
+        }
+      }
+    };
+    
+    checkAuthStatus();
+  }, [isAuthenticated]);
 
-  // Mock login/logout or make them no-op if not needed for testing
-  const login = async (credentials) => {
-    console.log('Mock login called, already authenticated.');
-    // No actual API call, state is already set
-    return user;
+  // Function to refresh user data from the server
+  const refreshUserData = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      setLoading(true);
+      const userData = await authService.getCurrentUser();
+      
+      if (userData) {
+        // Ensure we have numeric balance
+        if (userData.balance !== undefined || userData.saldo !== undefined) {
+          const balanceValue = userData.balance !== undefined ? userData.balance : userData.saldo;
+          userData.balance = Number(balanceValue);
+        }
+        
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      // If there's an error getting the current user, we might be unauthorized
+      if (error.response?.status === 401) {
+        logout();
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Login function
+  const login = async (credentials) => {
+    setLoading(true);
+    try {
+      const userData = await authService.login(credentials);
+      
+      // Ensure we have numeric balance
+      if (userData.balance !== undefined || userData.saldo !== undefined) {
+        const balanceValue = userData.balance !== undefined ? userData.balance : userData.saldo;
+        userData.balance = Number(balanceValue);
+      }
+      
+      setUser(userData);
+      setIsAuthenticated(true);
+      return userData;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logout function
   const logout = () => {
-    console.log('Mock logout called, setting state to unauthenticated.');
-    // For testing purposes, allow logout to clear the mock state
+    authService.logout();
     setIsAuthenticated(false);
     setUser(null);
-    // Actual localStorage clearing can be skipped or kept depending on needs
-    authService.logout(); // Optional: clear localStorage if service does it
   };
   
   // Function to update user balance
   const updateUserBalance = async (newBalance) => {
-    if (user) {
-      // Update state
-      setUser(prevUser => ({
-        ...prevUser,
-        saldo: newBalance
-      }));
-      
-      // Update localStorage for persistence
-      authService.updateUserBalance(newBalance);
-      
-      // Skip backend update for now as it's causing errors
-      // The dice game already updates the user balance in the backend
-      // when a bet is placed, so we don't need a separate update
-      
-      console.log('User balance updated to:', newBalance);
+    if (!user || !user.id) {
+      console.error('Cannot update balance: User not authenticated');
+      return;
+    }
+    
+    // Make sure newBalance is a number
+    const numericBalance = Number(newBalance);
+    
+    if (isNaN(numericBalance)) {
+      console.error('Invalid balance value:', newBalance);
+      return;
+    }
+    
+    // Update state with numeric balance
+    setUser(prevUser => ({
+      ...prevUser,
+      balance: numericBalance
+    }));
+    
+    // Update localStorage with numeric balance
+    authService.updateUserBalance(numericBalance);
+    
+    // Update backend (optional, as the balance is usually updated by the game logic)
+    try {
+      // Make sure we're passing a numeric value to the backend
+      await userService.updateUserBalance(user.id, numericBalance);
+      console.log('User balance updated to:', numericBalance);
+    } catch (error) {
+      console.error(':', error);
     }
   };
 
+  // Update user in context (for other user data updates)
+  const updateUserInContext = (updatedUserData) => {
+    if (!updatedUserData) return;
+    
+    // Ensure balance is numeric if present
+    if (updatedUserData.balance !== undefined) {
+      updatedUserData.balance = Number(updatedUserData.balance);
+    }
+    
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updatedUserData
+    }));
+    
+    // Update localStorage
+    localStorage.setItem('user', JSON.stringify({
+      ...user,
+      ...updatedUserData
+    }));
+  };
+
+  // Check if user is admin
+  const isAdmin = () => {
+    return user?.rol === 'ADMIN';
+  };
+
+  // Provide auth context values
   const value = {
     isAuthenticated,
     user,
-    // Use mock user data for isAdmin check or adapt authService.isAdmin
-    isAdmin: () => user?.roles?.includes('ADMIN'), 
+    isAdmin,
     login,
     logout,
     loading,
-    updateUserBalance // Add the update balance function to context
+    updateUserBalance,
+    refreshUserData,
+    updateUserInContext
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
