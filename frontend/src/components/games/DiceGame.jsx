@@ -134,7 +134,7 @@ const DiceGame = () => {
     console.log('Placing bet with data:', betData, `Current local balance: ${currentBalanceBeforeBet}`);
 
     // Use Promise chain instead of async/await
-    diceService.jugar(betData)
+  diceService.jugar(betData)
       .then(response => {
         const { diceResults, resolvedBet } = response;
         // Log the RAW response from the backend
@@ -171,19 +171,18 @@ const DiceGame = () => {
 
         // Update balance: Local state AND Context using backend's authoritative value
         setUserBalance(backendNewBalance);
-        if (updateUserBalance) {
+        /*if (updateUserBalance) {
             console.log(`Calling context updateUserBalance with: ${backendNewBalance}`);
             updateUserBalance(backendNewBalance);
         } else {
             console.warn("AuthContext does not provide updateUserBalance function!");
-        }
+        }*/
 
 // Update result message (use resolvedBet which is ApuestaDTO)
 const totalResult = diceResults[0] + diceResults[1];
 const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${totalResult}). `;
 
-// Win/loss amount is now directly in resolvedBet.winloss
-const winLossDisplayAmount = Math.abs(resolvedBet.winloss ?? 0); // Use winloss field
+
 const betAmount = resolvedBet.cantidad;
 
 // Add explanation of the payout calculation based on bet type
@@ -210,7 +209,7 @@ if (resolvedBet.estado === 'GANADA') {
   confetti({
     particleCount: 200,
     spread: 100,
-    origin: { y: 0.6 },
+    origin: { y: 0.6 },// center confetti after roll button
   });
   
     setResultMessage({
@@ -226,7 +225,7 @@ if (resolvedBet.estado === 'GANADA') {
 
 // Refresh history
 setTimeout(loadUserBetHistory, 1500);
-      })
+  })
       .catch(error => {
         console.error('CRITICAL ERROR during dice bet:', error);
         // Provide more specific feedback if possible
@@ -244,8 +243,7 @@ setTimeout(loadUserBetHistory, 1500);
   // --- UI Rendering ---
 
   const getDiceIcon = (value) => {
-    // Add a specific color style here
-    const iconStyle = { color: 'white' }; // Example: white
+    const iconStyle = { color: 'white' }; 
 
     switch (value) {
       case 1: return <FaDiceOne size={50} style={iconStyle} />;
