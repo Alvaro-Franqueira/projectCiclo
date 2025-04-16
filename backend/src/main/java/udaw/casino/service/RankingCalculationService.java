@@ -128,7 +128,7 @@ public class RankingCalculationService {
         
         // Add global rankings
         for (RankingType tipo : RankingType.values()) {
-            if (tipo != RankingType.BY_GAME_WINS) {
+            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE) { // Exclude game-specific rankings
                 Double score = calcularScore(usuario, tipo, null);
                 RankingEntry entry = new RankingEntry(usuario, null, tipo, score);
                 

@@ -30,14 +30,8 @@ const UserProfile = () => {
     fetchUserData();
   }, [user]); // Re-run when user from AuthContext changes
   
-  // Debug function to log bet data
-  const logBetData = (bets) => {
-    if (bets && bets.length > 0) {
-      console.log('Sample bet data:', bets[0]);
-      console.log('Available properties:', Object.keys(bets[0]));
-    }
-  };
-  console.log('User:', user);
+  
+
   const fetchUserData = async () => {
     if (!user?.id) return;
     
@@ -48,12 +42,9 @@ const UserProfile = () => {
       const userBets = await betService.getUserBets(user.id);
       console.log('User bets with game info:', userBets); 
       
-      // Log the structure of the bet data for debugging
-      logBetData(userBets);
-      
+
       // Set the bets in state
       setBets(Array.isArray(userBets) ? userBets : []);
-      console.log('userid'  , user.id);
       // Fetch user rankings
       const userRankings = await rankingService.getUserRankings(user.id);
       setRankings(Array.isArray(userRankings) ? userRankings : []);
@@ -123,7 +114,10 @@ const UserProfile = () => {
         totalWon: 0,
         totalLost: 0,
         netProfit: 0,
-        winRate: 0
+        winRate: 0,
+        maxBet: 0,
+        maxLoss: 0,
+        maxWin: 0
       };
     }
     
@@ -139,13 +133,21 @@ const UserProfile = () => {
     const netProfit = totalWon - totalLost;
     const winRate = totalBets > 0 ? (wonBets.length / totalBets) * 100 : 0;
     
+    const maxBet = bets.reduce((max, bet) => Math.max(max, bet.cantidad || 0), 0);
+    const maxLoss = lostBets.reduce((min, bet) => Math.min(min, bet.winloss || 0), 0);
+    const maxWin = wonBets.reduce((max, bet) => Math.max(max, bet.winloss || 0), 0);
+
+
     return {
       totalBets,
       totalWagered,
       totalWon,
       totalLost,
       netProfit,
-      winRate
+      winRate,
+      maxBet,
+      maxLoss,
+      maxWin
     };
   };
   const getGameIcon = () => {
@@ -198,7 +200,7 @@ const UserProfile = () => {
                 <h5 className="mb-1">Current Balance</h5>
                 <h3 className="mb-0 text-warning">
                   <FaCoins className="me-2" />
-                  ${user?.saldo?.toFixed(2) || userData.saldo?.toFixed(2) || '0.00'}
+                  {user?.saldo?.toFixed(2) || userData.saldo?.toFixed(2) || '0.00'}
                 </h3>
               </div>
               
@@ -257,6 +259,24 @@ const UserProfile = () => {
                           </h4>
                         </div>
                       </Col>
+                      <Col sm={6} md={4} className="mb-3">
+                        <div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}>
+                          <h6>Max bet</h6>
+                          <h4>${stats.maxBet.toFixed(2)}</h4>
+                        </div>
+                      </Col>
+                      <Col sm={6} md={4} className="mb-3">
+                        <div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}>
+                          <h6>Max Loss</h6>
+                          <h4 className="text-danger">${stats.maxLoss.toFixed(2)}</h4>
+                        </div>
+                      </Col>
+                      <Col sm={6} md={4} className="mb-3">
+                        <div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}>
+                          <h6>Max Win</h6>
+                          <h4 className="text-success">${stats.maxWin.toFixed(2)}</h4>
+                        </div>
+                      </Col>
                     </Row>
                     
                     {/* Game-specific statistics */}
@@ -268,8 +288,8 @@ const UserProfile = () => {
                     </h5>
                     <Row>
                       <Col md={6} className="mb-3">
-                        <Card className="h-100" style={{ backgroundColor: '#2a3441' }}>
-                          <Card.Header className="d-flex justify-content-between align-items-center">
+                        <Card className="h-100" style={{ backgroundColor: '#294c85' }}>
+                          <Card.Header className="d-flex justify-content-between align-items-center border-top-2" style={{ backgroundColor: '#011b45' }}>
                             <span>Dice Game</span>
                             <GiRollingDices size={20} color="#3498db" />
                           </Card.Header>
@@ -300,8 +320,8 @@ const UserProfile = () => {
                         </Card>
                       </Col>
                       <Col md={6} className="mb-3">
-                        <Card className="h-100" style={{ backgroundColor: '#2a3441' }}>
-                          <Card.Header className="d-flex justify-content-between align-items-center">
+                        <Card className="h-100" style={{ backgroundColor: '#294c85' }}>
+                          <Card.Header className="d-flex justify-content-between align-items-center" style={{ backgroundColor: '#011b45' }}>
                             <span>Roulette</span>
                             <img src={rouletteImg} alt="Roulette Icon" width={40} height={30} />
                           </Card.Header>
@@ -358,13 +378,11 @@ const UserProfile = () => {
                                     <GiRollingDices size={20} color="#3498db" className="me-2" />
                                     <span>Dice Game</span>
                                   </div>
-                                ) : (bet.juego?.nombre === 'Ruleta' || bet.juegoId === 1) ? (
+                                ) : (
                                   <div className="d-flex align-items-center">
                                     <img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" />
-                                    <span>Roulette</span>
+                                    <span>Roulette Game</span>
                                   </div>
-                                ) : (
-                                  bet.juego?.nombre || `Game #${bet.juegoId}` || 'Unknown Game'
                                 )}
                               </td>
                               <td>

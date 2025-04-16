@@ -6,6 +6,7 @@ import { GiAbstract013 } from "react-icons/gi";
 import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { GiTakeMyMoney } from "react-icons/gi";
+import neonFavicon from '../images/neonfavicon.png';
 
 
 const AppNavbar = () => {
@@ -34,10 +35,20 @@ const AppNavbar = () => {
     <Navbar bg="dark" variant="dark" expand="lg" className="mb-4" sticky="top">
       <Container>
       <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
-  <GiTakeMyMoney className="me-2 text-warning size={32}" size={50} />
-  <span className="fw-bold fs-2">Virtual Casino</span>
-  <GiTakeMyMoney className="me-2 text-warning size={32}" size={50} />
-</Navbar.Brand>
+        <img
+          src={neonFavicon}
+          alt="Virtual Casino Logo"
+          className="me-2"
+          style={{ width: '50px', height: '50px' }}
+        />
+        <span className="fw-bold fs-2">Virtual Casino</span>
+        <img
+          src={neonFavicon}
+          alt="Virtual Casino Logo"
+          className="me-2"
+          style={{ width: '50px', height: '50px' }}
+        />
+      </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">

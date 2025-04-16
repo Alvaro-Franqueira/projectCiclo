@@ -102,7 +102,8 @@ public class RankingCalculationController {
             List<RankingEntry> rankings = rankingCalculationService.obtenerRankingsDelUsuario(usuarioId);
             return ResponseEntity.ok(rankings);
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            e.printStackTrace(); // or use a logger
+            return ResponseEntity.status(500).body(null); // or return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 }

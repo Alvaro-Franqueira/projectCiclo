@@ -2,12 +2,12 @@
 --DROP TABLE IF EXISTS juegos CASCADE;
 --DROP TABLE IF EXISTS usuarios CASCADE;
 
-delete table juegos;
+--delete table juegos;
 --nsert only Roulette and Dice into games
- INSERT INTO juegos (name, description) VALUES
- ('Roulette', 'Classic roulette game with numbers from 0 to 36'),
- ('Dice', 'Betting game involving dice rolls') 
- ON CONFLICT (name) DO NOTHING; 
+ --INSERT INTO juegos (name, description) VALUES
+--('Roulette', 'Classic roulette game with numbers from 0 to 36'),
+ --('Dice', 'Betting game involving dice rolls') 
+ --ON CONFLICT (name) DO NOTHING; 
 
 
 -- Insertar solo Ruleta y Dados en juegos

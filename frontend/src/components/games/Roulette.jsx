@@ -16,7 +16,10 @@ import blackChip from '../images/black-chip.png';
 import cyanChip from '../images/cyan-chip.png';
 import flyingChips from '../images/flying-chips.png'; // Adjust the path as needed
 import confetti from 'canvas-confetti';
-import bigWin from '../images/bigwin.png'; 
+import bigWin from '../images/bigwin.png';
+import { Link } from 'react-router-dom';
+import { FaChartBar } from 'react-icons/fa'; // Adjust the path as needed
+
 
 // --- Constants and Helpers ---
 // Chip values and icons
@@ -57,7 +60,7 @@ function RouletteGame() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinResultNumber, setSpinResultNumber] = useState(null); // The actual winning number (string) after spin
   const [startSpin, setStartSpin] = useState(false); // Triggers the library wheel animation
-
+  const [spinResults, setSpinResults] = useState(null);
   // UI/Feedback State
   const [loading, setLoading] = useState(false); // Loading state for API calls
   const [message, setMessage] = useState({ text: '', type: 'info' }); // For displaying results/errors
@@ -201,6 +204,16 @@ const handleSpinClick = async () => {
         tipoApuesta: tipoApuesta,
         valorApuesta: valorApuesta
       };
+      //handle multibets
+      if (betPayload.valorApuesta.includes('-')){
+        const numbers = betPayload.valorApuesta.split('-').map(Number);
+      }
+      // make sure the betPayload is correct and dont have -
+      if (betPayload.valorApuesta.includes('-')){
+        const numbers = betPayload.valorApuesta.split('-').map(Number);
+        betPayload.valorApuesta = numbers.join(',');
+        betPayload.cantidad = betData.number * numbers.length;
+      }
 
       console.log("Sending bet:", betPayload);
       return ruletaService.jugar(betPayload);
@@ -308,8 +321,7 @@ const handleSpinEnd = () => {
   setBets({}); // Clear bets after animation
 };
 
-// Add this state variable to the component's state declarations
-const [spinResults, setSpinResults] = useState(null);
+
   // Helper function to determine the color of a number in the roulette wheel
   const getNumberColor = (number) => {
       const num = parseInt(number, 10);
@@ -331,8 +343,12 @@ const [spinResults, setSpinResults] = useState(null);
 
   return (
     <Container fluid className="roulette-container py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
       <h2 className="text-center mb-4">Casino Roulette</h2>
-
+      <Link to="/profile" className="btn btn-outline-primary">
+          <FaChartBar className="me-2" /> View My Statistics
+        </Link>
+      </div>
       {/* Balance Display */}
       <Row className="mb-3">
         <Col>
@@ -498,11 +514,6 @@ const [spinResults, setSpinResults] = useState(null);
             </Card>
         </Col>
       </Row>
-
-
-      <style>{`
-       
-      `}</style>
     </Container>
   );
 }

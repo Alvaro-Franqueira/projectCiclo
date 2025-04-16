@@ -350,6 +350,23 @@ setTimeout(loadUserBetHistory, 1500);
 
               {/* Bet Form */}
               <Form className="text-white" onSubmit={(e) => { e.preventDefault(); placeBetAndRoll(); }}>
+                                {/* Roll Button */}
+                <Button
+                  variant="primary"
+                  className="w-100 mt-3"
+                  style={{ marginBottom: '20px' }}
+                  type="submit"
+                  disabled={isRolling || !betAmount || betAmount <= 0 || betAmount > userBalance}
+                >
+                  {isRolling ? (
+                    <>
+                      <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                      Rolling...
+                    </>
+                  ) : (
+                    'Roll Dice'
+                  )}
+                </Button>
                 {/* Bet Amount */}
                 <Form.Group as={Row} className="mb-3 align-items-center ">
                   <Form.Label column sm={4}>Amount:</Form.Label>
@@ -391,22 +408,7 @@ setTimeout(loadUserBetHistory, 1500);
                   </Col>
                 </Form.Group>
 
-                {/* Roll Button */}
-                <Button
-                  variant="primary"
-                  className="w-100 mt-3"
-                  type="submit"
-                  disabled={isRolling || !betAmount || betAmount <= 0 || betAmount > userBalance}
-                >
-                  {isRolling ? (
-                    <>
-                      <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
-                      Rolling...
-                    </>
-                  ) : (
-                    'Roll Dice'
-                  )}
-                </Button>
+
               </Form>
             </Card.Body>
           </Card>
@@ -423,15 +425,26 @@ setTimeout(loadUserBetHistory, 1500);
                     <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
                       <div className="d-flex justify-content-between">
                         <span>
-                          {bet.tipo === 'parimpar' ? (bet.valorApostado === 'par' ? 'Even' : 'Odd') : `Número  ${bet.valorApostado} ----> `}
-                          
+                        
+                          {bet.tipo === 'parimpar' ? bet.valorApostado : `Número ${bet.valorApostado}`}
+                       
+
                         </span>
-                        <Badge bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
+                        <Badge   style={{
+                                    display: 'flex',
+                                    alignItems: 'center'// opcional: separa el texto del monto
+                                  }} bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
                           {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
                           ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.cantidad.toFixed(2)}
                         </Badge>
                       </div>
-                      <div className="text-muted" style={{ fontSize: '0.8em' }}>
+                      <div
+                          className="text-white"
+                          style={{
+                            fontSize: '0.8em',
+                            marginTop: '0.5rem' // or '8px' or whatever spacing you prefer
+                          }}
+>
                         {bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'Unknown date'}
                       </div>
                     </div>
