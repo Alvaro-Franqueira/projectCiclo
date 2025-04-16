@@ -72,7 +72,7 @@ const AppNavbar = () => {
           <FaUser className="me-1" /> {user.username || 'Profile'}
         </Nav.Link>
 
-        <Button variant="outline-light"  onClick={handleLogout} >
+        <Button variant="outline-light" className=" ms-auto d-inline-flex align-items-center" onClick={handleLogout} >
           <FaSignOutAlt /> Logout
         </Button>
       </>
