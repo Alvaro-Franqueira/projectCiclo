@@ -253,20 +253,16 @@ const handleSpinClick = async () => {
 
     const finalBalance = userBalance + totalWinLoss;
 
-    // Update user balance locally
-    if (updateUserBalance) {
-      updateUserBalance(finalBalance);
-    }
-    setUserBalance(finalBalance);
+
 
     // Fetch the real balance from the backend
     const updatedUser = await userService.getUserById(user.id);
-    setUserBalance(updatedUser.saldo);
+    setUserBalance(updatedUser.balance);
 
     setSpinResults({
       winningNumber: String(winningNumber),
       profit: totalWinLoss,
-      finalBalance: updatedUser.saldo
+      finalBalance: updatedUser.balance
     });
 
     setSpinResultNumber(String(winningNumber));
