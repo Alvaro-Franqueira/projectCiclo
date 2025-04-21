@@ -220,12 +220,16 @@ const handleSpinClick = async () => {
            apiResponse = await ruletaService.jugar(betsToProcess[0]); // Send the single bet object
            // apiResponse structure: { winningNumber, resolvedBet, totalWinLoss }
            finalWinningNumber = apiResponse.winningNumber;
-           finalTotalWinLoss = apiResponse.totalWinLoss;
+           finalTotalWinLoss = apiResponse.resolvedBet.winloss;
       } else { // numberOfBets > 1
            console.log("Calling multi-bet API");
            apiResponse = await ruletaService.jugarMultibet(betsToProcess); // Send the array of bet objects
            // apiResponse structure: { winningNumber, resolvedBets: [], totalWinLoss }
            finalWinningNumber = apiResponse.winningNumber;
+           for (const bet of apiResponse.resolvedBets) {
+               // Assuming each bet in resolvedBets has a winloss property
+               finalTotalWinLoss += bet.winloss; // Accumulate total win/loss
+           }
            finalTotalWinLoss = apiResponse.totalWinLoss;
       }
        // --- End Conditional API Call ---
@@ -244,7 +248,7 @@ const handleSpinClick = async () => {
       // Store results for display after animation
       setSpinResults({
           winningNumber: String(finalWinningNumber),
-          profit: finalTotalWinLoss, // Use the total calculated win/loss
+          profit: Number(finalTotalWinLoss), // Use the total calculated win/loss
           finalBalance: updatedUser.balance
       });
 
