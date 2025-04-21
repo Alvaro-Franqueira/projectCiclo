@@ -20,6 +20,8 @@ const DiceGame = () => {
   const [isRolling, setIsRolling] = useState(false);
   const [resultMessage, setResultMessage] = useState({ text: '', type: '' });
   const [history, setHistory] = useState([]);
+  const [clickPosition, setClickPosition] = useState({ x: 0.5, y: 0.5 });
+
   // --- Effects ---
 
   // Initialize balance from context ONCE or when user ID changes
@@ -52,7 +54,6 @@ const DiceGame = () => {
   }, [user]);
 
   // --- Data Fetching ---
-
   const loadUserBetHistory = () => {
     if (!user?.id) return;
     
@@ -80,7 +81,6 @@ const DiceGame = () => {
       setHistory([]);
     }
   };
-
   // --- Handlers ---
   const handleBetAmountChange = (e) => {
     let value = parseFloat(e.target.value);
@@ -105,7 +105,6 @@ const DiceGame = () => {
   };
 
   // --- Core Game Logic ---
-
   const placeBetAndRoll = () => {
     const currentBalanceBeforeBet = userBalance; // Capture balance before bet
     if (!betAmount || betAmount <= 0 || betAmount > currentBalanceBeforeBet) {
@@ -209,11 +208,16 @@ if (resolvedBet.estado === 'GANADA') {
   confetti({
     particleCount: 200,
     spread: 100,
-    origin: { y: 0.6 },// center confetti after roll button
+    origin: {
+      x: clickPosition.x,
+      y: clickPosition.y
+    },
   });
   
+
+ 
     setResultMessage({
-        text: baseMessage + `You won $${winLossDisplayAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
+        text: baseMessage + `You won $${winlossAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
         type: 'success'
     });
 } else {
@@ -322,23 +326,6 @@ setTimeout(loadUserBetHistory, 1500);
               {/* Result Message */}
                   {resultMessage.text && (
                     <div className="result-message-container mt-3 text-center">
-                      {resultMessage.type === 'success' && (
-                        <>
-                          {betType === 'numero' ? (
-                            <img
-                              src={bigWin}
-                              alt="Big Win"
-                              className="winning-image"
-                            />
-                          ) : (
-                            <img
-                              src={flyingChips}
-                              alt="Winning Chips"
-                              className="winning-image"
-                            />
-                          )}
-                        </>
-                      )}
                       <Alert variant={resultMessage.type}>
                         {resultMessage.text}
                       </Alert>
@@ -355,6 +342,11 @@ setTimeout(loadUserBetHistory, 1500);
                   style={{ marginBottom: '20px' }}
                   type="submit"
                   disabled={isRolling || !betAmount || betAmount <= 0 || betAmount > userBalance}
+                  onClick={(e) => {
+                    const x = e.clientX / window.innerWidth;
+                    const y = e.clientY / window.innerHeight;
+                    setClickPosition({ x, y });
+                  }}
                 >
                   {isRolling ? (
                     <>
