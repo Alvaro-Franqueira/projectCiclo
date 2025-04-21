@@ -15,7 +15,7 @@ const ruletaService = {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
 
-            const { winningNumber = 0, resolvedBet } = response.data || {};
+            const { winningNumber, resolvedBet } = response.data || {};
             const apuesta = sanitizeApuesta(resolvedBet || response.data);
 
             return { winningNumber, resolvedBet: apuesta };
