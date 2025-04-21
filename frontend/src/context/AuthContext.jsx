@@ -40,16 +40,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const userData = await authService.getCurrentUser();
-      
-      if (userData) {
-        // Ensure we have numeric balance
-        if (userData.balance !== undefined || userData.saldo !== undefined) {
-          const balanceValue = userData.balance !== undefined ? userData.balance : userData.saldo;
-          userData.balance = Number(balanceValue);
-        }
-        
-        setUser(userData);
-      }
+      setUser(userData);
     } catch (error) {
       console.error('Error refreshing user data:', error);
       // If there's an error getting the current user, we might be unauthorized
@@ -66,13 +57,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const userData = await authService.login(credentials);
-      
-      // Ensure we have numeric balance
-      if (userData.balance !== undefined || userData.saldo !== undefined) {
-        const balanceValue = userData.balance !== undefined ? userData.balance : userData.saldo;
-        userData.balance = Number(balanceValue);
-      }
-      
       setUser(userData);
       setIsAuthenticated(true);
       return userData;

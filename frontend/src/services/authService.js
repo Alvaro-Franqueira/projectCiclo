@@ -93,12 +93,7 @@ const authService = {
       if (userData.balance !== undefined && userData.balance !== null && typeof userData.balance !== 'object') {
         return Number(userData.balance);
       }
-      
-      // If we have saldo in localStorage, return it
-      if (userData.saldo !== undefined && userData.saldo !== null && typeof userData.saldo !== 'object') {
-        return Number(userData.saldo);
-      }
-      
+          
       // If we don't have a valid balance in localStorage, fetch from server
       if (userId) {
         try {
@@ -107,7 +102,7 @@ const authService = {
           
           // Update localStorage with the fetched user data
           if (user) {
-            const balanceValue = user.balance || user.saldo || 0;
+            const balanceValue = user.balance || 0;
             const numericBalance = Number(balanceValue);
             
             // Update the user data in localStorage

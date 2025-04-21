@@ -154,167 +154,168 @@ function RouletteGame() {
 // Modified handleSpinClick function to store results but not display them yet
 const handleSpinClick = async () => {
   const totalBetAmount = calculateTotalBet(bets);
-  if (isSpinning || loading || totalBetAmount === 0) {
-    if (totalBetAmount === 0) setMessage({ text: 'Place your bets first!', type: 'warning' });
-    return;
+  const numberOfBets = Object.keys(bets).length; // Get number of distinct bets
+
+  if (isSpinning || loading || numberOfBets === 0) {
+      if (numberOfBets === 0) setMessage({ text: 'Place your bets first!', type: 'warning' });
+      return;
   }
   if (totalBetAmount > userBalance) {
-    setMessage({ text: 'Total bet exceeds balance!', type: 'danger' });
-    return;
+      setMessage({ text: 'Total bet exceeds balance!', type: 'danger' });
+      return;
   }
 
   setLoading(true);
   setIsSpinning(true);
   setMessage({ text: 'Spinning...', type: 'info' });
+  setStartSpin(false); // Ensure wheel doesn't start prematurely if API fails fast
 
   try {
-    // Send each bet separately to the backend
-    const betPromises = Object.entries(bets).map(([betId, betData]) => {
-      let tipoApuesta, valorApuesta;
+      let apiResponse;
+      let finalWinningNumber = null;
+      let finalTotalWinLoss = 0;
 
-      // Handle different bet types according to backend requirements
-      if (betId === 'RED' || betId === 'BLACK') {
-        tipoApuesta = 'color';
-        valorApuesta = betId === 'RED' ? '1' : '2';
-      } else if (betId === 'EVEN' || betId === 'ODD') {
-        tipoApuesta = 'paridad';
-        valorApuesta = betId === 'EVEN' ? 'par' : 'impar';
-      } else if (betId === '1_TO_18' || betId === '19_TO_36') {
-        tipoApuesta = 'mitad';
-        valorApuesta = betId === '1_TO_18' ? '1' : '2';
-      } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
-        tipoApuesta = 'docena';
-        valorApuesta = betId === '1ST_DOZEN' ? '1' : 
-                      betId === '2ND_DOZEN' ? '2' : '3';
-      } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
-        tipoApuesta = 'columna';
-        valorApuesta = betId === '1ST_COLUMN' ? '1' : 
-                      betId === '2ND_COLUMN' ? '2' : '3';
-      } else if (betId.includes('-')) {
-        tipoApuesta = 'numero';
-        valorApuesta = betId;
-      } else {
-        tipoApuesta = 'numero';
-        valorApuesta = betId;
+      // Prepare the bet data
+      const betsToProcess = Object.entries(bets).map(([betId, betData]) => {
+          let tipoApuesta, valorApuesta;
+
+          // --- Bet Type Mapping Logic (same as before) ---
+          if (betId === 'RED' || betId === 'BLACK') {
+              tipoApuesta = 'color';
+              valorApuesta = betId === 'RED' ? '1' : '2'; // Or 'rojo'/'negro' if backend expects that
+          } else if (betId === 'EVEN' || betId === 'ODD') {
+              tipoApuesta = 'paridad';
+              valorApuesta = betId === 'EVEN' ? 'par' : 'impar';
+          } else if (betId === '1_TO_18' || betId === '19_TO_36') {
+              tipoApuesta = 'mitad';
+              valorApuesta = betId === '1_TO_18' ? '1' : '2'; // Or 'baja'/'alta'
+          } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
+              tipoApuesta = 'docena';
+              valorApuesta = betId === '1ST_DOZEN' ? '1' : betId === '2ND_DOZEN' ? '2' : '3';
+          } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
+              tipoApuesta = 'columna';
+              valorApuesta = betId === '1ST_COLUMN' ? '1' : betId === '2ND_COLUMN' ? '2' : '3';
+          } else if (/\d+-\d+/.test(betId)) { // Regex to check for split/street/corner like '1-2', '1-4', '1-2-4-5' etc.
+              // Assuming backend handles hyphenated numbers directly for splits/streets/corners etc.
+              tipoApuesta = 'numero'; // Or a more specific type if backend requires?
+              valorApuesta = betId; // Pass the hyphenated string e.g., "1-2"
+          } else { // Single number bet
+              tipoApuesta = 'numero';
+              valorApuesta = betId; // e.g., "0", "17", "36"
+          }
+          // --- End Bet Type Mapping ---
+
+          // Construct payload for this single bet
+          return {
+              usuarioId: user.id,
+              cantidad: betData.number, // The amount placed on this specific spot
+              tipoApuesta: tipoApuesta,
+              valorApuesta: valorApuesta
+          };
+      });
+
+      // --- Conditional API Call ---
+      if (numberOfBets === 1) {
+           console.log("Calling single bet API");
+           apiResponse = await ruletaService.jugar(betsToProcess[0]); // Send the single bet object
+           // apiResponse structure: { winningNumber, resolvedBet, totalWinLoss }
+           finalWinningNumber = apiResponse.winningNumber;
+           finalTotalWinLoss = apiResponse.totalWinLoss;
+      } else { // numberOfBets > 1
+           console.log("Calling multi-bet API");
+           apiResponse = await ruletaService.jugarMultibet(betsToProcess); // Send the array of bet objects
+           // apiResponse structure: { winningNumber, resolvedBets: [], totalWinLoss }
+           finalWinningNumber = apiResponse.winningNumber;
+           finalTotalWinLoss = apiResponse.totalWinLoss;
+      }
+       // --- End Conditional API Call ---
+
+
+      console.log("API Response processed:", apiResponse);
+
+      if (finalWinningNumber === null) {
+          throw new Error("Could not determine winning number from backend response.");
       }
 
-      const betPayload = {
-        usuarioId: user.id,
-        cantidad: betData.number,
-        tipoApuesta: tipoApuesta,
-        valorApuesta: valorApuesta
-      };
-      //handle multibets
-      if (betPayload.valorApuesta.includes('-')){
-        const numbers = betPayload.valorApuesta.split('-').map(Number);
-      }
-      // make sure the betPayload is correct and dont have -
-      if (betPayload.valorApuesta.includes('-')){
-        const numbers = betPayload.valorApuesta.split('-').map(Number);
-        betPayload.valorApuesta = numbers.join(',');
-        betPayload.cantidad = betData.number * numbers.length;
-      }
+      // Fetch the definitive balance from the backend AFTER the bets are processed
+      const updatedUser = await userService.getUserById(user.id);
+      setUserBalance(updatedUser.balance); // Update balance state with the authoritative value
 
-      console.log("Sending bet:", betPayload);
-      return ruletaService.jugar(betPayload);
-    });
+      // Store results for display after animation
+      setSpinResults({
+          winningNumber: String(finalWinningNumber),
+          profit: finalTotalWinLoss, // Use the total calculated win/loss
+          finalBalance: updatedUser.balance
+      });
 
-    const results = await Promise.allSettled(betPromises);
-    console.log("Backend responses:", results);
+      // Trigger the wheel animation
+      setSpinResultNumber(String(finalWinningNumber)); // Set the number for the wheel component
+      setStartSpin(true); // Start the animation
 
-    let totalWinLoss = 0;
-    let successfulBets = 0;
-
-    let winningNumber = null;
-
-    for (const result of results) {
-      if (result.status === 'fulfilled' && result.value?.winningNumber) {
-        winningNumber = result.value.winningNumber;
-        break;
-      }
-    }
-
-    if (winningNumber === null) {
-      throw new Error("Could not determine winning number from backend");
-    }
-
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value?.resolvedBet) {
-        const resolvedBet = result.value.resolvedBet;
-        console.log(`Bet ${index + 1} result with winning number ${winningNumber}:`, resolvedBet);
-        totalWinLoss = resolvedBet.winloss;
-        successfulBets++;
-      } else {
-        const betEntry = Object.entries(bets)[index];
-        const betId = betEntry ? betEntry[0] : 'unknown';
-        console.error(`Bet ${betId} failed:`, result.reason || result.value);
-      }
-    });
-
-    const finalBalance = userBalance + totalWinLoss;
-
-
-
-    // Fetch the real balance from the backend
-    const updatedUser = await userService.getUserById(user.id);
-    setUserBalance(updatedUser.balance);
-
-    setSpinResults({
-      winningNumber: String(winningNumber),
-      profit: totalWinLoss,
-      finalBalance: updatedUser.balance
-    });
-
-    setSpinResultNumber(String(winningNumber));
-    setStartSpin(true);
 
   } catch (error) {
-    console.error("Error during spin:", error);
-    setMessage({
-      text: error.message || error.response?.data?.message || 'Spin failed. Please try again.',
-      type: 'danger'
-    });
-    setIsSpinning(false);
-    setLoading(false);
+      console.error("Error during spin:", error);
+      setMessage({
+          text: error.message || 'Spin failed. Please try again.',
+          type: 'danger'
+      });
+      // Reset state on error
+      setIsSpinning(false);
+      setLoading(false);
+      setStartSpin(false); // Ensure animation doesn't start on error
+      // Optionally clear bets on error? Or leave them for user to retry/clear?
+      // setBets({});
   }
+  // Note: setLoading(false), setIsSpinning(false) are now primarily handled in handleSpinEnd
 };
 
-// Modify the handleSpinEnd function to show results after animation
+
 const handleSpinEnd = () => {
   console.log("Wheel animation finished.");
-  
-  // Now show the results that we stored earlier
-  if (spinResults) {
-    const { winningNumber, profit } = spinResults;
-    
 
-    if (profit > 0) {
-      confetti({
-        particleCount: 350,
-        spread: 80,
-        origin: { y: 0.6 }
+  if (spinResults) {
+      const { winningNumber, profit, finalBalance } = spinResults;
+
+       // Confetti for win
+      if (profit > 0) {
+        confetti({
+          particleCount: 350,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      }
+
+      // Update UI message
+      setMessage({
+          text: `Spin result: ${winningNumber}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
+          type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
       });
-    }
-    // Update UI with result information
-    setMessage({
-      text: `Spin result: ${winningNumber}. ${profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`}`,
-      type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
-    });
-    
-    // Update betting history
-    setBetHistory(prev => [winningNumber, ...prev.slice(0, 9)]);
-    fetchUserGameHistory();
-    // Update game history from the backend
-    fetchUserGameHistory();
-    
-    // Clear the stored results
-    setSpinResults(null);
+
+      // Update local history display
+      setBetHistory(prev => [winningNumber, ...prev.slice(0, 9)]);
+
+      // Fetch updated game history from backend
+      fetchUserGameHistory();
+
+       // Make sure balance shown matches the finalBalance from spinResults (which came from backend)
+       // setUserBalance(finalBalance); // Already set using userService.getUserById in handleSpinClick
+
+      // Clear the temporary results
+      setSpinResults(null);
+  } else {
+       // Handle cases where spin ended without results (e.g., error before setting spinResults)
+       console.warn("Spin ended but no spinResults were found.");
+       // Ensure UI reflects non-spinning state if message wasn't set to an error
+       if (message.type !== 'danger') {
+          setMessage({ text: 'Spin complete.', type: 'info' });
+       }
   }
-  
+
+  // Reset flags and clear bets for the next round
   setIsSpinning(false);
   setStartSpin(false);
   setLoading(false);
-  setBets({}); // Clear bets after animation
+  setBets({}); // Clear bets from the table after spin completes
 };
 
 
@@ -414,12 +415,12 @@ const handleSpinEnd = () => {
         {/* Center: Wheel, Buttons, Message */}
         <Col md={6} className="d-flex flex-column align-items-center">
             <div className="roulette-wheel-wrapper mb-3">
-                <RouletteWheel
-                start={startSpin}
-                winningBet={spinResultNumber}
-                onSpinningEnd={handleSpinEnd}
-                
-                />
+            <RouletteWheel
+              start={startSpin}
+              winningBet={spinResultNumber} // Use spinResultNumber state here
+              onSpinningEnd={handleSpinEnd}
+              // Add any other required props for your RouletteWheel component
+        />
             </div>
 
              {/* Spin/Clear Buttons */}

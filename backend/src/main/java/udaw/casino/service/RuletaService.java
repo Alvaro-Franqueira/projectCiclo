@@ -7,6 +7,9 @@ import udaw.casino.repository.UsuarioRepository;
 import udaw.casino.exception.ResourceNotFoundException; 
 import udaw.casino.exception.SaldoInsuficienteException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.transaction.Transactional;
@@ -32,25 +35,11 @@ public class RuletaService {
         this.userRepository = userRepository; // Initialize the user repository
     }
 
-    /**
-     * Handles playing a round of Roulette using a winning number provided externally (e.g., from frontend).
-     * Finds the Roulette game dynamically, creates the bet, determines the result based on the provided number,
-     * and resolves the bet.
-     *
-     * @param usuarioId            The ID of the user playing.
-     * @param cantidad             The amount being bet.
-     * @param tipoApuesta          The type of bet (e.g., "numero", "color", "paridad").
-     * @param valorApuesta         The specific value bet on (e.g., "17", "rojo", "par").
-     * @param numeroGanadorFrontend The winning number (0-36) provided by the client.
-     * @return The resolved Apuesta object.
-     * @throws ResourceNotFoundException if the user or the Roulette game is not found.
-     * @throws SaldoInsuficienteException if the user has insufficient balance.
-     * @throws IllegalArgumentException if numeroGanadorFrontend is out of range (0-36).
-     */
+
+
+//For lonely bets    
     @Transactional
     public Apuesta jugarRuleta(Long usuarioId, double cantidad, String tipoApuesta, String valorApuesta, int numeroGanadorFrontend) {
-
-
         // --- Validation ---
         if (usuarioId == null) {
             log.error("User ID is required but not provided.");
@@ -91,34 +80,22 @@ public class RuletaService {
 
         // Create the bet via ApuestaService (checks balance, saves initial bet)
         Apuesta apuestaCreada = apuestaService.crearApuesta(apuesta);
-
-        log.info("Processing bet based on frontend result: Number={}, Color={}, Parity={}", numeroGanadorFrontend);
-
-        // Determine if the bet won using the frontend's number
+          // Determine if the bet won using the frontend's number
         
-            apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, numeroGanadorFrontend)); // Use the frontend number for result calculation
+            apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, numeroGanadorFrontend)); // Use the controller number for result calculation
             log.info("Bet won(maybe)! User: {}, Bet ID: {}, Winning Number: {}", usuario.getUsername(), apuestaCreada.getId(), numeroGanadorFrontend);
 
             Double balance = usuario.getBalance() + apuestaCreada.getWinloss(); // Calculate new balance based on win/loss
             
             userRepository.save(usuarioService.actualizarSaldoUsuario(usuario.getId(), balance)); // Update user balance based on win/loss
 
-        // Resolve the bet (updates balance, sets win/loss state, triggers ranking update)
+       
         // Pass the frontend number to be potentially stored with the bet result if needed by resolverApuesta
         // Modify resolverApuesta if you need to store the actual winning number on the Apuesta entity
         return apuestaService.resolverApuesta(apuestaCreada);
     }
 
-    /**
-     * Determines if the bet won based on the winning number, color, and parity.
-     * (No changes needed in this helper method's logic)
-     *
-     * @param apuesta           The bet being checked.
-     * @param numeroGanador     The winning number (0-36).
-     * @param colorGanador      The winning color ("rojo", "negro", "verde").
-     * @param paridadGanadora   The winning parity ("par", "impar", "cero").
-     * @return true if the bet won, false otherwise.
-     */
+
     private Double determinarResultadoApuesta(Apuesta apuesta, int numeroGanador) {
         String tipo = apuesta.getTipoApuesta().toLowerCase();
         String valor = apuesta.getValorApostado().toLowerCase();

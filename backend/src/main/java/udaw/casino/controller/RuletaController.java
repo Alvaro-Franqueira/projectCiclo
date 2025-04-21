@@ -8,11 +8,15 @@ import udaw.casino.service.RuletaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.AllArgsConstructor; 
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 @RestController
@@ -73,6 +77,56 @@ public class RuletaController {
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error inesperado al procesar la apuesta."); // 500 Internal Server Error
         }
     }
+
+    @PostMapping("/jugar/multi")
+    public ResponseEntity<?> jugarRuletaMulti(@RequestBody List<ApuestaMultipleDTO> apuestas) {
+        try {
+            Random random = new Random();
+            int numeroGanador = random.nextInt(37); // 0-36 inclusive
+
+            List<RuletaResponse> respuestas = new ArrayList<>();
+
+            for (ApuestaMultipleDTO apuestaDTO : apuestas) {
+                Apuesta apuestaResuelta = ruletaService.jugarRuleta(
+                    apuestaDTO.getUsuarioId(),
+                    apuestaDTO.getCantidad(),
+                    apuestaDTO.getTipoApuesta(),
+                    apuestaDTO.getValorApuesta(),
+                    numeroGanador
+                );
+
+                ApuestaDTO apuestaDTOResponse = new ApuestaDTO(apuestaResuelta);
+
+                RuletaResponse response = new RuletaResponse();
+                response.setResolvedBet(apuestaDTOResponse);
+                response.setWinningNumber(numeroGanador);
+
+                respuestas.add(response);
+            }
+
+            return ResponseEntity.ok(respuestas);
+
+        } catch (SaldoInsuficienteException e) {
+            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ocurrió un error inesperado al procesar las apuestas múltiples.");
+        }
+    }
+
+
+    @Data
+    public static class ApuestaMultipleDTO {
+        private Long usuarioId;
+        private double cantidad;
+        private String tipoApuesta;
+        private String valorApuesta;
+    }
+    
 
     // Helper class for the response (Using Lombok @Data for brevity)
     @Data // Generates getters, setters, toString, equals, hashCode
