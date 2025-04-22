@@ -1,5 +1,6 @@
 package udaw.casino.service;
 
+import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
@@ -7,6 +8,9 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
+
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import udaw.casino.dto.ProcessPaymentDTO;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.model.Usuario;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +46,11 @@ public class PaymentService {
     public PaymentService(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
-
+    @PostConstruct
+    public void init() {
+        Stripe.apiKey = stripeApiKey;
+        System.out.println("Stripe API Key Initialized."); // Add log to confirm
+    }
     /**
      * Creates a payment intent in Stripe
      * 
@@ -58,15 +67,11 @@ public class PaymentService {
                               ", amount: " + paymentIntentDTO.getAmount() + 
                               ", currency: " + paymentIntentDTO.getCurrency());
             
-            // Create payment intent
+            // Create payment intent with specific payment method types instead of automatic
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(paymentIntentDTO.getAmount())
                     .setCurrency(paymentIntentDTO.getCurrency())
-                    .setAutomaticPaymentMethods(
-                        PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                            .setEnabled(true)
-                            .build()
-                    )
+                    .addAllPaymentMethodType(Arrays.asList("card", "paypal"))
                     .putMetadata("userId", usuario.getId().toString())
                     .build();
             

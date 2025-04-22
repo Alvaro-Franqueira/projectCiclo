@@ -1,6 +1,5 @@
 package udaw.casino.controller;
 
-import udaw.casino.dto.UpdateUserDTO;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.UsuarioNoEncontradoException;
 import udaw.casino.model.Usuario;
@@ -98,10 +97,10 @@ public class UsuarioController {
             Usuario nuevoUsuario = usuarioService.registrarUsuario(usuario);
             // Avoid returning the password hash in the response
             nuevoUsuario.setPassword(null); // Or use a DTO
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
-        } catch (UsuarioNoEncontradoException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
+            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
+        } catch (UsuarioNoEncontradoException e) { // Catch specific exception for existing user/email
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) { // Catch other potential errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "An error occurred during registration"));
         }
@@ -114,10 +113,10 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/id/{id}")
-    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable Long id) {
+    public ResponseEntity<Usuario> obtenerUsuarioPorId(@PathVariable Long id) {
         try {
             Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-            usuario.setPassword(null); // Don't return the password
+            usuario.setPassword(null); // Avoid returning password hash
             return ResponseEntity.ok(usuario);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -131,18 +130,19 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/username/{username}")
-    public ResponseEntity<?> obtenerUsuarioPorUsername(@PathVariable String username) {
+    public ResponseEntity<Usuario> obtenerUsuarioPorUsername(@PathVariable String username) {
         try {
             Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
-            usuario.setPassword(null); // Don't return the password
+            usuario.setPassword(null); // Avoid returning password hash
             return ResponseEntity.ok(usuario);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
+    // gets the user balance
     @GetMapping("/balance/{id}")
-    public ResponseEntity<?> obtenerBalancePorId(@PathVariable Long id) {
+    public ResponseEntity<Double> obtenerBalancePorId(@PathVariable Long id) {
         try {
             Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
             return ResponseEntity.ok(usuario.getBalance());
@@ -174,37 +174,17 @@ public class UsuarioController {
      * @return ResponseEntity with the updated user or an error.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody UpdateUserDTO usuarioDetails) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuarioDetails) {
+        // Important: This currently allows updating any field, including role and balance.
+        // Use DTOs and specific service methods for controlled updates (e.g., separate endpoint for balance/role changes by admin).
+        // Also, handle password updates separately and securely.
         try {
-            // Check if the authenticated user is allowed to update this user
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            
-            // User who made the put request
-            String currentUsername = authentication.getName();
-            Usuario userPut = usuarioService.obtenerUsuarioPorUsername(currentUsername);
-            
-            // Only allow admins or the user themselves to update their profile
-            boolean isAdmin = userPut.getRol().name().equals("ADMIN");
-            boolean isSameUser = userPut.getId().equals(id);
-            
-            if (!isAdmin && !isSameUser) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You are not authorized to update this user"));
-            }
-            
-            // Ensure password isn't accidentally updated to null or an unencoded value
-            // Fetch existing user to preserve password if not explicitly changed
-            Usuario existingUser = usuarioService.obtenerUsuarioPorId(id);
-            
-            // Set the ID to ensure we're updating the correct user
-            existingUser.setId(id);
-            existingUser.setUsername(usuarioDetails.getUsername());
-            // Only admins can update roles
-            if (isAdmin) {
-                existingUser.setRol(usuarioDetails.getRol());
-            }
+             // Ensure password isn't accidentally updated to null or an unencoded value
+             // Fetch existing user to preserve password if not explicitly changed
+             Usuario currentUser = usuarioService.obtenerUsuarioPorId(id);
+             usuarioDetails.setPassword(currentUser.getPassword()); // Keep existing password unless changed via a dedicated mechanism
 
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(existingUser);
+            Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioDetails);
             usuarioActualizado.setPassword(null); // Avoid returning hash
             return ResponseEntity.ok(usuarioActualizado);
         } catch (ResourceNotFoundException e) {
@@ -213,33 +193,6 @@ public class UsuarioController {
              return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during update.");
-        }
-    }
-
-    @PutMapping("/balance/{id}")
-    public ResponseEntity<?> actualizarBalance(@PathVariable Long id, @RequestParam double nuevoBalance) {
-        try {
-            // Check if the authenticated user is allowed to update this user's balance
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String currentUsername = authentication.getName();
-            
-            Usuario currentUser = usuarioService.obtenerUsuarioPorUsername(currentUsername);
-            
-            // Only allow admins to update user balance
-            boolean isAdmin = currentUser.getRol().name().equals("ADMIN");
-            
-            if (!isAdmin) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You are not authorized to update user balance"));
-            }
-            
-            Usuario usuario = usuarioService.actualizarBalance(id, nuevoBalance);
-            return ResponseEntity.ok(usuario);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An error occurred during balance update.");
         }
     }
 

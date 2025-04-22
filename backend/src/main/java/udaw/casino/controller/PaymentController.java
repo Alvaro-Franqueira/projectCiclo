@@ -2,6 +2,7 @@ package udaw.casino.controller;
 
 import com.stripe.exception.StripeException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,25 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    
+    @Value("${stripe.publishable.key}")
+    private String publishableKey;
 
     @Autowired
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+    
+    /**
+     * Returns the Stripe publishable key for use in the frontend
+     * 
+     * @return The Stripe publishable key
+     */
+    @GetMapping("/config")
+    public ResponseEntity<Map<String, String>> getPublishableKey() {
+        Map<String, String> config = new HashMap<>();
+        config.put("publishableKey", publishableKey);
+        return ResponseEntity.ok(config);
     }
 
     /**

@@ -3,6 +3,7 @@ import api from './api';
 const PAYMENT_ENDPOINTS = {
   CREATE_PAYMENT_INTENT: '/payments/create-payment-intent',
   PROCESS_PAYMENT: '/payments/process',
+  GET_CONFIG: '/payments/config'
 };
 
 const paymentService = {
@@ -56,6 +57,16 @@ const paymentService = {
     } catch (error) {
       console.error('Error processing payment:', error);
       throw error.response?.data || { message: 'Failed to process payment' };
+    }
+  },
+  getStripeConfig: async () => {
+    try {
+      const response = await api.get(PAYMENT_ENDPOINTS.GET_CONFIG);
+      console.log('Stripe config response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching Stripe config:', error);
+      throw error.response?.data || { message: 'Failed to fetch Stripe configuration' };
     }
   }
 };
