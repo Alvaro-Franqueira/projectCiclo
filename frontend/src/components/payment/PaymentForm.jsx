@@ -105,7 +105,7 @@ const PaymentForm = () => {
   
   return (
     <Container className="my-5">
-      <Row className="justify-content-center">
+      <Row className="justify-content-center ">
         <Col md={8} lg={6}>
           <Card className="shadow">
             <Card.Header className="bg-primary text-white">
@@ -115,12 +115,12 @@ const PaymentForm = () => {
               {error && <Alert variant="danger">{error}</Alert>}
               {message && <Alert variant="success">{message}</Alert>}
               
-              <p className="mb-4">
+              <p className="mb-4 text-white">
                 For every €1 spent, you'll receive 1000 credits in your casino balance.
               </p>
               
-              <Form onSubmit={handlePayment}>
-                <Form.Group className="mb-3">
+              <Form onSubmit={handlePayment} className="text-white">
+                <Form.Group className="mb-3 ">
                   <Form.Label>Amount (€)</Form.Label>
                   <Form.Control
                     type="number"

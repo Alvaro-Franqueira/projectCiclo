@@ -24,7 +24,7 @@ const PaymentSuccessPage = () => {
     
     // Automatically redirect to home after 5 seconds
     const timer = setTimeout(() => {
-      navigate('/');
+      navigate('/profile');
     }, 5000);
     
     return () => clearTimeout(timer);

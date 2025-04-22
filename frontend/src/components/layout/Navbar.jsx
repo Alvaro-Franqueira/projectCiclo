@@ -72,14 +72,9 @@ const AppNavbar = () => {
           <FaUser className="me-1" /> {user.username || 'Profile'}
         </Nav.Link>
 
-        <Nav.Link as={Link} to="/payment" className="d-flex align-items-center">
+        <Nav.Link as={Link} to="/payment" className="">
           <FaCreditCard className="me-1" /> Add Credits
-          {user && (
-            <Badge bg="success" className="ms-2">
-              <FaCoins className="me-1" size={12} />
-              {user.balance?.toLocaleString() || 0}
-            </Badge>
-          )}
+          
         </Nav.Link>
 
         <Button variant="outline-light" className=" ms-auto d-inline-flex align-items-center" onClick={handleLogout} >
