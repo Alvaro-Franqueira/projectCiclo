@@ -81,20 +81,8 @@ const betService = {
               console.error(`Failed to fetch game details for game ID ${bet.juegoId}:`, err);
             }
           } 
-          // If no juegoId, determine from bet type
-          else {
-            // Normalize property names
-            const tipo = bet.tipoApuesta || bet.tipo;
-            
-            // Determine game type based on bet properties
-            if (tipo === 'parimpar' || tipo === 'numero') {
-              bet.juegoId = 2; // Dice game ID
-              bet.juego = { id: 2, nombre: 'Dados' };
-            } else if (tipo === 'NUMERO' || tipo === 'COLOR' || tipo === 'PARIDAD') {
-              bet.juegoId = 1; // Roulette game ID
-              bet.juego = { id: 1, nombre: 'Ruleta' };
-            }
-          }
+
+          
           
           // Normalize property names for UI consistency
           if (bet.tipoApuesta && !bet.tipo) {

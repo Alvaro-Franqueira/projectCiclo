@@ -21,6 +21,33 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+// Add to UserManagement.jsx at the top level state declarations
+const [currentUser, setCurrentUser] = useState(null);
+
+// Add this to your useEffect or create a new one
+useEffect(() => {
+  const fetchCurrentUser = async () => {
+    try {
+      // Get the current user from localStorage if available
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        setCurrentUser(user);
+      } else {
+        // If not in localStorage, fetch from API
+        const userData = await userService.getCurrentUser();
+        setCurrentUser(userData);
+        // Optionally save to localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    } catch (err) {
+      console.error("Failed to get current user info", err);
+      setError("Please log in again to manage users");
+    }
+  };
+  
+  fetchCurrentUser();
+}, []);
 
   const fetchUsers = async () => {
     try {
@@ -76,6 +103,7 @@ const UserManagement = () => {
   const handleEditSubmit = async () => {
     try {
       setLoading(true);
+      
       await userService.updateUser(selectedUser.id, editFormData);
       
       // Update user in the list
@@ -96,6 +124,7 @@ const UserManagement = () => {
   const handleBalanceSubmit = async () => {
     try {
       setLoading(true);
+      console.log('Updating balance for user:', selectedUser.id, 'to:', balanceAmount);
       await userService.updateUserBalance(selectedUser.id, balanceAmount);
       
       // Update user balance in the list

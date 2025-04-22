@@ -131,6 +131,16 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    @Transactional
+    public Usuario actualizarBalance (Long userId, Double nuevoBalance) {
+        Usuario usuario = obtenerUsuarioPorId(userId);
+        if (nuevoBalance < 0) {
+            throw new IllegalArgumentException("El balance no puede ser negativo.");
+        }
+        usuario.setBalance(nuevoBalance);
+        usuarioRepository.save(usuario);
+        return usuario;
+    }
 
     /**
      * Deletes a user by their ID.

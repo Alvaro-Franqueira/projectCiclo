@@ -83,7 +83,7 @@ public class RuletaService {
           // Determine if the bet won using the frontend's number
         
             apuestaCreada.setWinloss(determinarResultadoApuesta(apuestaCreada, numeroGanadorFrontend)); // Use the controller number for result calculation
-            log.info("Bet won(maybe)! User: {}, Bet ID: {}, Winning Number: {}", usuario.getUsername(), apuestaCreada.getId(), numeroGanadorFrontend);
+            log.info("Bet finished! User: {}, Bet ID: {}, Winning Number: {}", usuario.getUsername(), apuestaCreada.getId(), numeroGanadorFrontend);
 
             Double balance = usuario.getBalance() + apuestaCreada.getWinloss(); // Calculate new balance based on win/loss
             

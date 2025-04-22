@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner } from 'react-bootstrap';
 // Use the components from the library
-import { RouletteTable, RouletteWheel } from '../../../react-casino-roulette/src';
-import '../../../react-casino-roulette/dist/index.css';
+import { RouletteTable, RouletteWheel } from '../../../react-casino-roulette/src'; // Adjust path if needed
+import '../../../react-casino-roulette/dist/index.css'; // Adjust path if needed
 import './Roulette.css'; // Your custom styles
 import betService from '../../services/betService';
 import ruletaService from '../../services/ruletaService';
@@ -31,12 +31,34 @@ const chipsMap = {
 };
 const defaultChip = 'chip10'; // Default chip to start with
 
-//change it to american roulette(the one with 0 and 00)
+// American Roulette has 0 and 00. Numbers 1-36 have the same colors.
 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
 // Regex to identify betIds representing multi-number inside bets (split, street, corner, line, etc.)
-// Assumes the library uses hyphenated digits for these (e.g., "1-2", "1-2-3", "1-4-2-5")
 const multiNumberBetRegex = /^\d+(-\d+)+$/;
+
+// Helper function to determine if a bet is a special type that needs custom handling
+const isSpecialBetType = (betId) => {
+    return ['RED', 'BLACK', 'EVEN', 'ODD', '1_TO_18', '19_TO_36',
+            '1ST_DOZEN', '2ND_DOZEN', '3RD_DOZEN',
+            '1ST_COLUMN', '2ND_COLUMN', '3RD_COLUMN'].includes(betId);
+};
+
+// Function to get bet type and value for special bets
+const getSpecialBetTypeAndValue = (betId) => {
+    if (betId === 'RED' || betId === 'BLACK') {
+        return { tipoApuesta: 'color', valorApuesta: betId === 'RED' ? '1' : '2' };
+    } else if (betId === 'EVEN' || betId === 'ODD') {
+        return { tipoApuesta: 'paridad', valorApuesta: betId === 'EVEN' ? 'par' : 'impar' };
+    } else if (betId === '1_TO_18' || betId === '19_TO_36') {
+        return { tipoApuesta: 'mitad', valorApuesta: betId === '1_TO_18' ? 'bajo' : 'alto' };
+    } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
+        return { tipoApuesta: 'docena', valorApuesta: betId === '1ST_DOZEN' ? '1' : betId === '2ND_DOZEN' ? '2' : '3' };
+    } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
+        return { tipoApuesta: 'columna', valorApuesta: betId === '1ST_COLUMN' ? '1' : betId === '2ND_COLUMN' ? '2' : '3' };
+    }
+    return null;
+};
 
 // Function to calculate total bet amount from the bets object
 const calculateTotalBet = (bets) => {
@@ -56,58 +78,51 @@ function RouletteGame() {
   // State for chip selection
   const [activeChipKey, setActiveChipKey] = useState(defaultChip); // e.g., 'chip10'
 
-  // State for wheel animation
-  const [isSpinning, setIsSpinning] = useState(false);
+  // State for wheel animation and process
+  const [isSpinning, setIsSpinning] = useState(false); // Tracks the entire spin process (API + animation)
   const [spinResultNumber, setSpinResultNumber] = useState(null); // The actual winning number (string) after spin
   const [startSpin, setStartSpin] = useState(false); // Triggers the library wheel animation
   const [spinResults, setSpinResults] = useState(null); // Stores results between API call and spin end
+
   // UI/Feedback State
-  const [loading, setLoading] = useState(false); // Loading state for API calls
   const [message, setMessage] = useState({ text: '', type: 'info' }); // For displaying results/errors
   const [betHistory, setBetHistory] = useState([]); // Recent winning numbers
   const [gameHistory, setGameHistory] = useState([]); // User's past bet results for this game
 
   // --- Effects ---
 
-  // Initialize balance from user context (assuming synchronous fetch or initial value)
+  // Initialize balance from user context
    useEffect(() => {
        const fetchBalance = async () => {
            if (user?.id) {
                try {
-                   // Use await if userService.getUserBalance is async
                    const balance = await userService.getUserBalance(user.id);
                    setUserBalance(balance);
                } catch (error) {
                    console.error("Failed to fetch initial balance:", error);
-                   setUserBalance(0); // Set default or handle error
+                   setUserBalance(0);
                    setMessage({ text: 'Could not fetch balance.', type: 'danger' });
                }
            }
        };
        fetchBalance();
-   }, [user?.id]); // Depend on user.id
+   }, [user?.id]);
 
    // Fetch user's bet history for Roulette (Game ID 1 assumed)
    const fetchUserGameHistory = useCallback(async () => {
        if (!user?.id) return;
        try {
-           // Assuming getUserGameBets returns the correct structure { bets: [...] } or similar
-           const historyResponse = await betService.getUserGameBets(user.id, 1); // Game ID 1 for Roulette
-
-           // Adjust based on the actual structure of historyResponse
-           const historyData = historyResponse.bets || historyResponse; // Example adjustment
-
+           const historyResponse = await betService.getUserGameBets(user.id, 1);
+           const historyData = historyResponse.bets || historyResponse;
            if (Array.isArray(historyData)) {
-               // Sort by date descending if timestamp available, otherwise take last 10 as received
-               // historyData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-               setGameHistory(historyData.slice(0, 10)); // Show last 10
+               setGameHistory(historyData.slice(0, 10));
            } else {
                console.error("Fetched history data is not an array:", historyData);
                setGameHistory([]);
            }
        } catch (error) {
            console.error("Failed to fetch user game history:", error);
-           setGameHistory([]); // Set empty on error
+           setGameHistory([]);
        }
    }, [user?.id]);
 
@@ -124,9 +139,10 @@ function RouletteGame() {
     setActiveChipKey(chipKey);
   };
 
-  // Handle clicks on the RouletteTable component (provided by the library)
+  // Handle clicks on the RouletteTable component
   const handleTableBet = ({ bet, payload, id }) => {
-    if (isSpinning || loading) return;
+    // Prevent betting while the wheel is spinning or API call is in progress
+    if (isSpinning) return;
 
     const selectedChip = chipsMap[activeChipKey];
     if (!selectedChip) {
@@ -143,7 +159,7 @@ function RouletteGame() {
     userService.getUserBalance(user.id).then(currentBalance => {
         if (potentialTotal > currentBalance) {
             setMessage({ text: "Insufficient balance for this bet.", type: 'warning' });
-            setUserBalance(currentBalance); // Update balance display just in case
+            setUserBalance(currentBalance);
         } else {
             setBets(prevBets => {
                 const newBets = { ...prevBets };
@@ -151,16 +167,15 @@ function RouletteGame() {
                     newBets[id] = {
                         ...newBets[id],
                         number: newBets[id].number + chipValue,
-                        icon: chipIcon // Update icon if chip changes? Maybe not needed.
+                        icon: chipIcon
                     };
                 } else {
                     newBets[id] = { number: chipValue, icon: chipIcon };
                 }
                 return newBets;
             });
-            // Update displayed balance optimistically, or re-fetch if strict consistency is needed
-            setUserBalance(currentBalance); // Reflect the balance check result
-            setMessage({ text: '', type: 'info' }); // Clear any previous message
+            setUserBalance(currentBalance);
+            setMessage({ text: '', type: 'info' });
         }
     }).catch(err => {
         console.error("Error fetching balance during bet placement:", err);
@@ -170,18 +185,19 @@ function RouletteGame() {
 
   // Clear all bets from the table
   const clearAllBets = () => {
-    if (isSpinning || loading) return;
+    if (isSpinning) return; // Prevent clearing while spinning
     setBets({});
     setMessage({ text: 'Bets cleared.', type: 'info' });
   };
 
 // Start the spin process
 const handleSpinClick = async () => {
-    const originalBetsState = bets; // Use the state representing visual bets
+    const originalBetsState = bets;
     const totalBetAmount = calculateTotalBet(originalBetsState);
     const numberOfVisualBets = Object.keys(originalBetsState).length;
 
-    if (isSpinning || loading || numberOfVisualBets === 0) {
+    // Prevent spin if already spinning or no bets placed
+    if (isSpinning || numberOfVisualBets === 0) {
         if (numberOfVisualBets === 0) setMessage({ text: 'Place your bets first!', type: 'warning' });
         return;
     }
@@ -190,7 +206,7 @@ const handleSpinClick = async () => {
     let currentBalance;
     try {
         currentBalance = await userService.getUserBalance(user.id);
-        setUserBalance(currentBalance); // Ensure UI is up-to-date
+        setUserBalance(currentBalance);
     } catch {
         setMessage({ text: 'Could not verify balance before spin.', type: 'danger' });
         return;
@@ -201,8 +217,7 @@ const handleSpinClick = async () => {
         return;
     }
 
-
-    setLoading(true);
+    // Set isSpinning to true to disable UI and indicate process start
     setIsSpinning(true);
     setMessage({ text: 'Spinning...', type: 'info' });
     setStartSpin(false); // Ensure wheel doesn't start prematurely
@@ -211,73 +226,34 @@ const handleSpinClick = async () => {
         let apiResponse;
         let finalWinningNumber = null;
         let finalTotalWinLoss = 0;
+        console.log("Starting spin process..., bets:", originalBetsState);
 
         // --- Transform Visual Bets into Backend-Ready Bet Objects ---
         const betsToProcess = Object.entries(originalBetsState).flatMap(([betId, betData]) => {
-            let tipoApuesta;
-            let valorApuesta; // Used for non-hyphenated bets
-
-            // Check if it's a multi-number bet (e.g., "1-2", "1-4-2-5")
-            if (multiNumberBetRegex.test(betId)) {
-                const numbers = betId.split('-').map(numStr => parseInt(numStr.trim(), 10));
-                const validNumbers = numbers.filter(num => !isNaN(num));
-
-                if (validNumbers.length === 0) {
-                    console.warn(`Could not parse numbers from betId: ${betId}`);
-                    return []; // Return empty array to be ignored by flatMap
+            console.log("Processing betId:", betId);
+            if (isSpecialBetType(betId)) {
+                const specialBet = getSpecialBetTypeAndValue(betId);
+                if (specialBet) {
+                    return [{ usuarioId: user.id, cantidad: betData.number, tipoApuesta: specialBet.tipoApuesta, valorApuesta: specialBet.valorApuesta }];
                 }
-
-                // Generate an array of individual 'numero' bet objects
-                return validNumbers.map(num => ({
-                    usuarioId: user.id,
-                    cantidad: betData.number, // The full amount bet on the visual spot applies to each covered number
-                    tipoApuesta: 'numero',     // Backend expects 'numero' for these parts
-                    valorApuesta: String(num), // The specific single number
-                    // Optional: Include originalBetId if backend needs to link these back?
-                    // originalBetId: betId
-                }));
             }
-            // --- Handle Non-Hyphenated Bets ---
-            else if (betId === 'RED' || betId === 'BLACK') {
-                tipoApuesta = 'color';
-                valorApuesta = betId === 'RED' ? '1' : '2';
-            } else if (betId === 'EVEN' || betId === 'ODD') {
-                tipoApuesta = 'paridad';
-                valorApuesta = betId === 'EVEN' ? 'par' : 'impar';
-            } else if (betId === '1_TO_18' || betId === '19_TO_36') {
-                tipoApuesta = 'mitad';
-                valorApuesta = betId === '1_TO_18' ? '1' : '2';
-            } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
-                tipoApuesta = 'docena';
-                valorApuesta = betId === '1ST_DOZEN' ? '1' : betId === '2ND_DOZEN' ? '2' : '3';
-            } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
-                tipoApuesta = 'columna';
-                valorApuesta = betId === '1ST_COLUMN' ? '1' : betId === '2ND_COLUMN' ? '2' : '3';
+            else if (multiNumberBetRegex.test(betId)) {
+                const numbers = betId.split('-');
+                console.log("Parsed multi-number bet:", numbers);
+                return numbers.map(num => ({ usuarioId: user.id, cantidad: betData.number, tipoApuesta: 'numero', valorApuesta: String(num) }));
             }
-             // Handle single number bets (e.g., "0", "17", "36") and "00"
-            else if (/^\d+$/.test(betId) || betId === '00') {
-                 tipoApuesta = 'numero';
-                 valorApuesta = betId;
-             } else {
+            else if (/^\d+$/.test(betId) || betId === '00') { // Correctly handles '00'
+                return [{ usuarioId: user.id, cantidad: betData.number, tipoApuesta: 'numero', valorApuesta: betId }];
+            } else {
                 console.warn("Unknown bet type ID:", betId);
-                return []; // Ignore unknown types
+                return [];
             }
+        });
 
-            // For non-hyphenated bets, return a single object in an array for flatMap
-            return [{
-                usuarioId: user.id,
-                cantidad: betData.number,
-                tipoApuesta: tipoApuesta,
-                valorApuesta: valorApuesta
-            }];
-        }); // End flatMap
-
-        // Check if there are any valid bets to send after processing
         if (betsToProcess.length === 0) {
              const messageText = numberOfVisualBets > 0 ? "Could not process any of the placed bets." : "Place your bets first!";
              setMessage({ text: messageText, type: 'warning' });
-             setIsSpinning(false);
-             setLoading(false);
+             setIsSpinning(false); // Reset spinning state
              return;
         }
 
@@ -285,37 +261,30 @@ const handleSpinClick = async () => {
         console.log("Bets to process:", betsToProcess);
 
         // --- Conditional API Call ---
-        // Determine if we need the single bet or multi-bet endpoint.
-        // Use 'jugar' ONLY if there was exactly ONE visual bet placed AND it was NOT a multi-number type.
         const isSingleSimpleBet = numberOfVisualBets === 1 && !multiNumberBetRegex.test(Object.keys(originalBetsState)[0]);
 
         if (isSingleSimpleBet) {
-            // We should have exactly one bet object in betsToProcess
             if (betsToProcess.length !== 1) {
                  console.error("Logic error: Expected 1 processed bet for a single simple visual bet, but got", betsToProcess.length);
-                 // Fallback to multibet or throw error? Let's try falling back.
                  console.log("Falling back to multi-bet API due to processing mismatch.");
                  apiResponse = await ruletaService.jugarMultibet(betsToProcess);
             } else {
                 console.log("Calling single bet API (jugar) with:", betsToProcess[0]);
                 apiResponse = await ruletaService.jugar(betsToProcess[0]);
             }
-            // Extract results (handle potential differences in response structure)
             finalWinningNumber = apiResponse.winningNumber;
-            finalTotalWinLoss = apiResponse.resolvedBet?.winloss ?? apiResponse.totalWinLoss ?? 0; // Adapt as needed
+            finalTotalWinLoss = apiResponse.resolvedBet?.winloss ?? apiResponse.totalWinLoss ?? 0;
 
-        } else { // Use multibet if multiple visual bets OR a single multi-number visual bet
-            if (betsToProcess.length < 1) { // Should be caught earlier, but safe check
+        } else {
+            if (betsToProcess.length < 1) {
                 throw new Error("No valid bets to send to the multi-bet API.");
             }
             console.log(`Calling multi-bet API (jugarMultibet) with ${betsToProcess.length} individual bets.`);
             apiResponse = await ruletaService.jugarMultibet(betsToProcess);
-             // Extract results (expecting totalWinLoss from multibet)
             finalWinningNumber = apiResponse.winningNumber;
-            finalTotalWinLoss = apiResponse.totalWinLoss ?? 0; // Provide default
+            finalTotalWinLoss = apiResponse.totalWinLoss ?? 0;
         }
         // --- End Conditional API Call ---
-
 
         console.log("API Response received:", apiResponse);
 
@@ -323,21 +292,18 @@ const handleSpinClick = async () => {
             throw new Error(apiResponse?.message || "Backend did not return a valid winning number.");
         }
 
-        // Fetch the definitive balance from the backend AFTER the bets are processed
         const updatedUser = await userService.getUserById(user.id);
         const finalBackendBalance = updatedUser.balance;
-        setUserBalance(finalBackendBalance); // Update balance state with the authoritative value
+        setUserBalance(finalBackendBalance);
 
-        // Store results for display after animation
         setSpinResults({
             winningNumber: String(finalWinningNumber),
-            profit: Number(finalTotalWinLoss), // Ensure it's a number
-            finalBalance: finalBackendBalance // Store the confirmed final balance
+            profit: Number(finalTotalWinLoss),
+            finalBalance: finalBackendBalance
         });
 
-        // Trigger the wheel animation
-        setSpinResultNumber(String(finalWinningNumber)); // Set the number for the wheel component
-        setStartSpin(true); // Start the animation
+        setSpinResultNumber(String(finalWinningNumber));
+        setStartSpin(true); // Start the animation AFTER successful API call
 
     } catch (error) {
         console.error("Error during spin:", error);
@@ -347,10 +313,8 @@ const handleSpinClick = async () => {
             type: 'danger'
         });
         // Reset state on error
-        setIsSpinning(false);
-        setLoading(false);
+        setIsSpinning(false); // Reset spinning state on error
         setStartSpin(false);
-        // Re-fetch balance on error to ensure consistency
         try {
              const currentBalanceOnError = await userService.getUserBalance(user.id);
              setUserBalance(currentBalanceOnError);
@@ -358,7 +322,7 @@ const handleSpinClick = async () => {
              console.error("Failed to re-fetch balance after spin error:", balanceError);
         }
     }
-    // Note: setLoading(false), setIsSpinning(false) are now primarily handled in handleSpinEnd
+    // Note: setIsSpinning(false) is now primarily handled in handleSpinEnd or the catch block
 };
 
 const handleSpinEnd = () => {
@@ -367,59 +331,40 @@ const handleSpinEnd = () => {
     if (spinResults) {
         const { winningNumber, profit, finalBalance } = spinResults;
 
-        // Ensure balance displayed matches the final balance from backend
         setUserBalance(finalBalance);
 
-        // Confetti for win
         if (profit > 0) {
-            confetti({
-                particleCount: 250, // Reduced slightly
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 250, spread: 70, origin: { y: 0.6 } });
         }
 
-        // Update UI message
         const winLossText = profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`;
         setMessage({
             text: `Landed on: ${winningNumber}. ${winLossText}`,
             type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
         });
 
-        // Update local history display
-        setBetHistory(prev => [winningNumber, ...prev.slice(0, 14)]); // Show more history?
-
-        // Fetch updated game history from backend *after* spin is fully resolved
+        setBetHistory(prev => [winningNumber, ...prev.slice(0, 14)]);
         fetchUserGameHistory();
-
-        // Clear the temporary results
-        setSpinResults(null);
+        setSpinResults(null); // Clear temporary results
     } else {
-        // Handle cases where spin ended without results (e.g., error before setting spinResults)
-        console.warn("Spin ended but no spinResults were found. This might happen after an error during the spin process.");
-        // Optionally set a generic message if no error was displayed before
+        console.warn("Spin ended but no spinResults were found.");
         if (message.type !== 'danger') {
              setMessage({ text: 'Spin complete.', type: 'info' });
         }
     }
 
     // Reset flags and clear bets for the next round
-    setIsSpinning(false);
+    setIsSpinning(false); // Spin process is now fully complete
     setStartSpin(false);
-    setLoading(false);
-    setBets({}); // Clear visual bets from the table after spin completes
+    setBets({}); // Clear visual bets
 };
 
 
-  // Helper function to determine the color of a number in the roulette wheel
+  // Helper function to determine the color of a number
   const getNumberColor = (number) => {
-      // Handle '00' specifically if using American Roulette
-      if (number === '00') return 'green';
+      if (number === '00' || number === '0') return 'green'; // Both 0 and 00 are green
       const num = parseInt(number, 10);
-      if (isNaN(num)) {
-          return 'black'; // Default or handle non-numeric results if they occur
-      }
-      if (num === 0) return 'green';
+      if (isNaN(num)) return 'black';
       if (redNumbers.includes(num)) return 'red';
       return 'black';
   };
@@ -431,9 +376,8 @@ const handleSpinEnd = () => {
 
   return (
     <Container fluid className="roulette-container py-4">
-        {/* ... (Top Title and Stats Link - unchanged) ... */}
          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="text-center mb-0">Casino Roulette</h2> {/* Removed mb-4 */}
+            <h2 className="text-center mb-0">Casino Roulette</h2>
             <Link to="/profile" className="btn btn-outline-primary">
                 <FaChartBar className="me-2" /> View My Statistics
             </Link>
@@ -473,8 +417,7 @@ const handleSpinEnd = () => {
                       onClick={() => handleChipChange(key)}
                       title={`Select $${value} chip`}
                     >
-                      <img width={45} height={45} src={icon} alt={`$${value} chip`} className="chip-image"/> {/* Slightly smaller */}
-                      {/* Removed text value display - less clutter */}
+                      <img width={45} height={45} src={icon} alt={`$${value} chip`} className="chip-image"/>
                     </div>
                   ))}
                 </div>
@@ -487,22 +430,19 @@ const handleSpinEnd = () => {
             {/* User History Card */}
            <Card>
                 <Card.Header>Your Recent Bets</Card.Header>
-                 {/* Added scroll styling directly */}
                 <ListGroup variant="flush" style={{ maxHeight: '200px', overflowY: 'auto', fontSize: '0.85rem' }}>
                     {gameHistory.length > 0 ? (
                         gameHistory.map(bet => (
                              <ListGroup.Item
-                                key={bet.id} // Make sure bet.id is unique from the API
+                                key={bet.id}
                                 className={`d-flex justify-content-between align-items-center p-2 ${bet.estado === 'GANADA' ? 'list-group-item-success' : 'list-group-item-danger'}`}
                              >
                                 <div>
-                                    {/* Displaying type/value might need adjustment based on API fields */}
                                     <span>{bet.tipoApuesta}: {bet.valorApostado} (${bet.cantidad?.toFixed(2)})</span>
                                     <br/>
                                     <small className="text-muted">Result: {bet.valorGanador} | {new Date(bet.fechaHora).toLocaleTimeString()}</small>
                                 </div>
                                 <span className={`fw-bold ${bet.estado === 'GANADA' ? 'text-success' : 'text-danger'}`}>
-                                     {/* Ensure winloss exists and is a number */}
                                     {typeof bet.winloss === 'number' ? `${bet.winloss >= 0 ? '+' : ''}${bet.winloss.toFixed(2)}` : 'N/A'}
                                 </span>
                             </ListGroup.Item>
@@ -517,25 +457,24 @@ const handleSpinEnd = () => {
         {/* Center: Wheel, Buttons, Message */}
         <Col md={6} className="d-flex flex-column align-items-center">
             <div className="roulette-wheel-wrapper mb-3">
-                {/* Ensure the wheel component can handle '00' if you use American layout */}
+                {/* Add american={true} prop if the library supports it for American layout */}
                 <RouletteWheel
                     start={startSpin}
-                    winningBet={spinResultNumber} // Pass the determined winning number string
+                    winningBet={spinResultNumber}
                     onSpinningEnd={handleSpinEnd}
-                    // Check if your wheel component needs specific American Roulette settings
-                    // american={true} // Example prop if it exists
+                    american={true} // Set to true for American Roulette (0 and 00)
                 />
             </div>
 
              {/* Spin/Clear Buttons */}
            <div className="d-flex justify-content-center w-100 mb-3">
               <Button
-                  variant="outline-danger" // Changed to outline
+                  variant="outline-danger"
                   size="lg"
                   onClick={clearAllBets}
-                  disabled={isSpinning || loading || Object.keys(bets).length === 0}
+                  disabled={isSpinning || Object.keys(bets).length === 0} // Disabled only if spinning or no bets
                   className="me-3"
-                  style={{ minWidth: '130px'}} // Slightly wider
+                  style={{ minWidth: '130px'}}
               >
                   Clear Bets
               </Button>
@@ -543,30 +482,28 @@ const handleSpinEnd = () => {
                   variant="success"
                   size="lg"
                   onClick={handleSpinClick}
-                  disabled={isSpinning || loading || Object.keys(bets).length === 0 || totalBetDisplay > userBalance}
-                  style={{ minWidth: '130px'}} // Slightly wider
+                  disabled={isSpinning || Object.keys(bets).length === 0 || totalBetDisplay > userBalance} // Disabled if spinning, no bets, or insufficient balance
+                  style={{ minWidth: '130px'}}
               >
-                  {isSpinning || loading ? <><Spinner as="span" animation="border" size="sm" /> Spinning...</> : 'SPIN'}
+                  {isSpinning ? <><Spinner as="span" animation="border" size="sm" /> Spinning...</> : 'SPIN'} {/* Show spinner only based on isSpinning */}
               </Button>
            </div>
 
 
             {/* Result Message Area */}
-            <div className="result-message-area w-100 px-3" style={{ minHeight: '60px' }}> {/* Added padding */}
-                 {/* Message Alert */}
+            <div className="result-message-area w-100 px-3" style={{ minHeight: '60px' }}>
                  {message.text && (
-                     <Alert variant={message.type} className="text-center py-2"> {/* Centered text */}
+                     <Alert variant={message.type} className="text-center py-2">
                          {message.text}
                      </Alert>
                  )}
-                 {/* Conditionally render winning image based on state AFTER spin completes and if won */}
-                 {message.type === 'success' && !isSpinning && (
-                    <div className="text-center mt-n2"> {/* Negative margin to overlap slightly */}
+                 {message.type === 'success' && !isSpinning && ( // Show image only after successful spin completes
+                    <div className="text-center mt-n2">
                         <img
                             src={flyingChips}
                             alt="Winning Chips"
-                            className="winning-image" // Ensure CSS handles animation/display
-                            style={{ maxWidth: '80px', height: 'auto' }} // Control size
+                            className="winning-image"
+                            style={{ maxWidth: '80px', height: 'auto' }}
                         />
                     </div>
                  )}
@@ -577,17 +514,15 @@ const handleSpinEnd = () => {
         <Col md={3}>
           <Card>
             <Card.Header>Last Numbers</Card.Header>
-            {/* Apply scrollbar styling directly */}
             <Card.Body className="p-2 text-center history-numbers-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {betHistory.length > 0 ? (
-                    // Display numbers in a flex container for wrapping
                      <div className="d-flex flex-wrap justify-content-center">
                         {betHistory.map((num, index) => (
                             <span
                                 key={index}
-                                className="history-number m-1" // Added margin
+                                className="history-number m-1"
                                 style={{ backgroundColor: getNumberColor(num), color: 'white' }}
-                                title={`Spin #${betHistory.length - index}`} // Show sequence
+                                title={`Spin #${betHistory.length - index}`}
                             >
                                 {num}
                             </span>
@@ -602,18 +537,17 @@ const handleSpinEnd = () => {
       </Row>
 
       {/* Bottom Row: Betting Table */}
-      <Row className="mt-2"> {/* Reduced margin top */}
-        <Col md={10} lg={9} className="mx-auto"> {/* Adjusted width */}
+      <Row className="mt-2">
+        <Col md={10} lg={9} className="mx-auto">
             <Card>
                 <Card.Header className="text-center">Place Your Bets</Card.Header>
-                {/* Ensure container allows centering and potential scaling */}
                  <Card.Body className="p-1 d-flex justify-content-center align-items-center roulette-table-card-body">
                     <div className="roulette-table-container" style={{ maxWidth: '100%', overflowX: 'auto' }}>
+                         {/* Add american={true} prop if the library supports it for American layout */}
                          <RouletteTable
                             onBet={handleTableBet}
-                            bets={bets} // Pass the visual bets state
-                            // Check if library needs American layout flag
-                            // american={true} // Example
+                            bets={bets}
+                            american={true} // Set to true for American Roulette (0 and 00)
                         />
                     </div>
                  </Card.Body>
@@ -621,7 +555,7 @@ const handleSpinEnd = () => {
         </Col>
       </Row>
 
-        {/* Big Win Modal or Image - Example (could be state-controlled) */}
+        {/* Big Win Modal or Image - Example */}
         {/* {showBigWin && (
             <div className="big-win-overlay">
                 <img src={bigWin} alt="Big Win!" />
@@ -630,5 +564,4 @@ const handleSpinEnd = () => {
     </Container>
   );
 }
-
 export default RouletteGame;
