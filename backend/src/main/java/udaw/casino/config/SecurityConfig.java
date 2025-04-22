@@ -52,7 +52,8 @@ public class SecurityConfig {
                     "/api/usuarios/login",
                     "/api/usuarios/registrar",
                     "/api/usuarios/username/**",
-                    "/api/usuarios/id/**" 
+                    "/api/usuarios/id/**",
+                    "/api/payments/webhook"
                 ).permitAll()
                 .requestMatchers("/api/usuarios/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

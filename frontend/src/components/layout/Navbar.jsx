@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, Button, Badge, Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaSignOutAlt, FaCoins, FaTrophy, FaGamepad, FaUserCog, FaDice, FaRandom } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCoins, FaTrophy, FaGamepad, FaUserCog, FaDice, FaRandom, FaCreditCard } from 'react-icons/fa';
 import { GiAbstract013 } from "react-icons/gi";
 import { useAuth } from '../../context/AuthContext';
 import neonFavicon from '../images/neonfavicon.png';
@@ -70,6 +70,16 @@ const AppNavbar = () => {
 
         <Nav.Link as={Link} to="/profile" className="">
           <FaUser className="me-1" /> {user.username || 'Profile'}
+        </Nav.Link>
+
+        <Nav.Link as={Link} to="/payment" className="d-flex align-items-center">
+          <FaCreditCard className="me-1" /> Add Credits
+          {user && (
+            <Badge bg="success" className="ms-2">
+              <FaCoins className="me-1" size={12} />
+              {user.balance?.toLocaleString() || 0}
+            </Badge>
+          )}
         </Nav.Link>
 
         <Button variant="outline-light" className=" ms-auto d-inline-flex align-items-center" onClick={handleLogout} >

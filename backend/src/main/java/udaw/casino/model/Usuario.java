@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +49,7 @@ public class Usuario {
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @ToString.Exclude // Exclude from toString to prevent circular references
     private List<Apuesta> apuestas;
 
     // Rankings are now calculated on-demand and not stored in the database
@@ -65,5 +67,17 @@ public class Usuario {
         this.username = username;
         this.password = password; // Password should be encoded before saving!
         this.email = email;
+    }
+    
+    // Override toString to prevent circular references
+    @Override
+    public String toString() {
+        return "Usuario{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", balance=" + balance +
+                ", rol=" + rol +
+                '}';
     }
 }

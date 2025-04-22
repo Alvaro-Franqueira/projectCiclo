@@ -24,6 +24,10 @@ import UserManagement from './components/admin/UserManagement';
 // User Profile
 import UserProfile from './pages/UserProfile';
 
+// Payment components
+import PaymentPage from './pages/PaymentPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+
 // Services
 import { useAuth } from './context/AuthContext';
 
@@ -50,6 +54,8 @@ function App() {
             <Route path="/games/dice" element={<DiceGame />} />
             <Route path="/rankings" element={<RankingList />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment-success" element={<PaymentSuccessPage />} />
           </Route>
           
           {/* Admin routes */}

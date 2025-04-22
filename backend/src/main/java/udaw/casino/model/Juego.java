@@ -1,6 +1,7 @@
 package udaw.casino.model;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Data
+@ToString(exclude = "apuestas") // Exclude apuestas from toString to prevent circular references
 @Table(name = "juegos") // Use plural for table names
 public class Juego {
 
@@ -40,4 +42,15 @@ public class Juego {
     public Juego(String nombre, String descripcion) {
         this.nombre = nombre;
         this.descripcion = descripcion;
-    }}
+    }
+    
+    // Override toString to prevent circular references
+    @Override
+    public String toString() {
+        return "Juego{" +
+                "id=" + id +
+                ", nombre='" + nombre + '\'' +
+                ", descripcion='" + descripcion + '\'' +
+                '}';
+    }
+}
