@@ -24,14 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/usuarios") // Consistent base path
+@RequestMapping("/api/usuarios") 
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    @Autowired
     public UsuarioController(UsuarioService usuarioService, 
                             AuthenticationManager authenticationManager,
                             JwtUtils jwtUtils) {

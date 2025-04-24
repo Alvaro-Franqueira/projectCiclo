@@ -80,7 +80,7 @@ function RouletteGame() {
 
   // State for wheel animation and process
   const [isSpinning, setIsSpinning] = useState(false); // Tracks the entire spin process (API + animation)
-  const [spinResultNumber, setSpinResultNumber] = useState(null); // The actual winning number (string) after spin
+  const [spinResultNumber, setSpinResultNumber] = useState("00"); // The actual winning number (string) after spin
   const [startSpin, setStartSpin] = useState(false); // Triggers the library wheel animation
   const [spinResults, setSpinResults] = useState(null); // Stores results between API call and spin end
 
@@ -224,7 +224,7 @@ const handleSpinClick = async () => {
 
     try {
         let apiResponse;
-        let finalWinningNumber = null;
+        let finalWinningNumber = "";
         let finalTotalWinLoss = 0;
         console.log("Starting spin process..., bets:", originalBetsState);
 
