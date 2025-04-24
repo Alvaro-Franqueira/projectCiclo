@@ -60,7 +60,8 @@ public class RuletaController {
             } else {
                 numeroGanador = String.valueOf(randomNumber);
             }
-            
+            System.err.println("Betting number generated: " + valorApuesta); // Log the winning number for debugging
+            System.err.println("BACK Winning number generated: " + numeroGanador); // Log the winning number for debugging
             // Call service with the server-generated winning number
             Apuesta apuestaResuelta = ruletaService.jugarRuleta(usuarioId, cantidad, tipoApuesta, valorApuesta, numeroGanador);
 
@@ -106,7 +107,7 @@ public class RuletaController {
             } else {
                 numeroGanador = String.valueOf(randomNumber);
             }
-
+            System.err.println("BACK Winning number generated: " + numeroGanador); // Log the winning number for debugging
             List<RuletaResponse> respuestas = new ArrayList<>();
 
             for (ApuestaMultipleDTO apuestaDTO : apuestas) {
