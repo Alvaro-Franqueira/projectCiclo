@@ -133,8 +133,8 @@ const CheckoutForm = () => {
         
         // Redirect after a short delay
         setTimeout(() => {
-          navigate('/payment-success');
-        }, 2000);
+          navigate('/profile');
+        }, 3000);
       } else {
         console.log('Payment status:', paymentIntent?.status || 'unknown');
         setMessage('Payment is being processed. You will be notified when it completes.');
@@ -181,8 +181,8 @@ const CheckoutForm = () => {
                   <Form.Label>Amount (€)</Form.Label>
                   <Form.Control
                     type="number"
-                    min="5"
-                    step="5"
+                    min="1"
+                    step="1"
                     value={amount}
                     onChange={handleAmountChange}
                     disabled={paymentStatus === 'processing' || loading}

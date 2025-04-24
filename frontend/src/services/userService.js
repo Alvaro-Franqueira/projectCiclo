@@ -23,8 +23,6 @@ const userService = {
   getUserById: async (userId) => {
     try {
       const response = await api.get(USER_ENDPOINTS.USER_BY_ID(userId));
-      // --- CRITICAL: Ensure response.data contains the balance field ---
-      // Example: response.data might look like { id: 1, username: 'test', email: '...', saldo: 123.45, rol: 'USER', ... }
       console.log("User data from getUserById:", response.data); // Add log to verify
       return response.data;
     } catch (error) {

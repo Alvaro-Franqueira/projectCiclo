@@ -65,5 +65,7 @@ public class Usuario {
         this.username = username;
         this.password = password; // Password should be encoded before saving!
         this.email = email;
+        fechaRegistro = LocalDateTime.now(); // Set registration time
+        this.rol = Rol.USER; // Default role is USER
     }
 }

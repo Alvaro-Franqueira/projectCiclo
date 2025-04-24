@@ -12,7 +12,7 @@ import bigWin from '../images/bigwin.png';
 
 const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
-  const [userBalance, setUserBalance] = useState(0); // Start with 0, update in useEffect
+  const [userBalance, setUserBalance] = useState(); //update in useEffect
   const [betAmount, setBetAmount] = useState(5);
   const [betType, setBetType] = useState('parimpar');
   const [betValue, setBetValue] = useState('par');
@@ -184,24 +184,7 @@ const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${t
 
 const betAmount = resolvedBet.cantidad;
 
-// Add explanation of the payout calculation based on bet type
 let payoutExplanation = '';
-if (resolvedBet.tipo === 'parimpar') {
-    // For even/odd bets, payout is 95% of bet amount
-    payoutExplanation = ` (95% of your $${betAmount} bet)`;
-} else if (resolvedBet.tipo === 'numero') {
-    // For number bets, payout depends on the number (using odds table from backend)
-    const odds = totalResult === 7 ? 5.0 : 
-                 (totalResult === 6 || totalResult === 8) ? 6.0 :
-                 (totalResult === 5 || totalResult === 9) ? 8.0 :
-                 (totalResult === 4 || totalResult === 10) ? 10.0 :
-                 (totalResult === 3 || totalResult === 11) ? 15.0 :
-                 (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
-    payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
-} else if (resolvedBet.tipo === 'mitad') {
-    // For half bets, payout is 95% of bet amount
-    payoutExplanation = ` (95% of your $${betAmount} bet)`;
-}
 
 if (resolvedBet.estado === 'GANADA') {
   // Trigger confetti animation
@@ -213,7 +196,24 @@ if (resolvedBet.estado === 'GANADA') {
       y: clickPosition.y
     },
   });
-  
+  // Add explanation of the payout calculation based on bet type
+
+  if (resolvedBet.tipo === 'parimpar') {
+      // For even/odd bets, payout is 95% of bet amount
+      payoutExplanation = ` (95% of your $${betAmount} bet)`;
+  } else if (resolvedBet.tipo === 'numero') {
+      // For number bets, payout depends on the number (using odds table from backend)
+      const odds = totalResult === 7 ? 5.0 : 
+                  (totalResult === 6 || totalResult === 8) ? 6.0 :
+                  (totalResult === 5 || totalResult === 9) ? 8.0 :
+                  (totalResult === 4 || totalResult === 10) ? 10.0 :
+                  (totalResult === 3 || totalResult === 11) ? 15.0 :
+                  (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
+      payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
+  } else if (resolvedBet.tipo === 'mitad') {
+      // For half bets, payout is 95% of bet amount
+      payoutExplanation = ` (95% of your $${betAmount} bet)`;
+  }
 
  
     setResultMessage({

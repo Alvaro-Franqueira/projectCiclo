@@ -1,7 +1,9 @@
 package udaw.casino.controller;
 
+import udaw.casino.dto.UserDTO;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.UsuarioNoEncontradoException;
+import udaw.casino.model.Rol;
 import udaw.casino.model.Usuario;
 import udaw.casino.security.JwtUtils;
 import udaw.casino.service.UsuarioService;
@@ -174,18 +176,20 @@ public class UsuarioController {
      * @return ResponseEntity with the updated user or an error.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuarioDetails) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody UserDTO usuarioDetails) {
         // Important: This currently allows updating any field, including role and balance.
         // Use DTOs and specific service methods for controlled updates (e.g., separate endpoint for balance/role changes by admin).
         // Also, handle password updates separately and securely.
         try {
-             // Ensure password isn't accidentally updated to null or an unencoded value
-             // Fetch existing user to preserve password if not explicitly changed
-             Usuario currentUser = usuarioService.obtenerUsuarioPorId(id);
-             usuarioDetails.setPassword(currentUser.getPassword()); // Keep existing password unless changed via a dedicated mechanism
+            Usuario usuarioExistente = usuarioService.obtenerUsuarioPorId(id);
+            if (usuarioExistente == null) {
+                return ResponseEntity.notFound().build();
+            }
+            usuarioExistente.setUsername(usuarioDetails.getUsername());
+            usuarioExistente.setEmail(usuarioDetails.getEmail());
+            usuarioExistente.setRol(Rol.valueOf(usuarioDetails.getRol()));
 
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioDetails);
-            usuarioActualizado.setPassword(null); // Avoid returning hash
+            Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioExistente);
             return ResponseEntity.ok(usuarioActualizado);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -196,6 +200,18 @@ public class UsuarioController {
         }
     }
 
+    // update a balance
+    @PutMapping("/balance/{id}")
+    public ResponseEntity<?> actualizarBalance(@PathVariable Long id, @RequestParam double nuevoBalance) {
+        try {
+            Usuario usuario = usuarioService.actualizarBalance(id, nuevoBalance);
+            return ResponseEntity.ok(usuario);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during balance update.");
+        }
+    }
     /**
      * Deletes a user.
      * Requires ADMIN role (to be enforced by Spring Security).

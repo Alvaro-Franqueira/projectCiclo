@@ -46,9 +46,20 @@ public class RuletaController {
 
 
         try {
-            // Generate a random winning number (0-36) on the server side
+            // Generate a random winning number (including 0 and 00)
             Random random = new Random();
-            int numeroGanador = random.nextInt(37); // 0-36 inclusive
+            String numeroGanador;
+            
+            // Generate a random number between 0 and 37
+            // 0-36 will represent the standard numbers
+            // 37 will represent "00"
+            int randomNumber = random.nextInt(38);
+            
+            if (randomNumber == 37) {
+                numeroGanador = "00";
+            } else {
+                numeroGanador = String.valueOf(randomNumber);
+            }
             
             // Call service with the server-generated winning number
             Apuesta apuestaResuelta = ruletaService.jugarRuleta(usuarioId, cantidad, tipoApuesta, valorApuesta, numeroGanador);
@@ -81,8 +92,20 @@ public class RuletaController {
     @PostMapping("/jugar/multi")
     public ResponseEntity<?> jugarRuletaMulti(@RequestBody List<ApuestaMultipleDTO> apuestas) {
         try {
+            // Generate a random winning number (including 0 and 00)
             Random random = new Random();
-            int numeroGanador = random.nextInt(37); // 0-36 inclusive
+            String numeroGanador;
+            
+            // Generate a random number between 0 and 37
+            // 0-36 will represent the standard numbers
+            // 37 will represent "00"
+            int randomNumber = random.nextInt(38);
+            
+            if (randomNumber == 37) {
+                numeroGanador = "00";
+            } else {
+                numeroGanador = String.valueOf(randomNumber);
+            }
 
             List<RuletaResponse> respuestas = new ArrayList<>();
 
@@ -131,7 +154,7 @@ public class RuletaController {
     // Helper class for the response (Using Lombok @Data for brevity)
     @Data // Generates getters, setters, toString, equals, hashCode
     private static class RuletaResponse {
-        private int winningNumber; // The number used to resolve the bet (came from frontend)
+        private String winningNumber; // Changed from int to String to support "00"
         private ApuestaDTO resolvedBet; // Details of the processed bet
     }
 
