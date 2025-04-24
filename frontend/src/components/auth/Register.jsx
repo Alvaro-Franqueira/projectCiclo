@@ -71,10 +71,14 @@ const Register = () => {
             }) => (
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Username</Form.Label>
+                  <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control
+                    id='username'
                     type="text"
                     name="username"
+                    label="Username"
+                    autoComplete="username"
+                    autoFocus
                     value={values.username}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -86,11 +90,14 @@ const Register = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label htmlFor='email'>Email</Form.Label>
                   <Form.Control
+                    id='email'
                     type="email"
                     name="email"
+                    label="Email"
                     value={values.email}
+                    autoComplete="email"
                     onChange={handleChange}
                     onBlur={handleBlur}
                     isInvalid={touched.email && errors.email}
@@ -101,10 +108,13 @@ const Register = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Password</Form.Label>
+                  <Form.Label htmlFor='password'>Password</Form.Label>
                   <Form.Control
+                    id='password'
                     type="password"
                     name="password"
+                    label="Password"
+                    autoComplete="new-password"
                     value={values.password}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -116,10 +126,13 @@ const Register = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Confirm Password</Form.Label>
+                  <Form.Label htmlFor='confirmPassword'>Confirm Password</Form.Label>
                   <Form.Control
+                    id='confirmPassword'
                     type="password"
                     name="confirmPassword"
+                    label="Confirm Password"
+                    autoComplete="new-password"
                     value={values.confirmPassword}
                     onChange={handleChange}
                     onBlur={handleBlur}

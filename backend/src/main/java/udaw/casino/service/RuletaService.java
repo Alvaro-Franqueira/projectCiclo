@@ -4,8 +4,6 @@ import udaw.casino.model.Apuesta;
 import udaw.casino.model.Juego;
 import udaw.casino.model.Usuario;
 import udaw.casino.repository.UsuarioRepository;
-import udaw.casino.exception.ResourceNotFoundException; 
-import udaw.casino.exception.SaldoInsuficienteException;
 import org.springframework.stereotype.Service;
 
 

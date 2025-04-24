@@ -49,11 +49,13 @@ const Login = () => {
             }) => (
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Username</Form.Label>
+                  <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control
+                    id='username'
                     type="text"
                     name="username"
                     value={values.username}
+                    autoComplete="username"
                     onChange={handleChange}
                     onBlur={handleBlur}
                     isInvalid={touched.username && errors.username}
@@ -64,10 +66,11 @@ const Login = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Password</Form.Label>
+                  <Form.Label >Password</Form.Label>
                   <Form.Control
                     type="password"
                     name="password"
+                    autoComplete="current-password"
                     value={values.password}
                     onChange={handleChange}
                     onBlur={handleBlur}

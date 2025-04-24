@@ -10,14 +10,23 @@ import neonFavicon from '../images/neonfavicon.png';
 const AppNavbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
-  
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+  const handleDropdownToggle = () => {
+    setShowDropdown(!showDropdown);
+  }
+
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-4" sticky="top" align="right">
+    <Navbar bg="dark" 
+            variant="dark" 
+            expand="lg" 
+            className="mb-4" 
+            sticky="top" 
+            align="right">
       <Container>
         
       <Navbar.Brand as={Link} to="/" >
@@ -45,34 +54,34 @@ const AppNavbar = () => {
             <FaGamepad className="me-1" /> Games
           </Dropdown.Toggle>
           <Dropdown.Menu>
-            <Dropdown.Item as={Link} to="/games/roulette">
+            <Dropdown.Item as={Link} to="/games/roulette" onClick={handleDropdownToggle}>
               <GiAbstract013 className="me-2" /> Roulette
             </Dropdown.Item>
-            <Dropdown.Item as={Link} to="/games/dice">
+            <Dropdown.Item as={Link} to="/games/dice" onClick={handleDropdownToggle}>
               <FaDice className="me-2" /> Dice Game
             </Dropdown.Item>
             <Dropdown.Divider />
-            <Dropdown.Item as={Link} to="/games">
+            <Dropdown.Item as={Link} to="/games" onClick={handleDropdownToggle}>
               <FaGamepad className="me-2" /> All Games
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
 
-        <Nav.Link as={Link} to="/rankings">
+        <Nav.Link as={Link} to="/rankings" onClick={handleDropdownToggle}>
           <FaTrophy className="me-1" /> Rankings
         </Nav.Link>
 
         {user && user.rol === 'ADMIN' && (
-          <Nav.Link as={Link} to="/admin">
+          <Nav.Link as={Link} to="/admin"  onClick={handleDropdownToggle}>
             <FaUserCog className="me-1" /> Admin Panel
           </Nav.Link>
         )}
 
-        <Nav.Link as={Link} to="/profile" className="">
+        <Nav.Link as={Link} to="/profile" className="" onClick={handleDropdownToggle}>
           <FaUser className="me-1" /> {user.username || 'Profile'}
         </Nav.Link>
 
-        <Nav.Link as={Link} to="/payment" className="d-flex align-items-center">
+        <Nav.Link as={Link} to="/payment" className="ms-auto align-items-center"  onClick={handleDropdownToggle}>
           <FaCreditCard className="me-1" /> Add Credits
 
         </Nav.Link>

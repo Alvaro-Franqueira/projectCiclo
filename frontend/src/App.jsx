@@ -39,7 +39,11 @@ function App() {
   const { isAuthenticated, isAdmin } = useAuth();
 
   return (
-    <Router>
+    <Router future={{ 
+      v7_relativeSplatPath: true,
+      v7_startTransition: true 
+    }}>
+    
       <AppNavbar />
       <Container className="py-4">
         <Routes>
