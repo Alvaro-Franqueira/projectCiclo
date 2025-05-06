@@ -5,6 +5,7 @@ import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.model.Apuesta;
 import udaw.casino.service.ApuestaService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +37,15 @@ public class ApuestaController {
 
     // GET /api/apuestas/usuario/{usuarioId} - Get all bets for a user
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<Apuesta>> obtenerApuestasPorUsuario(@PathVariable Long usuarioId) {
+    public ResponseEntity<List<ApuestaDTO>> obtenerApuestasPorUsuario(@PathVariable Long usuarioId) {
         try {
             // Service already checks if user exists
             List<Apuesta> apuestas = apuestaService.obtenerApuestasPorUsuario(usuarioId);
-            return ResponseEntity.ok(apuestas);
+            List<ApuestaDTO> apuestasDTO = new ArrayList<>();
+            for (Apuesta apuesta : apuestas) {
+                apuestasDTO.add(new ApuestaDTO(apuesta));
+            }
+            return ResponseEntity.ok(apuestasDTO);
         } catch (ResourceNotFoundException e) {
              // This happens if the user specified by usuarioId doesn't exist
              return ResponseEntity.notFound().build();

@@ -80,3 +80,11 @@
    /* Ensure table has space, prevent stretching */
    min-height: 200px; /* Adjust as needed */
 }
+.titulon-ruleta /*in the center of the container in block*/
+{  
+  margin: auto; /* Center the title */
+}
+
+.titulo-ruleta {
+  padding: 10px;
+}

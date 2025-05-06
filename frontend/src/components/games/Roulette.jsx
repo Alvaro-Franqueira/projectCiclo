@@ -19,7 +19,7 @@ import confetti from 'canvas-confetti';
 import bigWin from '../images/bigwin.png';
 import { Link } from 'react-router-dom';
 import { FaChartBar } from 'react-icons/fa'; // Adjust the path as needed
-
+import { GiAbstract013 } from 'react-icons/gi'; // Adjust the path as needed
 
 // --- Constants and Helpers ---
 // Chip values and icons
@@ -377,10 +377,15 @@ const handleSpinEnd = () => {
   return (
     <Container fluid className="roulette-container py-4">
          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="text-center mb-0">Casino Roulette</h2>
+            <div className="d-flex align-items-center titulon-ruleta">
+            <GiAbstract013 size={50} />
+            <h2 className='titulo-ruleta'>Roulette</h2>
+            </div>
             <Link to="/profile" className="btn btn-outline-primary">
                 <FaChartBar className="me-2" /> View My Statistics
             </Link>
+        
+            
         </div>
 
         {/* Balance Display */}
@@ -554,12 +559,7 @@ const handleSpinEnd = () => {
         </Col>
       </Row>
 
-        {/* Big Win Modal or Image - Example */}
-        {/* {showBigWin && (
-            <div className="big-win-overlay">
-                <img src={bigWin} alt="Big Win!" />
-            </div>
-        )} */}
+     
     </Container>
   );
 }
