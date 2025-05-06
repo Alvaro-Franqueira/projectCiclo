@@ -29,7 +29,6 @@ public class DadosController {
     private final UsuarioService usuarioService;
     private final JuegoService juegoService;
     
-    private static final String DICE_GAME_NAME = "Dice";
     @PostMapping("/jugar")
     public ResponseEntity<DiceGameResponseDTO> jugarDados(@RequestBody PlaceBetRequestDTO betRequest) {
         // Validate the request body
@@ -54,7 +53,7 @@ public class DadosController {
         apuesta.setCantidad(betRequest.getCantidad());
         apuesta.setTipoApuesta(betRequest.getTipo());
         apuesta.setValorApostado(betRequest.getValorApostado());
-        apuesta.setJuego(juegoService.obtenerJuegoPorNombre(DICE_GAME_NAME));
+        apuesta.setJuego(juegoService.obtenerJuegoPorId(betRequest.getJuegoId()));
         
         // Process the bet with the generated dice sum
         Apuesta resolvedBet = dadosService.jugarDados(apuesta, sumaDados);

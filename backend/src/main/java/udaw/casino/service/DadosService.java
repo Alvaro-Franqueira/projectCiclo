@@ -26,7 +26,7 @@ public class DadosService {
         log.info("Processing dice game with bet: {}", apuesta);
         log.info("Received dice game request: {}", apuesta);
 
-        // Validation
+        // Validations
         if (apuesta.getCantidad() <= 0) {
             log.error("Invalid bet amount: {}. Must be greater than 0.", apuesta.getCantidad());
             throw new IllegalArgumentException("Cantidad de apuesta inválida: " + apuesta.getCantidad() + ". Debe ser mayor que 0.");
@@ -48,50 +48,20 @@ public class DadosService {
             throw new SaldoInsuficienteException("Saldo insuficiente para realizar la apuesta.");
         }
         
-        // Get the current balance before any changes
-        double startingBalance = usuario.getBalance();
-        log.info("User balance before bet: {}", startingBalance);
         
-        // First, deduct the bet amount from the user's balance
-        double balanceAfterBet = startingBalance - apuesta.getCantidad();
-        usuario.setBalance(balanceAfterBet);
-        log.info("Balance after deducting bet: {}", balanceAfterBet);
-        
-        // Create the bet (ApuestaService no longer modifies the balance)
         Apuesta apuestaCreada = apuestaService.crearApuesta(apuesta);
-        log.info("Processing bet based on dice roll result: Number={}", sumDados);
 
         // Set the winning number and calculate win/loss amount
         apuestaCreada.setValorGanador(String.valueOf(sumDados));
         
-        // Calculate the win/loss amount
-        // For wins: determinarResultadoRuleta returns a positive amount (the winnings)
-        // For losses: determinarResultadoRuleta returns -cantidad (the negative bet amount)
-        double winAmount = determinarResultadoRuleta(apuestaCreada, sumDados);
+        double winAmount = determinarResultadoDados(apuestaCreada, sumDados);
         
-        // Store the winloss value in the bet
-        // For wins: this is the net profit (not including the original bet)
-        // For losses: this is the negative bet amount
         apuestaCreada.setWinloss(winAmount);
         
-        // Calculate final balance
-        double finalBalance;
-        if (winAmount > 0) {
-            // If player won, add the winnings AND return the original bet
-            finalBalance = balanceAfterBet + winAmount + apuesta.getCantidad();
-            log.info("User won {}. Returning bet {} plus winnings. New balance: {}", 
-                     winAmount, apuesta.getCantidad(), finalBalance);
-            apuestaCreada.setEstado("GANADA");
-        } else {
-            // If player lost, the bet amount was already deducted
-            finalBalance = balanceAfterBet;
-            log.info("User lost {}. New balance: {}", Math.abs(winAmount), finalBalance);
-            apuestaCreada.setEstado("PERDIDA");
-        }
-        
+
         // Update the user's balance
-        usuario.setBalance(finalBalance);
-        usuarioService.actualizarSaldoUsuario(usuario.getId(), finalBalance);
+        usuario.setBalance(usuario.getBalance() + winAmount);
+        usuarioService.actualizarSaldoUsuario(usuario.getId(), usuario.getBalance());
         
         // Resolve the bet using the ApuestaService
         return apuestaService.resolverApuesta(apuestaCreada);
@@ -114,7 +84,7 @@ public class DadosService {
     );
     
     
-    private Double determinarResultadoRuleta(Apuesta apuesta, int totalSum) {
+    private Double determinarResultadoDados(Apuesta apuesta, int totalSum) {
         String tipo = apuesta.getTipoApuesta().toLowerCase();
         String valorApostado = apuesta.getValorApostado().toLowerCase();
         double cantidad = apuesta.getCantidad();
@@ -129,7 +99,7 @@ public class DadosService {
                     return -cantidad;
                 }
     
-            case "mitad":
+            case "mayormenor":
                 // mitad 1: 2–6, mitad 2: 7–12
                 int mitad = totalSum <= 6 ? 1 : 2;
                 return valorApostado.equals(String.valueOf(mitad)) ? cantidad * 0.95 : -cantidad;
@@ -138,13 +108,11 @@ public class DadosService {
                 boolean esPar = totalSum % 2 == 0;
                 boolean eligioPar = valorApostado.equals("par");
                 return (esPar == eligioPar) ? cantidad * 0.95 : -cantidad;
-    
+
             default:
             log.warn("Unknown bet type encountered: {}", tipo);
                 return null; // apuesta inválida
         }
     }
-    
-
 }
     

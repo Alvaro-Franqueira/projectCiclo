@@ -64,23 +64,18 @@ public class ApuestaService {
              log.warn("Attempted to resolve an already resolved bet (ID: {}, Status: {})", apuestaId, apuesta.getEstado());
              return apuesta; 
         }
-
         // Set the status based on winloss
         if (apuesta.getWinloss() > 0) {
             apuesta.setEstado("GANADA");
         } else {
             apuesta.setEstado("PERDIDA");
         }
-        
-        // IMPORTANT: We no longer modify the balance here
-        // The balance is updated in the game service
-        
         // Save the updated bet status
         Apuesta apuestaResuelta = apuestaRepository.save(apuesta);
         log.info("Bet {} resolved. Status: {}, Win/Loss: {}", apuestaId, apuestaResuelta.getEstado(), apuestaResuelta.getWinloss());
- 
         return apuestaResuelta;
     }
+    
     public Apuesta obtenerApuestaPorId(Long id) {
         return apuestaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Apuesta", "id", id));
