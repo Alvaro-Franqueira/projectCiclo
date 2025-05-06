@@ -65,9 +65,9 @@ public class DadosService {
         apuestaCreada.setValorGanador(String.valueOf(sumDados));
         
         // Calculate the win/loss amount
-        // For wins: determinarResultadoApuesta returns a positive amount (the winnings)
-        // For losses: determinarResultadoApuesta returns -cantidad (the negative bet amount)
-        double winAmount = determinarResultadoApuesta(apuestaCreada, sumDados);
+        // For wins: determinarResultadoRuleta returns a positive amount (the winnings)
+        // For losses: determinarResultadoRuleta returns -cantidad (the negative bet amount)
+        double winAmount = determinarResultadoRuleta(apuestaCreada, sumDados);
         
         // Store the winloss value in the bet
         // For wins: this is the net profit (not including the original bet)
@@ -114,7 +114,7 @@ public class DadosService {
     );
     
     
-    private Double determinarResultadoApuesta(Apuesta apuesta, int totalSum) {
+    private Double determinarResultadoRuleta(Apuesta apuesta, int totalSum) {
         String tipo = apuesta.getTipoApuesta().toLowerCase();
         String valorApostado = apuesta.getValorApostado().toLowerCase();
         double cantidad = apuesta.getCantidad();

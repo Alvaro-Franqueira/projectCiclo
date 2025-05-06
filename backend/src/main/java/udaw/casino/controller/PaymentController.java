@@ -23,7 +23,7 @@ public class PaymentController {
     @Value("${stripe.publishable.key}")
     private String publishableKey;
 
-    @Autowired
+    
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }

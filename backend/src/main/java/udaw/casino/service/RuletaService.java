@@ -6,6 +6,7 @@ import udaw.casino.model.Usuario;
 import udaw.casino.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,44 +37,15 @@ public class RuletaService {
 
 //For lonely bets    
     @Transactional
-    public Apuesta jugarRuleta(Long usuarioId, double cantidad, String tipoApuesta, String valorApuesta, String numeroGanadorFrontend) {
+    public Apuesta jugarRuleta(Long usuarioId, double cantidad, String tipoApuesta, String valorApuesta, String numeroGanadorController) {
         // --- Validation ---
-        if (usuarioId == null) {
-            log.error("User ID is required but not provided.");
-            throw new IllegalArgumentException("ID de usuario es requerido pero no se proporcionó.");
-        }
-        if (cantidad <= 0) {
-            log.error("Invalid bet amount: {}. Must be greater than 0.", cantidad);
-            throw new IllegalArgumentException("Cantidad de apuesta inválida: " + cantidad + ". Debe ser mayor que 0.");
-        }   
-        if (tipoApuesta == null || tipoApuesta.isEmpty()) {
-            log.error("Bet type is required but not provided.");
-            throw new IllegalArgumentException("Tipo de apuesta es requerido pero no se proporcionó.");
-        }
-        if (valorApuesta == null || valorApuesta.isEmpty()) {
-            log.error("Bet value is required but not provided.");
-            throw new IllegalArgumentException("Valor de apuesta es requerido pero no se proporcionó.");
-        }
-        
-        // Validate the winning number
-        if (!numeroGanadorFrontend.equals("0") && !numeroGanadorFrontend.equals("00")) {
-            try {
-                int num = Integer.parseInt(numeroGanadorFrontend);
-                if (num < 0 || num > 36) {
-                    log.error("Invalid winning number received from client: {}. Must be between 0 and 36, or '00'.", numeroGanadorFrontend);
-                    throw new IllegalArgumentException("Número ganador inválido: " + numeroGanadorFrontend + ". Debe estar entre 0 y 36, o ser '00'.");
-                }
-            } catch (NumberFormatException e) {
-                log.error("Invalid winning number format received from client: {}. Must be a number between 0 and 36, or '00'.", numeroGanadorFrontend);
-                throw new IllegalArgumentException("Formato de número ganador inválido: " + numeroGanadorFrontend + ". Debe ser un número entre 0 y 36, o '00'.");
-            }
-        }
 
+        
         Usuario usuario = usuarioService.obtenerUsuarioPorId(usuarioId);
         Juego juegoRuleta = juegoService.obtenerJuegoPorNombre(ROULETTE_GAME_NAME);
 
         log.info("User {} playing Roulette (Game ID: {}) with bet type: {}, value: {}, amount: {}. Frontend winning number: {}",
-                 usuario.getUsername(), juegoRuleta.getId(), tipoApuesta, valorApuesta, cantidad, numeroGanadorFrontend);
+                 usuario.getUsername(), juegoRuleta.getId(), tipoApuesta, valorApuesta, cantidad, numeroGanadorController);
 
         // Create the bet object (ApuestaService handles balance check)
         Apuesta apuesta = new Apuesta();
@@ -86,8 +58,8 @@ public class RuletaService {
         // Create the bet via ApuestaService (checks balance, saves initial bet)
         Apuesta apuestaCreada = apuestaService.crearApuesta(apuesta);
           // Determine if the bet won using the frontend's number
-        apuestaCreada.setValorGanador(numeroGanadorFrontend);
-        Double ganancia = determinarResultadoApuesta(apuestaCreada, numeroGanadorFrontend);
+        apuestaCreada.setValorGanador(numeroGanadorController);
+        Double ganancia = determinarResultadoRuleta(apuestaCreada, numeroGanadorController);
         if (ganancia == null) {
             log.error("Invalid bet type or value: type={}, value={}", tipoApuesta, valorApuesta);
             throw new IllegalArgumentException("Tipo o valor de apuesta inválido: " + tipoApuesta + ", " + valorApuesta);
@@ -111,55 +83,33 @@ public class RuletaService {
     }
 
     // Determine the result of a bet based on the winning number
-    private Double determinarResultadoApuesta(Apuesta apuesta, String numeroGanadorStr) {
+    private Double determinarResultadoRuleta(Apuesta apuesta, String numeroGanadorStr) {
         String tipo = apuesta.getTipoApuesta();
         String valor = apuesta.getValorApostado();
         
-        // Log the bet and winning number for debugging
+        // Log the bet and winning number for debugging, development only    
         log.info("Determining result for bet: type={}, value={}, winning number={}", 
                 tipo, valor, numeroGanadorStr);
-        
-        // Convert the winning number to an integer for calculations
-        // Handle "00" as a special case
-        int numeroGanador = 0;
-        boolean isDoubleZero = false;
-        
-        if (numeroGanadorStr.equals("00")) {
-            isDoubleZero = true;
-            numeroGanador = -1; // Use -1 to represent "00" internally
-        } else {
-            try {
-                numeroGanador = Integer.parseInt(numeroGanadorStr);
-            } catch (NumberFormatException e) {
-                log.error("Invalid winning number format: {}", numeroGanadorStr);
-                return null;
-            }
-        }
-        
-        // Get the color of the winning number
+
+        int numeroGanador = Integer.parseInt(numeroGanadorStr); // for calculations
         String colorGanador = obtenerColorNumero(numeroGanadorStr);
         
-        // Determine the parity of the winning number
-        String paridadGanadora = "ninguno"; // Default for 0 and 00
-        if (!isDoubleZero && numeroGanador != 0) {
-            paridadGanadora = (numeroGanador % 2 == 0) ? "par" : "impar";
-        }
+
         
         // Process the bet based on its type
         switch (tipo.toLowerCase()) {
-            case "numero":
-                // Direct number bet (pays 35:1)
-                // IMPORTANT: Use exact string comparison to avoid "00" matching with "0"
-                if (valor.equals(numeroGanadorStr)) {
+            case "numero":// Direct number bet (pays 35:1)
+                if (valor.equals(numeroGanadorStr)) { // checks 0 and 00
+                    // development only
                     log.info("Number bet win: bet value '{}' matches winning number '{}'", valor, numeroGanadorStr);
-                    return apuesta.getCantidad() * 35; // Winning bet
+                    return apuesta.getCantidad() * 35; 
                 } else {
                     log.info("Number bet loss: bet value '{}' does not match winning number '{}'", valor, numeroGanadorStr);
-                    return -apuesta.getCantidad(); // Losing bet
+                    return -apuesta.getCantidad(); 
                 }
                 
             case "color": // expects 1 for red and 2 for black
-                if (isDoubleZero || numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are not red or black
+                if (numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are not red or black
                 if ((colorGanador.equals("rojo") && valor.equals("1")) || 
                     (colorGanador.equals("negro") && valor.equals("2"))) {
                     return apuesta.getCantidad(); // Winning bet
@@ -168,44 +118,46 @@ public class RuletaService {
                 }
             
                  
-            case "paridad": // Assuming "par" or "impar" from frontend too
-                if (isDoubleZero || numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are neither even nor odd
+            case "paridad": // Assuming "par" or "impar" from frontend
+            if (numeroGanador == 0) return -apuesta.getCantidad(); 
+                String paridadGanadora;
+                paridadGanadora = (numeroGanador % 2 == 0) ? "par" : "impar";
+
                 if (valor.equals(paridadGanadora)){
-                    return apuesta.getCantidad(); // Winning bet
+                    return apuesta.getCantidad();
                 } else {
-                    return -apuesta.getCantidad(); // Losing bet
+                    return -apuesta.getCantidad();
                 }
             // Ensure frontend bet values match expected values here (e.g., 'rojo', 'par', '1', 'bajo')
-            case "docena":
+            case "docena": // Winning dozen pays 2:1
                  try {
-                     if (isDoubleZero || numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are not in any dozen
+                     if (numeroGanador == 0) return -apuesta.getCantidad(); 
                      int docenaApostada = Integer.parseInt(valor); // Expecting "1", "2", or "3"
                      int docenaGanadora = (int) Math.ceil((double) numeroGanador / 12.0);
-                     return docenaApostada == docenaGanadora ? apuesta.getCantidad() * 2 : -apuesta.getCantidad(); // Winning dozen pays 2:1
+                     return docenaApostada == docenaGanadora ? apuesta.getCantidad() * 2 : -apuesta.getCantidad();
                  } catch (NumberFormatException | ArithmeticException e) {
                       log.warn("Invalid value for 'docena' bet: {} or error calculating dozen for {}", valor, numeroGanador, e);
                       return null; 
                  }
              case "columna":
                  try {
-                     if (isDoubleZero || numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are not in any column
+                     if (numeroGanador == 0) return -apuesta.getCantidad(); 
                      int colApostada = Integer.parseInt(valor); // Expecting "1", "2", or "3"
                      int colGanadora = (numeroGanador % 3 == 0) ? 3 : numeroGanador % 3;
-                     if (colApostada == colGanadora) { return apuesta.getCantidad() * 2;}
-                        else{return -apuesta.getCantidad();} // Losing bet
+                     return colApostada == colGanadora ?  apuesta.getCantidad() * 2 : -apuesta.getCantidad();
                  } catch (NumberFormatException e) {
                       log.warn("Invalid value for 'columna' bet: {}", valor, e);
                       return null;
                  }
              case "mitad": // Expecting "bajo" (1-18) or "alto" (19-36)
-                 if (isDoubleZero || numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are neither high nor low
+                 if (numeroGanador == 0) return -apuesta.getCantidad(); // 0 and 00 are neither high nor low
                  boolean esBajoGanador = numeroGanador >= 1 && numeroGanador <= 18;
                  boolean esBajoApuesta = valor.equals("bajo");
-                 return (esBajoGanador == esBajoApuesta) ? apuesta.getCantidad() : -apuesta.getCantidad(); // Winning bet
+                 return (esBajoGanador == esBajoApuesta) ? apuesta.getCantidad() : -apuesta.getCantidad(); 
 
             default:
                  log.warn("Unknown bet type encountered: {}", tipo);
-                return null; // Unknown bet type
+                return null;
         }
     }
 
@@ -219,15 +171,9 @@ public class RuletaService {
         if (numeroStr.equals("0") || numeroStr.equals("00")) return "verde";
         
         try {
-            int numero = Integer.parseInt(numeroStr);
             // Standard American roulette coloring
-            int[] rojos = {
-                1, 3, 5, 7, 9, 12, 14, 16, 18,
-                19, 21, 23, 25, 27, 30, 32, 34, 36
-            };        
-            for (int rojo : rojos) {
-                if (numero == rojo) return "rojo";
-            }
+            ArrayList<String> rojos = new ArrayList<>(java.util.Arrays.asList("1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"));
+            if (rojos.contains(numeroStr)) return "rojo";
             return "negro";
         } catch (NumberFormatException e) {
             log.error("Invalid number format for color determination: {}", numeroStr);

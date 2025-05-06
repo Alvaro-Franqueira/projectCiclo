@@ -44,8 +44,7 @@ public class ApuestaService {
             throw new SaldoInsuficienteException("Saldo insuficiente para realizar la apuesta. Saldo actual: " + usuario.getBalance());
         }
         
-        // IMPORTANT: We no longer deduct the bet amount here
-        // The balance will be updated in the game service based on the winloss result
+        // develment only
         log.info("Creating bet for user {} with amount {}", usuario.getUsername(), apuesta.getCantidad());
 
         // Set initial bet state

@@ -5,6 +5,9 @@ import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.exception.SaldoInsuficienteException;
 import udaw.casino.model.Apuesta;
 import udaw.casino.service.RuletaService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,8 +27,8 @@ import java.util.Random;
 @AllArgsConstructor 
 public class RuletaController {
 
-    private final RuletaService ruletaService;
-
+    private final RuletaService ruletaService;       
+    private static final Logger log = LoggerFactory.getLogger(RuletaService.class);
     /*
      * Endpoint to place a bet and play a round of Roulette, generating a winning number on the server.
      * Requires authenticated user context (handled by Spring Security later).
@@ -43,7 +46,22 @@ public class RuletaController {
             @RequestParam String tipoApuesta,
             @RequestParam String valorApuesta
             ) {
-
+                if (usuarioId == null) {
+                    log.error("User ID is required but not provided.");
+                    throw new IllegalArgumentException("ID de usuario es requerido pero no se proporcionó.");
+                }
+                if (cantidad <= 0) {
+                    log.error("Invalid bet amount: {}. Must be greater than 0.", cantidad);
+                    throw new IllegalArgumentException("Cantidad de apuesta inválida: " + cantidad + ". Debe ser mayor que 0.");
+                }   
+                if (tipoApuesta == null || tipoApuesta.isEmpty()) {
+                    log.error("Bet type is required but not provided.");
+                    throw new IllegalArgumentException("Tipo de apuesta es requerido pero no se proporcionó.");
+                }
+                if (valorApuesta == null || valorApuesta.isEmpty()) {
+                    log.error("Bet value is required but not provided.");
+                    throw new IllegalArgumentException("Valor de apuesta es requerido pero no se proporcionó.");
+                }
 
         try {
             // Generate a random winning number (including 0 and 00)
@@ -60,9 +78,14 @@ public class RuletaController {
             } else {
                 numeroGanador = String.valueOf(randomNumber);
             }
+
+
+            // DEVELOPMENT ONLY: Log the generated winning number
+            // This should be removed or replaced with a proper logging mechanism in production
             System.err.println("Betting number generated: " + valorApuesta); // Log the winning number for debugging
             System.err.println("BACK Winning number generated: " + numeroGanador); // Log the winning number for debugging
-            // Call service with the server-generated winning number
+            
+
             Apuesta apuestaResuelta = ruletaService.jugarRuleta(usuarioId, cantidad, tipoApuesta, valorApuesta, numeroGanador);
 
             ApuestaDTO apuestaDTO = new ApuestaDTO(apuestaResuelta);
@@ -107,10 +130,28 @@ public class RuletaController {
             } else {
                 numeroGanador = String.valueOf(randomNumber);
             }
+
+            // DEVELOPMENT ONLY: Log the generated winning number
             System.err.println("BACK Winning number generated: " + numeroGanador); // Log the winning number for debugging
             List<RuletaResponse> respuestas = new ArrayList<>();
 
             for (ApuestaMultipleDTO apuestaDTO : apuestas) {
+                if (apuestaDTO.usuarioId == null) {
+                    log.error("User ID is required but not provided.");
+                    throw new IllegalArgumentException("ID de usuario es requerido pero no se proporcionó.");
+                }
+                if (apuestaDTO.cantidad <= 0) {
+                    log.error("Invalid bet amount: {}. Must be greater than 0.", apuestaDTO.cantidad);
+                    throw new IllegalArgumentException("Cantidad de apuesta inválida: " + apuestaDTO.cantidad + ". Debe ser mayor que 0.");
+                }   
+                if (apuestaDTO.tipoApuesta == null || apuestaDTO.tipoApuesta.isEmpty()) {
+                    log.error("Bet type is required but not provided.");
+                    throw new IllegalArgumentException("Tipo de apuesta es requerido pero no se proporcionó.");
+                }
+                if (apuestaDTO.valorApuesta == null || apuestaDTO.valorApuesta.isEmpty()) {
+                    log.error("Bet value is required but not provided.");
+                    throw new IllegalArgumentException("Valor de apuesta es requerido pero no se proporcionó.");
+                }
                 Apuesta apuestaResuelta = ruletaService.jugarRuleta(
                     apuestaDTO.getUsuarioId(),
                     apuestaDTO.getCantidad(),
