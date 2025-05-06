@@ -31,13 +31,6 @@ const GameSelection = () => {
     fetchGames();
   }, []);
 
-  // Fallback games if API call fails or no games are available
-  const defaultGames = [
-    { id: 1, nombre: 'Ruleta', descripcion: 'Classic casino roulette game. Place your bets and try your luck!', path: '/games/roulette' },
-    { id: 2, nombre: 'Dice', descripcion: 'Roll the dice and win based on your prediction.', path: '/games/dice' }
-  ];
-  const displayGames = Array.isArray(games) && games.length > 0 ? games : defaultGames;
-
 
   const getGameIcon = (gameName) => {
     const name = gameName.toLowerCase();
@@ -59,24 +52,27 @@ const GameSelection = () => {
 
   return (
     <Container>
-      <h2 className="text-center mb-4">Select a Game</h2>
+      <h2 className="text-center mb-4 ">Select a Game</h2>
       
       {error && <Alert variant="danger">{error}</Alert>}
       
-      <Row className="g-4">
-        {displayGames.map((game) => (
+      <Row className="g-4 justify-content-center">
+        {games.map((game) => (
           <Col key={game.id} md={6} lg={4}>
-            <Card className="h-100 shadow-sm">
+            <Card className="h-100 shadow-sm ">
               <Card.Body className="d-flex flex-column">
-                <div className="text-center mb-3 game-icon-container">
+                <div 
+                    className="text-center mb-3 game-icon-container" 
+                    style={{ cursor: 'pointer' }} 
+                    onClick={() => navigate(`/games/${game.nombre}`)}
+                >
                   {getGameIcon(game.nombre)}
                 </div>
-                <Card.Title className="text-center text-light">{game.nombre}</Card.Title>
-                <Card.Text className="flex-grow-1 text-light">{game.descripcion}</Card.Text>
+                <Card.Title className="text-light">{game.nombre}</Card.Title>
+                <Card.Text className="text-light">{game.descripcion}</Card.Text>
                 <Button 
-                  variant="primary" 
                   className="w-100 mt-auto"
-                  onClick={() => navigate(game.path || `/games/${game.nombre}`)}
+                  onClick={() => navigate(`/games/${game.nombre}`)}
                 >
                   Play Now
                 </Button>
@@ -85,20 +81,6 @@ const GameSelection = () => {
           </Col>
         ))}
       </Row>
-
-      <style>{`
-        .game-icon-container {
-          background-color: #2c3e50;
-          border-radius: 50%;
-          width: 80px;
-          height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-      `}</style>
     </Container>
   );
 };

@@ -15,16 +15,7 @@
   transform: scale(0.98);
 }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
-  .casino-roulette-container {
-    max-width: 400px;
-    height: 400px;
-  } 
-  .roulette-table {
-    font-size: 0.9rem;
-  }
-}
+
 
 @media (max-width: 768px) {
   .chip {
