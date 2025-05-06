@@ -42,7 +42,7 @@ const PaymentPage = () => {
                     <strong>€1 = 1,000 credits</strong>
                   </p>
                   <p className="text-white small">
-                    The minimum purchase amount is €5.
+                    The minimum purchase amount is €1.
                   </p>
                 </Col>
               </Row>

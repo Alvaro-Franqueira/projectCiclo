@@ -78,7 +78,15 @@ body {
   align-items: center;
   height: 100px;
 }
+.card-profile {
+  background-color: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  height: fit-content;
 
+}
 
 .card-header {
   background-color: #334155;
@@ -127,6 +135,182 @@ body {
   text-align: center;
 }
 
+/* General Styles for Improved Contrast */
+:root {
+  --primary-color: #1e3a8a;  /* Primary color */
+  --secondary-color: #10b981; /* Greenish for success */
+  --accent-color: #f59e0b;    /* Orange accent color */
+  --dark-color: #111827;      /* Dark color for backgrounds */
+  --light-color: #f3f4f6;     /* Light color for text */
+  --danger-color: #ef4444;    /* Red for error messages */
+  --muted-color: #6b7280;     /* Muted text color for less important text */
+}
 
+/* General Body Styling */
+body {
+  background-color: var(--dark-color);
+  color: var(--light-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container Styling */
+.container {
+  background-color: rgba(30, 41, 59, 0.9); /* Slightly darker background */
+  border-radius: 10px;
+  padding: 2rem;
+}
+
+/* Improved Form Inputs */
+.form-control {
+  background-color: #1e293b; /* Darker input background */
+  color: #f3f4f6; /* Lighter text for readability */
+  border: 1px solid #334155; /* Lighter border for contrast */
+  border-radius: 6px;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+/* Focused Input */
+.form-control:focus {
+  background-color: #1e293b;
+  color: var(--accent-color); /* Focus color */
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25);
+}
+
+/* Button Styling */
+.btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #111827;
+  font-weight: bold;
+  padding: 0.75rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #fbbf24;
+  border-color: #f59e0b;
+  color: #1e293b;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:active {
+  background-color: #f59e0b;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(2px);
+}
+.card-header-tabs {
+  background-color: rgb(1, 27, 69);
+  color: white;
+  font-weight: bold;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  position: relative;
+}
+
+.card-tab-body {
+  background-color: #1e293b;
+  padding: 1rem;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  position: relative;
+  z-index: 0;
+
+  margin-right: -8px;
+  margin-left: -8px;  
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+
+/* Alert Styling */
+.alert-success {
+  background-color: rgba(16, 185, 129, 0.2); /* Lighter green */
+  border-color: var(--success-color);
+  color: #ecfdf5;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.alert-danger {
+  background-color: rgba(239, 68, 68, 0.2); /* Lighter red */
+  border-color: var(--danger-color);
+  color: #fef2f2;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+/* Card Styling */
+.card {
+  background-color: #1e293b;
+  border: none;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.card-header {
+  background-color: #334155; /* Darker header */
+  color: white;
+  font-weight: bold;
+}
+
+/* Payment Method Container */
+.payment-methods-container {
+  background-color: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+/* On Hover of Payment Methods Container */
+.payment-methods-container:hover {
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Payment Text */
+.card-body p {
+  color: var(--light-color);
+  font-size: 1rem;
+}
+
+/* Footer */
+.card-footer {
+  background-color: #1e293b;
+  border-top: 1px solid #334155;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.card-footer small {
+  color: var(--muted-color);
+}
+
+/* Loading Spinner */
+.spinner-border {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+/* Improved Success Message */
+.success-glow {
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px #f59e0b, 0 0 10px #f59e0b;
+  }
+  100% {
+    text-shadow: 0 0 20px #f59e0b, 0 0 30px #f59e0b;
+  }
+}
 
 

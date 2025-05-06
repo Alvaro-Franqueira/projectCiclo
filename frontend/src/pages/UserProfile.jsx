@@ -175,8 +175,8 @@ const UserProfile = () => {
             {error && <Alert variant="danger">{error}</Alert>}
             <Row>
                 {/* Profile Card */}
-                <Col lg={4} className="mb-4 ">
-                    <Card className="profile-card h-100 text-white">
+                <Col lg={4} className="mb-4 card-profile">
+                    <Card className="text-white" style={{ boxShadow: 'none' }}>
                         <Card.Body className="text-center">
                             <div className="avatar-placeholder mb-3">
                                 {isNumberOne ? (<FaCrown size={60} color="#FFD700"/>) : (<FaUser size={60} />)}
@@ -192,7 +192,7 @@ const UserProfile = () => {
                                 <div><FaCalendarAlt className="me-2" /><small>Joined</small></div>
                                 <small>{profileData.fechaRegistro ? new Date(profileData.fechaRegistro).toLocaleDateString() : 'N/A'}</small>
                             </div>
-                            <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155' }}>
+                            <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155' , borderColor: "#f59e0b", borderWidth: '1px', borderStyle: 'solid' }}>
                                 <h5 className="mb-1">Current Balance</h5>
                                 <h3 className="mb-0 text-warning">
                                     <FaCoins className="me-2" />
@@ -211,11 +211,11 @@ const UserProfile = () => {
                 {/* Stats/History/Rankings Tabs */}
                 <Col lg={8}>
                     <Card>
-                        <Card.Header>
+                    <Card.Header style={{ margin: 0, padding: 0, display: 'inline-block' }}>
                             <Tabs defaultActiveKey="stats" id="profile-tabs" className="card-header-tabs justify-content-around">
                                 {/* Statistics Tab */}
                                 <Tab eventKey="stats" title={<><FaCoins className="me-1" /> Statistics</>}>
-                                    <div className="p-3">
+                                    <div className="p-3 card-tab-body">
                                         <Row>
                                             <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
                                             <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4></div></Col>
@@ -292,7 +292,7 @@ const UserProfile = () => {
 
                                 {/* Bet History Tab */}
                                 <Tab eventKey="bets" title={<><FaGamepad className="me-1" /> Bet History</>}>
-                                    <div className="p-3">
+                                    <div className="p-3 card-tab-body">
                                         {bets.length > 0 ? (
                                             <>
                                                 <Table responsive hover variant="dark">
@@ -383,7 +383,7 @@ const UserProfile = () => {
 
                                 {/* My Rankings Tab */}
                                 <Tab eventKey="myRankings" title={<><FaTrophy className="me-1" /> My Rankings</>}>
-                                    <div className="p-3">
+                                    <div className="p-3 card-tab-body">
                                         {rankings.length > 0 ? (
                                             <Table responsive hover variant='dark'>
                                                 <thead>

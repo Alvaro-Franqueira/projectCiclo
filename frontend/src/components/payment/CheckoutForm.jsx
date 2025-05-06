@@ -176,7 +176,7 @@ const CheckoutForm = () => {
                 For every €1 spent, you'll receive 1000 credits in your casino balance.
               </p>
               
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} className="mb-4 text-white">
                 <Form.Group className="mb-3">
                   <Form.Label>Amount (€)</Form.Label>
                   <Form.Control
@@ -188,7 +188,7 @@ const CheckoutForm = () => {
                     disabled={paymentStatus === 'processing' || loading}
                     required
                   />
-                  <Form.Text className="text-muted">
+                  <Form.Text className="text-white">
                     You will receive {amount * 1000} credits.
                   </Form.Text>
                 </Form.Group>
