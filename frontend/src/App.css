@@ -19,8 +19,48 @@ body {
 .container {
   background-color: rgba(30, 41, 59, 0.8);
   border-radius: 8px;
-  padding: 20px;
+  padding: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+}
+.navbar .btn,
+.navbar .nav-link {
+  white-space: nowrap;
+}
+
+/* Custom Dropdown Menu Style */
+
+.dropdown-menu {
+  background-color: #1e293b !important; /* dark background */
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  justify-content: center;
+  align-items: center;
+  display: flex wrap;
+  width: 50px;
+  margin: 0 auto;
+}
+
+.dropdown-item {
+  color: #f3f4f6; /* light text */
+  padding: 0.5rem 1.25rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: #334155;
+  color: #f59e0b; /* accent color */
+}
+
+.dropdown-divider {
+  border-top: 1px solid #475569;
 }
 
 /* Card styling */
@@ -53,6 +93,10 @@ body {
 .btn-success {
   background-color: var(--success-color);
   border-color: var(--success-color);
+}
+.btn-success:hover {
+  background-color: #059669;
+  border-color: #059669;
 }
 
 
