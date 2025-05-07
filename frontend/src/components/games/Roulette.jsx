@@ -312,6 +312,7 @@ const handleSpinEnd = () => {
 
   const totalBetDisplay = calculateTotalBet(bets);
 
+  const maxHeightForFiveItems = '340px';
   return (
     <Container fluid className="roulette-container py-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
@@ -439,44 +440,35 @@ const handleSpinEnd = () => {
             <Card className="text-white" style={{ backgroundColor: '#333' /* Example dark background */ }}>
             <Card.Header>
                 <FaHistory className="me-2" />
-                Recent Bets {/* Or "Recent Dice Bets" if specific */}
+                Recent Bets
             </Card.Header>
             <Card.Body>
                 {gameHistory.length > 0 ? (
-                    <div>
+                    <div style={{ maxHeight: maxHeightForFiveItems, overflowY: 'auto' }}> {/* SCROLL APPLIED HERE */}
                         {gameHistory.map((bet) => (
                             <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <span>
-                                        {/*
-                                            Adjust this logic based on your actual bet.tipoApuesta values.
-                                            If bet.tipoApuesta is "Par" or "Impar", you might just want to show that.
-                                            If it's a bet on a specific number, show "Número X".
-                                        */}
-                                        {bet.tipoApuesta.toLowerCase() === 'par' || bet.tipoApuesta.toLowerCase() === 'impar' || bet.tipoApuesta.toLowerCase() === 'parimpar'
-                                            ? `Choice: ${bet.valorApostado}` // e.g., "Choice: Par"
-                                            : `${bet.tipoApuesta}: ${bet.valorApostado}` // e.g., "Número: 5" or "Color: Rojo"
-                                        }
-                                        {/* Original amount wagered, if desired:
-                                        <span className="text-muted ms-1">(${bet.cantidad?.toFixed(2)})</span>
-                                        */}
+                                <div className="d-flex justify-content-around align-items-center">
+                                <span className="text-white">
+                                        {bet.cantidad ? `Bet: $${bet.cantidad}` : '0.00'}
                                     </span>
+                                    <span>
+                                        {bet.tipoApuesta.toLowerCase() === 'color'
+                                            ? bet.valorApostado=== '1' ? `color: rojo` : `color: negro`
+                                            : `${bet.tipoApuesta}: ${bet.valorApostado}`
+                                        }
+                                    </span>
+
                                     <Badge
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            padding: '0.35em 0.65em' // Adjust padding for better appearance
+                                            padding: '0.35em 0.65em'
                                         }}
                                         bg={bet.estado === 'GANADA' ? 'success' : 'danger'}
                                     >
                                         {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
-                                        <span className="ms-1"> {/* Added margin for separation */}
+                                        <span className="ms-1">
                                             $
-                                            {/*
-                                                The good example prefers winloss if available, then amount.
-                                                Your old code showed winloss separately and wagered amount in ().
-                                                This version shows the P/L or the wagered amount if P/L isn't clear.
-                                            */}
                                             {typeof bet.winloss === 'number'
                                                 ? Math.abs(bet.winloss).toFixed(2)
                                                 : (bet.cantidad ? bet.cantidad.toFixed(2) : '0.00')
@@ -485,7 +477,7 @@ const handleSpinEnd = () => {
                                     </Badge>
                                 </div>
                                 <div
-                                    className="text-white-50" // Using text-white-50 for a slightly dimmer date
+                                    className="text-white-50"
                                     style={{
                                         fontSize: '0.8em',
                                         marginTop: '0.5rem'
