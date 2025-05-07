@@ -54,6 +54,7 @@ function AppRoutes() {
             <Route path="/games/poker" element={<ComingSoon />} />
             <Route path="/games/tragaperras" element={<ComingSoon />} />
             <Route path="/games/blackjack" element={<ComingSoon />} />
+            <Route path="/games/sportsbetting" element={<ComingSoon />} />
             <Route path="/rankings" element={<RankingList />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/payment" element={<PaymentPage />} />

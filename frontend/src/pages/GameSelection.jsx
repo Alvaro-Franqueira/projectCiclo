@@ -13,7 +13,7 @@ import Icon from '@mdi/react';
 import { mdiSlotMachineOutline } from '@mdi/js';
 import pokerChip from '../components/images/poker-chip.png';
 import blackjackImg from '../components/images/blackjack-white.png';
-
+import sportBettingImg from '../components/images/betting.png';
 
 const GameSelection = () => {
   const [games, setGames] = useState([]);
@@ -49,7 +49,9 @@ const GameSelection = () => {
     
     if (name.includes('blackjack')) return <img src={blackjackImg} alt="Blackjack Icon" width={80} height={80} />;
 
-    if (name.includes('poker')) return <img src={pokerChip} alt="Poker Icon" width={60} height={60} />;
+    if (name.includes('poker')) return <img src={pokerChip} alt="Poker Icon" width={65} height={65} />;
+    
+    if (name.includes('sports betting')) return <img src={sportBettingImg} alt="Sports Betting Icon" width={80} height={80} />;
     return <FaGem size={50} color="#9b59b6" />;
   };
 
@@ -84,7 +86,7 @@ const GameSelection = () => {
                 <Card.Text className="text-light">{game.descripcion}</Card.Text>
                 <Button 
                   className="w-100 mt-auto"
-                  onClick={() => navigate(`/games/${game.nombre}`)}
+                  onClick={() => navigate(`/games/${game.nombre.replace(/\s+/g, '')}`)}
                 >
                   Play Now
                 </Button>
