@@ -210,22 +210,22 @@ const UserProfile = () => {
 
                 {/* Stats/History/Rankings Tabs */}
                 <Col lg={8}>
-                    <Card>
-                    <Card.Header style={{ margin: 0, padding: 0, display: 'inline-block' }}>
+                    <Card className='no-shadow'>
+                    <Card.Header style={{ margin: 10, marginLeft:20, padding: 0, display: 'inline-block' }}>
                             <Tabs defaultActiveKey="stats" id="profile-tabs" className="card-header-tabs justify-content-around">
                                 {/* Statistics Tab */}
                                 <Tab eventKey="stats" title={<><FaCoins className="me-1" /> Statistics</>}>
                                     <div className="p-3 card-tab-body">
                                         <Row>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Win Rate</h6><h4>{(stats.winRate?? 0).toFixed(1)}%</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Won</h6><h4 className="text-success">${stats.totalWon.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Total Lost</h6><h4 className="text-danger">${stats.totalLost.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Net Profit</h6><h4 className={stats.netProfit >= 0 ? 'text-success' : 'text-danger'}>${stats.netProfit.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Max bet</h6><h4>${stats.maxBet.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Max Loss</h6><h4 className="text-danger">${stats.maxLoss.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded" style={{ backgroundColor: '#334155' }}><h6>Max Win</h6><h4 className="text-success">${stats.maxWin.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Win Rate</h6><h4>{(stats.winRate?? 0).toFixed(1)}%</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Won</h6><h4 className="text-success">${stats.totalWon.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Lost</h6><h4 className="text-danger">${stats.totalLost.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Net Profit</h6><h4 className={stats.netProfit >= 0 ? 'text-success' : 'text-danger'}>${stats.netProfit.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max bet</h6><h4>${stats.maxBet.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max Loss</h6><h4 className="text-danger">${stats.maxLoss.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max Win</h6><h4 className="text-success">${stats.maxWin.toFixed(2)}</h4></div></Col>
                                         </Row>
                                         <h5 className="mt-4 mb-3 d-flex justify-content-between align-items-center">
                                             <span>Game Statistics</span>

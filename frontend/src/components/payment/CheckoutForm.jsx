@@ -162,9 +162,9 @@ const CheckoutForm = () => {
 
   return (
     <Container className="my-5">
-      <Row className="justify-content-center">
+      <Row className="justify-content-center ">
         <Col md={8} lg={6}>
-          <Card className="shadow">
+          <Card className="shadow payment-card">
             <Card.Header className="bg-primary text-white">
               <h4 className="mb-0">Add Credits to Your Account</h4>
             </Card.Header>
@@ -187,6 +187,7 @@ const CheckoutForm = () => {
                     onChange={handleAmountChange}
                     disabled={paymentStatus === 'processing' || loading}
                     required
+                    className="text-white backg-dark"
                   />
                   <Form.Text className="text-white">
                     You will receive {amount * 1000} credits.
@@ -195,7 +196,7 @@ const CheckoutForm = () => {
                 
                 <div className="mb-4">
                   <h5 className="mb-3">Payment Method</h5>
-                  <div className="payment-methods-container">
+                  <div className="payment-methods-container ">
                     <PaymentElement />
                   </div>
                 </div>
@@ -224,8 +225,8 @@ const CheckoutForm = () => {
                 </div>
               )}
             </Card.Body>
-            <Card.Footer className="text-center">
-              <small className="text-muted">
+            <Card.Footer className="text-center backg-dark">
+              <small className="text-white ">
                 Secure payment processing by Stripe
               </small>
             </Card.Footer>

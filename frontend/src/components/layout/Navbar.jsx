@@ -19,6 +19,7 @@ import {
 import { GiAbstract013 } from 'react-icons/gi';
 import { useAuth } from '../../context/AuthContext';
 import neonFavicon from '../images/neonfavicon.png';
+import logoCasino from '../images/logo-casino.png';
 
 const AppNavbar = ({ noSticky }) => {
   const navigate = useNavigate();
@@ -62,12 +63,12 @@ const AppNavbar = ({ noSticky }) => {
       <Container fluid>
         <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
           <img
-            src={neonFavicon}
+            src={logoCasino}
             alt="Logo"
-            className="me-2"
+            className="me-2 navbar-logo"
             style={{ width: '40px', height: '40px' }}
           />
-          <span className="fw-bold fs-4">Virtual Casino</span>
+          <span className="fw-bold fs-4 casino-navbar">Virtual Casino</span>
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="navbar-nav" />

@@ -26,7 +26,7 @@ const PaymentPage = () => {
 
   return (
     <Container className="my-5">
-      <Row className="justify-content-center mb-4">
+      <Row className="justify-content-center mb-4 payment-card-header">
         <Col md={8}>
           <h2 className="text-center mb-4">Add Credits to Your Account</h2>
           <Card className="shadow-sm mb-4 text-white">
