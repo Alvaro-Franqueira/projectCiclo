@@ -8,6 +8,13 @@ import rouletteImg from '../components/images/rouletteimg.png';
 import gameService from '../services/gameService';
 import { GiRollingDices } from "react-icons/gi";
 
+
+import Icon from '@mdi/react';
+import { mdiSlotMachineOutline } from '@mdi/js';
+import pokerChip from '../components/images/poker-chip.png';
+import blackjackImg from '../components/images/blackjack-white.png';
+
+
 const GameSelection = () => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,8 +43,13 @@ const GameSelection = () => {
     const name = gameName.toLowerCase();
     if (name.includes('roulette')) return <img src={rouletteImg} alt="Roulette Icon" width={140} height={100} />;
 
-
     if (name.includes('dice')) return <GiRollingDices size={70} color="#3498db" />;
+  
+    if (name.includes('slots') || name.includes('tragaperras')) return <Icon path={mdiSlotMachineOutline} size={3} color="#e74c3c" />;  
+    
+    if (name.includes('blackjack')) return <img src={blackjackImg} alt="Blackjack Icon" width={80} height={80} />;
+
+    if (name.includes('poker')) return <img src={pokerChip} alt="Poker Icon" width={60} height={60} />;
     return <FaGem size={50} color="#9b59b6" />;
   };
 
