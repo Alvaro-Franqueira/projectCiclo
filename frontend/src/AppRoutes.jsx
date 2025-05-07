@@ -14,6 +14,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import GameSelection from './pages/GameSelection';
 import RouletteGame from './components/games/Roulette';
 import DiceGame from './components/games/DiceGame';
+import ComingSoon from './pages/ComingSoon';
 
 // Ranking component
 import RankingList from './components/ranking/RankingList';
@@ -50,6 +51,9 @@ function AppRoutes() {
             <Route path="/games" element={<GameSelection />} />
             <Route path="/games/roulette" element={<RouletteGame />} />
             <Route path="/games/dice" element={<DiceGame />} />
+            <Route path="/games/poker" element={<ComingSoon />} />
+            <Route path="/games/tragaperras" element={<ComingSoon />} />
+            <Route path="/games/blackjack" element={<ComingSoon />} />
             <Route path="/rankings" element={<RankingList />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/payment" element={<PaymentPage />} />
