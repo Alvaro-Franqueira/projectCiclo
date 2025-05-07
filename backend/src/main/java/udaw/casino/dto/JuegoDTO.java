@@ -1,9 +1,11 @@
 package udaw.casino.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import udaw.casino.model.Juego;
 
 @Data
+@NoArgsConstructor
 public class JuegoDTO {
     private Long id;
     private String nombre;

@@ -14,12 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
+
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 @RestController
 @RequestMapping("/api/juegos")
@@ -42,11 +48,16 @@ public class JuegoController {
      * @return Created game
      */
     @PostMapping
-    public ResponseEntity<?> crearJuego(@RequestBody Juego juego) {
+    public ResponseEntity<?> crearJuego(@Valid @RequestBody JuegoDTO juegoDTO) {
         try {
+            Juego juego = new Juego();
+            juego.setNombre(juegoDTO.getNombre());
+            juego.setDescripcion(juegoDTO.getDescripcion());
             Juego nuevoJuego = juegoService.crearJuego(juego);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoJuego);
         } catch (Exception e) {
+            
+            log.error("Error creating game with name: {}", juegoDTO.getNombre(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to create game"));
         }
@@ -115,4 +126,48 @@ public class JuegoController {
         JuegoDTO juegoDTO = new JuegoDTO(juego);
         return ResponseEntity.ok(juegoDTO);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarJuego(@PathVariable Long id, @RequestBody JuegoDTO juegoDTO) {
+        try {
+            Juego juego = new Juego();
+            juego.setId(id);
+            juego.setNombre(juegoDTO.getNombre());
+            juego.setDescripcion(juegoDTO.getDescripcion());
+            log.info("Attempting to update game with ID: {} and name: {}", id, juegoDTO.getNombre());
+            Juego juegoActualizado = juegoService.updateGame(id, juego);
+            
+            log.info("Successfully updated game with ID: {}", juegoActualizado.getId());
+            return ResponseEntity.ok(juegoActualizado);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            
+            log.warn("Game not found for update with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Failed to update game"));
+        }
+    }
+
+
+    /**
+     * Delete a game by ID.
+     * 
+     * @param id Game ID
+     * @return Response status
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarJuego(@PathVariable Long id) {
+        try {
+            juegoService.eliminarJuego(id);
+            return ResponseEntity.ok(Map.of("message", "Game deleted successfully"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Failed to delete game"));
+        }
+    }
+
+    
 }

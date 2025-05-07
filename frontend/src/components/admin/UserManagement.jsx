@@ -1,180 +1,310 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Table, Button, Form, Modal, Alert, Spinner, Badge } from 'react-bootstrap';
-import { FaUserEdit, FaCoins, FaTrash, FaSearch } from 'react-icons/fa';
-import userService from '../../services/userService';
+// src/components/admin/UserManagement.js (or whatever its path is)
+import React, { useState, useEffect, useCallback } from 'react';
+import { Container, Table, Button, Form, Modal, Alert, Spinner, Badge, Image } from 'react-bootstrap'; // Added Image
+import {
+  FaUserEdit,
+  FaUser,
+  FaCoins,
+  FaTrash,
+  FaSearch, // Use FaSearch for both or differentiate if needed
+  FaGamepad, // Added Gamepad icon
+  FaPlus,    // Added Plus icon
+  FaEdit,    // Added Edit icon
+  FaTrashAlt // Added TrashAlt icon
+} from 'react-icons/fa';
+import userService from '../../services/userService'; // Adjust path as needed
+import gameService from '../../services/gameService'; // Import gameService
 
-const UserManagement = () => {
+// --- User Management Section ---
+const UserManagement = () => { // NOTE: This component now handles BOTH users and games
+  // --- User Management State ---
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showBalanceModal, setShowBalanceModal] = useState(false);
+  const [userLoading, setUserLoading] = useState(true); // Renamed for clarity
+  const [userError, setUserError] = useState('');     // Renamed for clarity
+  const [userSearchTerm, setUserSearchTerm] = useState(''); // Renamed for clarity
+  const [showUserEditModal, setShowUserEditModal] = useState(false); // Renamed for clarity
+  const [showUserBalanceModal, setShowUserBalanceModal] = useState(false); // Renamed for clarity
   const [selectedUser, setSelectedUser] = useState(null);
-  const [balanceAmount, setBalanceAmount] = useState(0);
-  const [editFormData, setEditFormData] = useState({
+  const [userBalanceAmount, setUserBalanceAmount] = useState(0); // Renamed for clarity
+  const [userEditFormData, setUserEditFormData] = useState({ // Renamed for clarity
     username: '',
     email: '',
     rol: 'USER'
   });
+  // No longer need currentUser state if not used
+
+  // --- User Management Effects & Handlers ---
+  const fetchUsers = useCallback(async () => {
+    try {
+      setUserLoading(true); // Use renamed state
+      const usersData = await userService.getAllUsers();
+      setUsers(usersData);
+      setUserError(''); // Use renamed state
+    } catch (err) {
+      setUserError(err.message || 'Failed to load users. Please try again later.'); // Use renamed state
+      console.error("User fetch error:", err);
+      setUsers([]); // Clear users on error
+    } finally {
+      setUserLoading(false); // Use renamed state
+    }
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-// Add to UserManagement.jsx at the top level state declarations
-const [currentUser, setCurrentUser] = useState(null);
+  }, [fetchUsers]);
 
-// Add this to your useEffect or create a new one
-useEffect(() => {
-  const fetchCurrentUser = async () => {
-    try {
-      // Get the current user from localStorage if available
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        setCurrentUser(user);
-      } else {
-        // If not in localStorage, fetch from API
-        const userData = await userService.getCurrentUser();
-        setCurrentUser(userData);
-        // Optionally save to localStorage
-        localStorage.setItem('user', JSON.stringify(userData));
-      }
-    } catch (err) {
-      console.error("Failed to get current user info", err);
-      setError("Please log in again to manage users");
-    }
-  };
-  
-  fetchCurrentUser();
-}, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const usersData = await userService.getAllUsers();
-      setUsers(usersData);
-      setError('');
-    } catch (err) {
-      setError('Failed to load users. Please try again later.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handleUserSearch = (e) => {
+    setUserSearchTerm(e.target.value); // Use renamed state
   };
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(user =>
+    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase())) || // Use renamed state
+    (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase()))
   );
 
-  const handleEditClick = (user) => {
+  const handleUserEditClick = (user) => {
     setSelectedUser(user);
-    setEditFormData({
+    setUserEditFormData({ // Use renamed state
       username: user.username,
       email: user.email,
       rol: user.rol
     });
-    setShowEditModal(true);
+    setShowUserEditModal(true); // Use renamed state
+    setUserError(''); // Clear errors on opening modal
   };
 
-  const handleBalanceClick = (user) => {
+  const handleUserBalanceClick = (user) => {
     setSelectedUser(user);
-    setBalanceAmount(user.balance);
-    setShowBalanceModal(true);
+    setUserBalanceAmount(user.balance || 0); // Use renamed state, default to 0
+    setShowUserBalanceModal(true); // Use renamed state
+    setUserError(''); // Clear errors on opening modal
   };
 
-  const handleEditFormChange = (e) => {
+  const handleUserEditFormChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData({
-      ...editFormData,
+    setUserEditFormData({ // Use renamed state
+      ...userEditFormData, // Use renamed state
       [name]: value
     });
   };
 
-  const handleBalanceChange = (e) => {
-    setBalanceAmount(parseFloat(e.target.value));
+  const handleUserBalanceChange = (e) => {
+    setUserBalanceAmount(parseFloat(e.target.value) || 0); // Use renamed state, default to 0
   };
 
-  const handleEditSubmit = async () => {
+  const handleUserEditSubmit = async () => {
     try {
-      setLoading(true);
-      
-      await userService.updateUser(selectedUser.id, editFormData);
-      
+      setUserLoading(true); // Use renamed state
+      setUserError(''); // Clear previous errors
+
+      await userService.updateUser(selectedUser.id, userEditFormData); // Use renamed state
+
       // Update user in the list
-      setUsers(users.map(user => 
-        user.id === selectedUser.id ? { ...user, ...editFormData } : user
+      setUsers(users.map(user =>
+        user.id === selectedUser.id ? { ...user, ...userEditFormData } : user // Use renamed state
       ));
-      
-      setShowEditModal(false);
-      setError('');
+
+      setShowUserEditModal(false); // Use renamed state
     } catch (err) {
-      setError('Failed to update user. Please try again.');
-      console.error(err);
+      setUserError(err.message || 'Failed to update user. Please try again.'); // Use renamed state
+      console.error("User update error:", err);
     } finally {
-      setLoading(false);
+      setUserLoading(false); // Use renamed state
     }
   };
 
-  const handleBalanceSubmit = async () => {
+  const handleUserBalanceSubmit = async () => {
     try {
-      setLoading(true);
-      console.log('Updating balance for user:', selectedUser.id, 'to:', balanceAmount);
-      await userService.updateUserBalance(selectedUser.id, balanceAmount);
-      
+      setUserLoading(true); // Use renamed state
+      setUserError(''); // Clear previous errors
+      console.log('Updating balance for user:', selectedUser.id, 'to:', userBalanceAmount); // Use renamed state
+      await userService.updateUserBalance(selectedUser.id, userBalanceAmount); // Use renamed state
+
       // Update user balance in the list
-      setUsers(users.map(user => 
-        user.id === selectedUser.id ? { ...user, balance: balanceAmount } : user
+      setUsers(users.map(user =>
+        user.id === selectedUser.id ? { ...user, balance: userBalanceAmount } : user // Use renamed state
       ));
-      
-      setShowBalanceModal(false);
-      setError('');
+
+      setShowUserBalanceModal(false); // Use renamed state
     } catch (err) {
-      setError('Failed to update user balance. Please try again.');
-      console.error(err);
+      setUserError(err.message || 'Failed to update user balance. Please try again.'); // Use renamed state
+      console.error("Balance update error:", err);
     } finally {
-      setLoading(false);
+      setUserLoading(false); // Use renamed state
     }
   };
 
-  if (loading && users.length === 0) {
-    return (
+
+  // --- Game Management Section ---
+  // --- Game Management State ---
+  const [games, setGames] = useState([]);
+  const [gameLoading, setGameLoading] = useState(true); // New state for game loading
+  const [gameError, setGameError] = useState('');     // New state for game errors
+  const [gameSearchTerm, setGameSearchTerm] = useState(''); // New state for game search
+  const [showGameModal, setShowGameModal] = useState(false); // New state for game modal
+  const [selectedGame, setSelectedGame] = useState(null); // New state for selected game (edit)
+  const [isEditMode, setIsEditMode] = useState(false); // New state to distinguish add/edit
+  const [gameFormData, setGameFormData] = useState({ // New state for game form data
+    nombre: '',
+    descripcion: '',
+
+  });
+
+  const initialGameFormState = { // New initial state for game form
+    nombre: '',
+    descripcion: '',
+  };
+
+  // --- Game Management Effects & Handlers ---
+  const fetchGames = useCallback(async () => {
+    try {
+      setGameLoading(true); // Use new state
+      const gamesData = await gameService.getAllGames();
+      setGames(gamesData || []); // Use new state, default to empty array
+      setGameError(''); // Use new state
+    } catch (err) {
+      setGameError(err.message || 'Failed to load games. Please try again later.'); // Use new state
+      console.error("Game fetch error:", err);
+      setGames([]); // Clear games on error
+    } finally {
+      setGameLoading(false); // Use new state
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGames();
+  }, [fetchGames]);
+
+  const handleGameSearch = (e) => {
+    setGameSearchTerm(e.target.value); // Use new state
+  };
+
+  const filteredGames = games.filter(game =>
+    (game.nombre && game.nombre.toLowerCase().includes(gameSearchTerm.toLowerCase())) || // Use new state
+    (game.descripcion && game.descripcion.toLowerCase().includes(gameSearchTerm.toLowerCase()))
+  );
+
+  const handleShowAddModal = () => {
+    setSelectedGame(null);
+    setIsEditMode(false);
+    setGameFormData(initialGameFormState);
+    setShowGameModal(true);
+    setGameError(''); // Clear errors on opening modal
+  };
+
+  const handleShowEditModal = (game) => {
+    setSelectedGame(game);
+    setIsEditMode(true);
+    setGameFormData({
+      nombre: game.nombre,
+      descripcion: game.descripcion
+    });
+    setShowGameModal(true);
+    setGameError(''); // Clear errors on opening modal
+  };
+
+  const handleCloseGameModal = () => {
+    setShowGameModal(false);
+    setSelectedGame(null);
+    setGameError(''); // Clear errors on closing modal
+  };
+
+  const handleGameFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setGameFormData({
+      ...gameFormData,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseFloat(value) : value)
+    });
+  };
+
+  const handleGameSubmit = async (e) => {
+    e.preventDefault();
+    setGameLoading(true); // Use new state
+    setGameError(''); // Clear previous errors
+
+    // Basic validation
+    if (!gameFormData.nombre || !gameFormData.descripcion) {
+        setGameError("Name and description are required.");
+        setGameLoading(false);
+        return;
+    }
+    const gameDataToSend = {
+      nombre: gameFormData.nombre,
+      descripcion: gameFormData.descripcion,
+  };
+    try {
+      if (isEditMode && selectedGame) {
+        await gameService.updateGame(selectedGame.id,{id: selectedGame.id, ... gameDataToSend} );
+      } else {
+        await gameService.addGame(gameFormData);
+      }
+      await fetchGames(); // Refresh the game list
+      handleCloseGameModal();
+    } catch (err) {
+      setGameError(err.message || 'Failed to save game. Please check the details.'); // Use new state
+      console.error("Game submit error:", err);
+    } finally {
+      setGameLoading(false); // Use new state
+    }
+  };
+
+  const handleDeleteGame = async (gameId) => {
+    if (window.confirm('Are you sure you want to delete this game?')) {
+      setGameLoading(true); // Use new state
+      setGameError(''); // Clear errors
+      try {
+        await gameService.deleteGame(gameId);
+        await fetchGames(); // Refresh the game list
+      } catch (err) {
+        setGameError(err.message || 'Failed to delete game.'); // Use new state
+        console.error("Game delete error:", err);
+      } finally {
+        setGameLoading(false); // Use new state
+      }
+    }
+  };
+
+  // --- Combined Render ---
+  // Display loading spinner only if NO data for either section is loaded yet
+  if (userLoading && users.length === 0 && gameLoading && games.length === 0) {
+     return (
       <Container className="text-center my-5">
         <Spinner animation="border" />
-        <p className="mt-2">Loading users...</p>
+        <p className="mt-2">Loading management data...</p>
       </Container>
     );
   }
 
+
   return (
     <Container>
-      <h2 className="text-center mb-4">User Management</h2>
-      
-      {error && <Alert variant="danger">{error}</Alert>}
-      
+      {/* --- User Management Section --- */}
+      <h2 className="text-center mb-4"><FaUser className="me-2"/>User Management</h2> {/* Added User icon */}
+
+      {/* Note: Error is now userError */}
+      {userError && <Alert variant="danger">{userError}</Alert>}
+
       <div className="d-flex justify-content-between mb-3">
-        <Form.Group className="mb-3" style={{ width: '300px' }}>
+        <Form.Group style={{ width: '300px' }}>
           <div className="position-relative">
+            {/* Note: SearchTerm is now userSearchTerm */}
             <Form.Control
               type="text"
               placeholder="Search users..."
-              value={searchTerm}
-              onChange={handleSearch}
+              value={userSearchTerm}
+              onChange={handleUserSearch} // Use handleUserSearch
             />
             <FaSearch style={{ position: 'absolute', right: '10px', top: '10px', color: '#aaa' }} />
           </div>
         </Form.Group>
-        
-        <Button variant="primary" onClick={fetchUsers}>
-          Refresh
+
+        {/* Note: Loading is now userLoading */}
+        <Button variant="secondary" onClick={fetchUsers} disabled={userLoading}> {/* Use secondary for refresh */}
+          {userLoading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Refresh Users'} {/* Differentiate refresh button */}
         </Button>
       </div>
-      
+
+      {/* User Table */}
       <Table striped bordered hover responsive>
         <thead>
           <tr>
@@ -200,18 +330,19 @@ useEffect(() => {
                 <td>${user.balance?.toFixed(2) || '0.00'}</td>
                 <td>{new Date(user.fechaRegistro).toLocaleDateString()}</td>
                 <td>
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm" 
-                    className="me-2"
-                    onClick={() => handleEditClick(user)}
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="me-2 mb-1" // Added mb-1 for stacking on small screens
+                    onClick={() => handleUserEditClick(user)} // Use handleUserEditClick
                   >
                     <FaUserEdit /> Edit
                   </Button>
-                  <Button 
-                    variant="outline-success" 
+                  <Button
+                    variant="outline-success"
                     size="sm"
-                    onClick={() => handleBalanceClick(user)}
+                    className="mb-1" // Added mb-1
+                    onClick={() => handleUserBalanceClick(user)} // Use handleUserBalanceClick
                   >
                     <FaCoins /> Balance
                   </Button>
@@ -221,27 +352,29 @@ useEffect(() => {
           ) : (
             <tr>
               <td colSpan="6" className="text-center">
-                {searchTerm ? 'No users found matching your search.' : 'No users available.'}
+                {userSearchTerm ? 'No users found matching your search.' : 'No users available.'} {/* Use userSearchTerm */}
               </td>
             </tr>
           )}
         </tbody>
       </Table>
-      
-      {/* Edit User Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+
+      {/* User Edit Modal */}
+      <Modal show={showUserEditModal} onHide={() => setShowUserEditModal(false)} backdrop="static" keyboard={false}> {/* Use showUserEditModal */}
         <Modal.Header closeButton>
           <Modal.Title>Edit User</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <Form>
+        <Form onSubmit={(e) => { e.preventDefault(); handleUserEditSubmit(); }}> {/* Added onSubmit */}
+          <Modal.Body>
+             {userError && showUserEditModal && <Alert variant="danger">{userError}</Alert>} {/* Show user modal error */}
             <Form.Group className="mb-3">
               <Form.Label>Username</Form.Label>
               <Form.Control
                 type="text"
                 name="username"
-                value={editFormData.username}
-                onChange={handleEditFormChange}
+                value={userEditFormData.username} // Use userEditFormData
+                onChange={handleUserEditFormChange} // Use handleUserEditFormChange
+                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -249,64 +382,190 @@ useEffect(() => {
               <Form.Control
                 type="email"
                 name="email"
-                value={editFormData.email}
-                onChange={handleEditFormChange}
+                value={userEditFormData.email} // Use userEditFormData
+                onChange={handleUserEditFormChange} // Use handleUserEditFormChange
+                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Role</Form.Label>
               <Form.Select
                 name="rol"
-                value={editFormData.rol}
-                onChange={handleEditFormChange}
+                value={userEditFormData.rol} // Use userEditFormData
+                onChange={handleUserEditFormChange} // Use handleUserEditFormChange
+                required
               >
                 <option value="USER">USER</option>
                 <option value="ADMIN">ADMIN</option>
               </Form.Select>
             </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleEditSubmit}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowUserEditModal(false)}> {/* Use setShowUserEditModal */}
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={userLoading}> {/* Use type=submit, userLoading */}
+               {userLoading ? <Spinner as="span" animation="border" size="sm" /> : 'Save Changes'} {/* userLoading */}
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
-      
-      {/* Edit Balance Modal */}
-      <Modal show={showBalanceModal} onHide={() => setShowBalanceModal(false)}>
+
+      {/* User Balance Modal */}
+      <Modal show={showUserBalanceModal} onHide={() => setShowUserBalanceModal(false)} backdrop="static" keyboard={false}> {/* Use showUserBalanceModal */}
         <Modal.Header closeButton>
           <Modal.Title>Update Balance</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <p>Update balance for user: <strong>{selectedUser?.username}</strong></p>
-          <Form>
+         <Form onSubmit={(e) => { e.preventDefault(); handleUserBalanceSubmit(); }}> {/* Added onSubmit */}
+          <Modal.Body>
+            {userError && showUserBalanceModal && <Alert variant="danger">{userError}</Alert>} {/* Show user modal error */}
+            <p>Update balance for user: <strong>{selectedUser?.username}</strong></p> {/* selectedUser is fine */}
             <Form.Group className="mb-3">
               <Form.Label>Balance Amount ($)</Form.Label>
               <Form.Control
                 type="number"
-                min="0"
-                step="10"
-                value={balanceAmount}
-                onChange={handleBalanceChange}
+                value={userBalanceAmount} // Use userBalanceAmount
+                onChange={handleUserBalanceChange} // Use handleUserBalanceChange
+                required
               />
             </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowBalanceModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleBalanceSubmit}>
-            Update Balance
-          </Button>
-        </Modal.Footer>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowUserBalanceModal(false)}> {/* Use setShowUserBalanceModal */}
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={userLoading}> {/* Use type=submit, userLoading */}
+              {userLoading ? <Spinner as="span" animation="border" size="sm" /> : 'Update Balance'} {/* userLoading */}
+            </Button>
+          </Modal.Footer>
+         </Form>
       </Modal>
+
+
+      {/* --- Visual Separator --- */}
+      <hr className="my-5" /> {/* Add a horizontal rule with margin */}
+
+      {/* --- Game Management Section --- */}
+      <h2 className="text-center mb-4"><FaGamepad className="me-2"/>Game Management</h2> {/* Added Gamepad icon */}
+
+      {/* Note: Error is now gameError */}
+      {gameError && !showGameModal && <Alert variant="danger">{gameError}</Alert>} {/* Show general game errors */}
+
+      <div className="d-flex justify-content-between mb-3">
+        <Form.Group style={{ width: '300px' }}>
+          <div className="position-relative">
+            {/* Note: SearchTerm is now gameSearchTerm */}
+            <Form.Control
+              type="text"
+              placeholder="Search games by name, description, genre..."
+              value={gameSearchTerm}
+              onChange={handleGameSearch} // Use handleGameSearch
+            />
+            <FaSearch style={{ position: 'absolute', right: '10px', top: '10px', color: '#aaa' }} />
+          </div>
+        </Form.Group>
+        <div>
+          <Button variant="primary" onClick={handleShowAddModal} className="me-2">
+            <FaPlus /> Add Game
+          </Button>
+          {/* Note: Loading is now gameLoading */}
+          <Button variant="secondary" onClick={fetchGames} disabled={gameLoading}>
+            {gameLoading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Refresh Games'} {/* Differentiate refresh button */}
+          </Button>
+        </div>
+      </div>
+
+      {/* Game Table */}
+      <Table striped bordered hover responsive>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredGames.length > 0 ? (
+            filteredGames.map(game => (
+              <tr key={game.id}>
+                <td>{game.id}</td>
+                <td>{game.nombre}</td>
+                <td>{game.descripcion?.substring(0, 50)}{game.descripcion?.length > 50 ? '...' : ''}</td>
+                <td>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="me-2 mb-1" // Added mb-1
+                    onClick={() => handleShowEditModal(game)} // Use handleShowEditModal
+                  >
+                    <FaEdit /> Edit
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                     className="mb-1" // Added mb-1
+                    onClick={() => handleDeleteGame(game.id)} // Use handleDeleteGame
+                  >
+                    <FaTrashAlt /> Delete
+                  </Button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="7" className="text-center">
+                {gameSearchTerm ? 'No games found matching your search.' : 'No games available. Try adding one!'} {/* Use gameSearchTerm */}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+
+      {/* Game Add/Edit Modal */}
+      {/* Note: Modal show state is showGameModal, form data is gameFormData etc. */}
+      <Modal show={showGameModal} onHide={handleCloseGameModal} backdrop="static" keyboard={false}> {/* Use showGameModal */}
+        <Modal.Header closeButton>
+          <Modal.Title>{isEditMode ? 'Edit Game' : 'Add New Game'}</Modal.Title> {/* Use isEditMode */}
+        </Modal.Header>
+        <Form onSubmit={handleGameSubmit}> {/* Use handleGameSubmit */}
+          <Modal.Body>
+            {gameError && showGameModal && <Alert variant="danger">{gameError}</Alert>} {/* Show game modal-specific errors */}
+            <Form.Group className="mb-3">
+              <Form.Label>Name <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                name="nombre"
+                value={gameFormData.nombre} // Use gameFormData
+                onChange={handleGameFormChange} // Use handleGameFormChange
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Description <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="descripcion"
+                value={gameFormData.descripcion} // Use gameFormData
+                onChange={handleGameFormChange} // Use handleGameFormChange
+                required
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseGameModal}> {/* Use handleCloseGameModal */}
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={gameLoading}> {/* Use type=submit, gameLoading */}
+              {gameLoading ? <Spinner as="span" animation="border" size="sm" /> : (isEditMode ? 'Save Changes' : 'Add Game')} {/* Use gameLoading, isEditMode */}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
     </Container>
   );
 };
 
-export default UserManagement;
+export default UserManagement; // The component name remains UserManagement, but it now manages both

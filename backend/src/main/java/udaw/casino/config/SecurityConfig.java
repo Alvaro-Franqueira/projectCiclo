@@ -1,7 +1,8 @@
-package udaw.casino.config;
- 
+package udaw.casino.config; // Make sure this package matches your project structure
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // Important for specifying HTTP methods
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -15,18 +16,18 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import udaw.casino.security.JwtAuthenticationFilter;
+import udaw.casino.security.JwtAuthenticationFilter; // Make sure this path is correct
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity // Enables @PreAuthorize, @PostAuthorize, @Secured
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, 
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           UserDetailsService userDetailsService,
                           PasswordEncoder passwordEncoder) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -45,23 +46,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults())
-            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults()) // Enable CORS with default configuration
+            .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are using JWT (stateless)
             .authorizeHttpRequests(auth -> auth
+                // --- PUBLICLY ACCESSIBLE ENDPOINTS (Unauthenticated access) ---
                 .requestMatchers(
-                    "/api/usuarios/login",
-                    "/api/usuarios/registrar",
-                    "/api/usuarios/username/**",
-                    "/api/usuarios/id/**",
-                    "/api/payments/webhook"
+                    "/api/usuarios/login",          // User login
+                    "/api/usuarios/registrar",      // User registration
+                    "/api/payments/webhook"         // Payment webhook
                 ).permitAll()
+
+                // --- AUTHENTICATED USER ENDPOINTS (Any logged-in user: USER or ADMIN) ---
+                // Logged-in users can GET game information
+                .requestMatchers(HttpMethod.GET, "/api/juegos", "/api/juegos/**").authenticated()
+                // Logged-in users can GET their own or other users' (public) details
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/username/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/id/**").authenticated()
+                // Add other endpoints here that any authenticated user can access
+                // Example: .requestMatchers("/api/user/profile").authenticated()
+
+                // --- ADMIN ONLY ENDPOINTS ---
+                // For user management operations restricted to ADMINs
                 .requestMatchers("/api/usuarios/admin/**").hasRole("ADMIN")
+                // Only ADMINS can create, update, or delete games
+                .requestMatchers(HttpMethod.POST, "/api/juegos").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/juegos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/juegos/**").hasRole("ADMIN")
+                // Add other endpoints here that only ADMINs can access
+                // Example: .requestMatchers("/api/reports/**").hasRole("ADMIN")
+
+                // --- ALL OTHER REQUESTS MUST BE AUTHENTICATED (Default fallback) ---
+                // This will cover any other endpoints not explicitly defined above.
                 .anyRequest().authenticated()
             )
-            .sessionManagement(sess -> sess
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Configure session management to be stateless, as we are using JWTs
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Disable HTTP Basic authentication
             .httpBasic(AbstractHttpConfigurer::disable)
+            // Disable form login
             .formLogin(AbstractHttpConfigurer::disable)
+            // Add our custom JWT authentication filter before the standard Spring Security username/password filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

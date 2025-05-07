@@ -81,4 +81,22 @@ public class JuegoService {
         // Add checks here if needed (e.g., check if apuestas exist for this juego)
         juegoRepository.delete(juego);
     }
+
+    /**
+     * Updates an existing game.
+     *
+     * @param id The ID of the game to update.
+     * @param juego The new game details.
+     * @return The updated Juego object.
+     * @throws ResourceNotFoundException if the game is not found.
+     */
+    @Transactional
+    public Juego updateGame(Long id, Juego juego) {
+        Juego juegoExistente = obtenerJuegoPorId(id); // Ensure game exists
+        // Optional: Add checks for unique fields if needed (e.g., name)
+        juegoExistente.setNombre(juego.getNombre());
+        juegoExistente.setDescripcion(juego.getDescripcion());
+        // Add other fields as necessary
+        return juegoRepository.save(juegoExistente);
+    }
 }

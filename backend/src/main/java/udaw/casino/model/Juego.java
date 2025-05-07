@@ -19,8 +19,7 @@ public class Juego {
     private Long id;
 
     @NotBlank(message = "Game name cannot be blank")
-    @Column(nullable = false, unique = true)
-    @UniqueElements // Ensure game names are unique
+    @Column(name = "nombre", nullable = false, unique = true)
     private String nombre; // e.g., "Roulette", "Dice"
 
     @Column(length = 500) // Allow for a longer description
@@ -30,9 +29,6 @@ public class Juego {
     @OneToMany(mappedBy = "juego", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY) // Bets are linked to a game
     private List<Apuesta> apuestas;
 
-    // Removed the incorrect ManyToMany relationship with Ranking
-    // A Ranking entry might relate to a Juego (via ManyToOne in Ranking),
-    // but a Juego doesn't inherently own Ranking entries.
 
     // --- Constructors ---
     public Juego() {}

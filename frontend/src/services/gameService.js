@@ -34,6 +34,40 @@ const gameService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch game details' };
     }
+  },
+  // Update an existing game
+  updateGame: async (gameId, gameData) => {
+    try {
+      // Assuming gameData includes: nombre, descripcion, urlImagen, precio, genero
+      const response = await api.put(GAME_ENDPOINTS.GAME_BY_ID(gameId), gameData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating game:', error.response?.data || error.message);
+      throw error.response?.data || { message: 'Failed to update game' };
+    }
+  },
+
+  // Delete a game
+  deleteGame: async (gameId) => {
+    try {
+      const response = await api.delete(GAME_ENDPOINTS.GAME_BY_ID(gameId));
+      return response.data; // Or just response.status if no data is returned on delete
+    } catch (error) {
+      console.error('Error deleting game:', error.response?.data || error.message);
+      throw error.response?.data || { message: 'Failed to delete game' };
+    }
+  },
+  // Create a new game
+  addGame: async (gameData) => {
+    try {
+      const response = await api.post(GAME_ENDPOINTS.ALL_GAMES, gameData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating game:', error.response?.data || error.message);
+      throw error.response?.data || { message: 'Failed to create game' };
+    }
   }
-}
+};
+
+
 export default gameService;
