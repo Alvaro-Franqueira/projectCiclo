@@ -20,7 +20,7 @@ import { GiAbstract013 } from 'react-icons/gi';
 import { useAuth } from '../../context/AuthContext';
 import neonFavicon from '../images/neonfavicon.png';
 
-const AppNavbar = () => {
+const AppNavbar = ({ noSticky }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
@@ -56,10 +56,10 @@ const AppNavbar = () => {
       expanded={expanded}
       onToggle={() => setExpanded((prev) => !prev)}
       className="mb-4"
-      sticky="top"
+      sticky={noSticky ? undefined : "top"}
       ref={navRef}
     >
-      <Container>
+      <Container fluid>
         <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
           <img
             src={neonFavicon}

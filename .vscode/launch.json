@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CasinoApplication",
+            "request": "launch",
+            "mainClass": "udaw.casino.CasinoApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
