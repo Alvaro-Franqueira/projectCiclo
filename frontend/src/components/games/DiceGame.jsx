@@ -1,6 +1,6 @@
 // src/components/games/DiceGame.js
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Form, Card, Alert, Badge, Spinner, InputGroup, FormControl } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Card, Alert, Badge, Spinner, InputGroup, FormControl, Image } from 'react-bootstrap';
 import { FaDice, FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix, FaHistory, FaDollarSign, FaUser, FaChartBar } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext'; // Correct path assumed
 import diceService from '../../services/diceService'; // Correct path assumed
@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import flyingChips from '../images/flying-chips.png'; // Adjust the path as needed
 import confetti from 'canvas-confetti';
 import bigWin from '../images/bigwin.png'; 
+import logoCasino from '../images/logo-casino.png';
 
 const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
@@ -331,7 +332,7 @@ setTimeout(loadUserBetHistory, 1500);
   // Component Return (JSX)
   return (
     <Container className="py-4 dice-body">
-      {/* Floating message */}
+      {/* Floating message with logo */}
       {resultMessage.text && (
         <div 
           className={`floating-message alert alert-${resultMessage.type}`}
@@ -356,7 +357,18 @@ setTimeout(loadUserBetHistory, 1500);
                          resultMessage.type === 'warning' ? '#f59e0b' : '#0d6efd'
           }}
         >
-          {resultMessage.text}
+          <div className="d-flex align-items-center">
+            <div className="me-3">
+              <Image 
+                src={logoCasino} 
+                alt="Casino Logo" 
+                width={40} 
+                height={40} 
+                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))' }} 
+              />
+            </div>
+            <div className="text-start">{resultMessage.text}</div>
+          </div>
         </div>
       )}
 
@@ -412,10 +424,23 @@ setTimeout(loadUserBetHistory, 1500);
                   }}
                 >
                   {isRolling ? (
-                    <>
-                      <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
-                      Rolling...
-                    </>
+                    <div className="d-flex align-items-center justify-content-center">
+                      <div className="position-relative me-3">
+                        <Spinner animation="border" size="sm" role="status" aria-hidden="true" className="position-absolute" style={{ top: '-3px', left: '-3px' }} />
+                        <Image 
+                          src={logoCasino} 
+                          alt="Casino Logo" 
+                          width={24} 
+                          height={24} 
+                          className="spinning-logo" 
+                          style={{ 
+                            animation: 'pulse-glow 0.8s infinite alternate',
+                            filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.6))'
+                          }} 
+                        />
+                      </div>
+                      <span>Rolling...</span>
+                    </div>
                   ) : (
                     'Roll Dice'
                   )}

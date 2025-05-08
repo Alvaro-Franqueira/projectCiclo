@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination } from 'react-bootstrap';
+import {  Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination, Image } from 'react-bootstrap';
 import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown, FaMedal, FaMoneyBillWave, FaStar, FaAward } from 'react-icons/fa';
 import userService from '../services/userService';
 import betService from '../services/betService';
@@ -7,6 +7,7 @@ import rankingService from '../services/rankingService';
 import { useAuth } from '../context/AuthContext';
 import { GiRollingDices, GiCoins } from "react-icons/gi";
 import rouletteImg from '../components/images/rouletteimg.png';
+import kingLogo from '../components/images/king-logo.png';
 
 const UserProfile = () => {
     const { user } = useAuth();
@@ -281,7 +282,13 @@ const UserProfile = () => {
                     <Card className="text-white" style={{ boxShadow: 'none' }}>
                         <Card.Body className="text-center">
                             <div className="avatar-placeholder mb-3">
-                                {isNumberOne ? (<FaCrown size={60} color="#FFD700"/>) : (<FaUser size={60} />)}
+                                {isNumberOne ? (<Image 
+                                                    src={kingLogo} 
+                                                    alt="Casino Logo King" 
+                                                    width={130} 
+                                                    height={130} 
+                                                    style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))', borderRadius: '24px'  }} 
+                                                />) : (<FaUser size={60} />)}
                             </div>
                             <Card.Title style={{ paddingBottom: '10px' }}>{profileData.username || 'User'}</Card.Title>
                             <Card.Subtitle className="mb-3 text-white">{profileData.email || 'No email'}</Card.Subtitle>

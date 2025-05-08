@@ -28,6 +28,20 @@
   filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
 }
 
+
+
+.crown-icon {
+  position: relative;
+  z-index: 1;
+}
+
+
+
+@keyframes glow-pulse {
+  0% { box-shadow: 0 0 3px rgba(245, 158, 11, 0.5); }
+  100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); }
+}
+
 /* Main tabs styling */
 .ranking-tabs .nav-link {
   color: white;
@@ -123,9 +137,6 @@
   font-size: 1.2rem;
 }
 
-
-
-
 .game-icon {
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
@@ -165,8 +176,6 @@
 
 .ranking-table tbody tr:hover {
   background-color: #334155 !important;
-  transform: translateX(5px);
-  border-left: 3px solid var(--accent-color);
 }
 
 /* Top ranking rows */
@@ -191,15 +200,8 @@
   position: relative;
 }
 
-.rank-icon {
-  display: block;
-  margin: 0 auto;
-}
 
-.rank-first {
-  color: gold;
-  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
-}
+
 
 .rank-second {
   color: silver;

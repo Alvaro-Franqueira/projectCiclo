@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Alert, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Alert, Spinner, Image } from 'react-bootstrap';
 import { FaCoins, FaLock, FaDollarSign, FaChartLine, FaExclamationCircle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import StripeContainer from '../components/payment/StripeContainer';
+import logoCasino from '../components/images/logo-casino.png';
 
 const PaymentPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -35,7 +36,7 @@ const PaymentPage = () => {
 
   return (
     <Container className="my-5">
-      {/* Floating message */}
+      {/* Floating message with logo */}
       {message.text && (
         <div 
           className={`floating-message alert alert-${message.type}`}
@@ -60,7 +61,19 @@ const PaymentPage = () => {
                          message.type === 'warning' ? '#f59e0b' : '#0d6efd'
           }}
         >
-          {message.text}
+          <div className="d-flex align-items-center">
+            <div className="me-3">
+              <Image 
+                src={logoCasino} 
+                alt="Casino Logo" 
+                width={40} 
+                height={40} 
+                className="notification-logo"
+                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))' }}
+              />
+            </div>
+            <div className="text-start">{message.text}</div>
+          </div>
         </div>
       )}
       

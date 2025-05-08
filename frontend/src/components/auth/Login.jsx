@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert, Container, Card } from 'react-bootstrap';
+import { Form, Button, Alert, Container, Card, Image } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
+import logoCasino from '../images/logo-casino.png';
 
 const loginSchema = Yup.object().shape({
   username: Yup.string().required('Username is required'),
@@ -29,7 +30,15 @@ const Login = () => {
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
       <Card className="shadow" style={{ width: '400px' }}>
         <Card.Body className="text-white">
-          <Card.Title className="text-center mb-4">Login to Casino</Card.Title>
+          <div className="text-center mb-4">
+            <Image 
+              src={logoCasino} 
+              alt="Casino Logo" 
+              className="login-logo mb-3" 
+              style={{ width: '150px', filter: 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.4))' }} 
+            />
+            <Card.Title>Login to Casino</Card.Title>
+          </div>
           
           {error && <Alert variant="danger" className="text-white">{error}</Alert>}
           

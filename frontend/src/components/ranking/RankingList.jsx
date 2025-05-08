@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Table, Tabs, Tab, Alert, Spinner, Badge, Card, Row, Col } from 'react-bootstrap';
+import { Container, Table, Tabs, Tab, Alert, Spinner, Badge, Card, Row, Col, Image } from 'react-bootstrap';
 import { FaTrophy, FaCoins, FaGamepad, FaPercentage, FaChartLine, FaMedal, FaCrown, FaDice, FaCircle, FaDollarSign } from 'react-icons/fa';
 import rankingService from '../../services/rankingService';
 import gameService from '../../services/gameService';
+import logoCasino from '../images/logo-casino.png';
+import silverLogo from '../images/silver-logo.png';
+import bronzeLogo from '../images/bronze-logo.png';
 import './RankingList.css';
 
 const RankingList = () => {
@@ -179,9 +182,43 @@ const RankingList = () => {
   };
 
   const getRankIcon = (index) => {
-    if (index === 0) return <FaCrown className="rank-icon rank-first" size={28} />;
-    if (index === 1) return <FaMedal className="rank-icon rank-second" size={24} />;
-    if (index === 2) return <FaMedal className="rank-icon rank-third" size={22} />;
+    if (index === 0) {
+      return (
+        <div className="top-player-badge">
+          
+          <div className="rank-icon rank-first" 
+          >
+            <Image 
+              src={logoCasino} 
+              alt="Casino Logo Gold" 
+              width={20} 
+              height={20} 
+              style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))' }} 
+            />
+          </div>
+        </div>
+      );
+    }
+    if (index === 1) return <div className="rank-icon rank-first" 
+    >
+      <Image 
+        src={silverLogo} 
+        alt="Casino Logo Silver" 
+        width={18} 
+        height={18} 
+        style={{ filter: 'drop-shadow(0 0 3px rgba(35, 36, 37, 0.5))', borderRadius: '4px'  }} 
+      />
+    </div>;
+    if (index === 2) return <div className="rank-icon rank-first" 
+    >
+      <Image 
+        src={bronzeLogo} 
+        alt="Casino Logo Bronze" 
+        width={18} 
+        height={18} 
+        style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))', borderRadius: '4px'  }} 
+      />
+    </div>;
     return <span className="rank-number">#{index + 1}</span>;
   };
 
@@ -370,9 +407,11 @@ const RankingList = () => {
   return (
     <Container>
       <Card className="ranking-card">
-        <Card.Header className="text-center ranking-header">
+        <Card.Header className="text-center ranking-header d-flex align-items-center justify-content-center">
+          
           <FaTrophy className="me-2 trophy-icon" />
           <h2 className="mb-0">Player Rankings</h2>
+          <FaTrophy className="me-2 trophy-icon" />
         </Card.Header>
         <Card.Body>
           <Tabs
