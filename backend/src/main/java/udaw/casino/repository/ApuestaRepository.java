@@ -138,4 +138,14 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
      */
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN CAST(SUM(CASE WHEN a.estado = 'GANADA' THEN 1 ELSE 0 END) AS double) / COUNT(a) ELSE 0 END FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId")
     Double calculateWinRateForUserAndGame(@Param("usuarioId") Long usuarioId, @Param("juegoId") Long juegoId);
+
+    /**
+     * Calculates the total profit for a user on a specific game (sum of winloss values).
+     *
+     * @param usuarioId The ID of the user.
+     * @param juegoId The ID of the game.
+     * @return The total profit for the specific game.
+     */
+    @Query("SELECT COALESCE(SUM(a.winloss), 0.0) FROM Apuesta a WHERE a.usuario.id = :usuarioId AND a.juego.id = :juegoId")
+    Double calculateTotalProfitForUserAndGame(@Param("usuarioId") Long usuarioId, @Param("juegoId") Long juegoId);
 }

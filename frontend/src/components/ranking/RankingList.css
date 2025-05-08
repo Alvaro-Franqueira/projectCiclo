@@ -1,0 +1,321 @@
+/* RankingList.css - Casino-themed styling for the rankings page */
+
+.ranking-card {
+  border: none;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+  background-color: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ranking-header {
+  background-color: #12234a;
+  padding: 1rem ;
+  border: 4px solid var(--accent-color);
+ 
+}
+
+.ranking-header h2 {
+  font-weight: bold;
+  color: var(--accent-color);
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.trophy-icon {
+  color: var(--accent-color);
+  font-size: 2rem;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+}
+
+/* Main tabs styling */
+.ranking-tabs .nav-link {
+  color: #f3f4f6;
+  padding: 0.75rem 1rem;
+  background-color: #334155;
+  margin-right: 5px;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #475569;
+  border-bottom: none;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.ranking-tabs .nav-link:hover {
+  background-color: #3b536d;
+  color: var(--accent-color);
+}
+
+.ranking-tabs .nav-link.active {
+  background-color: #1e293b;
+  color: var(--accent-color);
+  border-bottom: 3px solid var(--accent-color);
+  font-weight: bold;
+}
+
+/* Subtabs styling */
+.ranking-subtabs {
+  margin-top: 0.5rem;
+}
+
+.ranking-subtabs .nav-link {
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  background-color: #293548;
+  border-bottom: none;
+}
+
+.ranking-subtabs .nav-link.active {
+  background-color: #1e293b;
+  border-bottom: 2px solid var(--accent-color);
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.ranking-subtab-content {
+
+}
+
+.tab-description {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.ranking-tab-content {
+  padding: 1.5rem;
+  background-color: #1e293b;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Game-specific ranking cards */
+.game-ranking-card {
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.game-ranking-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.game-ranking-header {
+  padding: 1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.dice-ranking-card .game-ranking-header {
+  background-color: #4338ca; /* Indigo */
+  color: white;
+  border-bottom: 2px solid #c7d2fe;
+}
+
+.roulette-ranking-card .game-ranking-header {
+  background-color: #7f1d1d; /* Dark red */
+  color: white;
+  border-bottom: 2px solid #fecaca;
+}
+
+.game-icon {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+}
+
+/* Table styling */
+.ranking-table-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-table {
+  margin-bottom: 0;
+  background-color: #0f172a;
+}
+
+.ranking-table thead th {
+  background-color: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 1rem;
+  font-weight: bold;
+}
+
+.dice-ranking-card .ranking-table thead th {
+  background-color: #3730a3; /* Darker indigo */
+}
+
+.roulette-ranking-card .ranking-table thead th {
+  background-color: #991b1b; /* Darker red */
+}
+
+.ranking-table tbody tr {
+  transition: background-color 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.ranking-table tbody tr:hover {
+  background-color: #334155 !important;
+  transform: translateX(5px);
+  border-left: 3px solid var(--accent-color);
+}
+
+/* Top ranking rows */
+.top-ranking {
+  background-color: rgba(30, 58, 138, 0.2) !important;
+}
+
+.rank-1 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.rank-2 {
+  background-color: rgba(107, 114, 128, 0.15) !important;
+}
+
+.rank-3 {
+  background-color: rgba(205, 127, 50, 0.15) !important;
+}
+
+/* Rank icons */
+.rank-column {
+  position: relative;
+}
+
+.rank-icon {
+  display: block;
+  margin: 0 auto;
+}
+
+.rank-first {
+  color: gold;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+}
+
+.rank-second {
+  color: silver;
+  filter: drop-shadow(0 0 3px rgba(192, 192, 192, 0.5));
+}
+
+.rank-third {
+  color: #CD7F32; /* Bronze */
+  filter: drop-shadow(0 0 3px rgba(205, 127, 50, 0.5));
+}
+
+.rank-number {
+  font-weight: bold;
+  color: #94a3b8;
+}
+
+.player-name {
+  font-weight: bold;
+  color: #f3f4f6;
+}
+
+/* Value badges */
+.value-badge {
+  font-weight: bold;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Game selection */
+.game-tabs {
+  background-color: #1e293b;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.game-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.game-badge {
+  cursor: pointer;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.game-badge:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.game-badge.active {
+  background-color: var(--accent-color) !important;
+  color: #1e293b;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Loading spinner */
+.spinner-accent {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  border-right-color: transparent;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .game-specific-rankings .row {
+    flex-direction: column;
+  }
+  
+  .game-ranking-card {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ranking-tabs .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .ranking-subtabs .nav-link {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .value-badge {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .game-ranking-header {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .ranking-tabs .nav-link {
+    margin-right: 2px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .ranking-subtabs .nav-link {
+    margin-right: 1px;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  
+  .game-badge {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+} 

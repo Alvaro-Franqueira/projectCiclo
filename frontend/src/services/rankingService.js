@@ -13,7 +13,8 @@ const RANKING_TYPES = {
   TOTAL_BETS_AMOUNT: 'TOTAL_BETS_AMOUNT',
   OVERALL_PROFIT: 'OVERALL_PROFIT',
   WIN_RATE: 'WIN_RATE',
-  BY_GAME_WIN_RATE: 'BY_GAME_WIN_RATE'
+  BY_GAME_WIN_RATE: 'BY_GAME_WIN_RATE',
+  BY_GAME_PROFIT: 'BY_GAME_PROFIT'
 };
 
 const rankingService = {
@@ -60,6 +61,16 @@ const rankingService = {
     }
   },
   
+  // Get game profit rankings
+  getGameProfitRankings: async (gameId) => {
+    try {
+      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, RANKING_TYPES.BY_GAME_PROFIT));
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch game profit rankings' };
+    }
+  },
+
   // Get win rate rankings
   getWinRateRankings: async () => {
     try {

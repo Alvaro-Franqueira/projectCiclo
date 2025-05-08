@@ -206,6 +206,14 @@ public class RankingCalculationService {
                 // Returns Double (0.0 to 1.0) or 0.0 - SAFE
                 Double gameWinRate = apuestaRepository.calculateWinRateForUserAndGame(usuario.getId(), juego.getId());
                 return gameWinRate != null ? gameWinRate * 100 : 0.0; // Convert to percentage
+                
+            case BY_GAME_PROFIT:
+                if (juego == null || juego.getId() == null) {
+                    throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_PROFIT ranking type");
+                }
+                // Returns Double or 0.0 - SAFE
+                Double gameProfit = apuestaRepository.calculateTotalProfitForUserAndGame(usuario.getId(), juego.getId());
+                return gameProfit != null ? gameProfit : 0.0;
 
             default:
                 log.error("Unsupported RankingType encountered: {}", tipo);
