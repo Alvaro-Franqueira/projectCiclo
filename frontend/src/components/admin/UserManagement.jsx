@@ -299,7 +299,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
         </Form.Group>
 
         {/* Note: Loading is now userLoading */}
-        <Button variant="secondary" onClick={fetchUsers} disabled={userLoading}> {/* Use secondary for refresh */}
+        <Button variant="primary2" onClick={fetchUsers} disabled={userLoading}> {/* Use secondary for refresh */}
           {userLoading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Refresh Users'} {/* Differentiate refresh button */}
         </Button>
       </div>
@@ -465,7 +465,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
           </div>
         </Form.Group>
         <div>
-          <Button variant="primary" onClick={handleShowAddModal} className="me-2">
+          <Button variant="primary2" onClick={handleShowAddModal} className="me-2">
             <FaPlus /> Add Game
           </Button>
           {/* Note: Loading is now gameLoading */}

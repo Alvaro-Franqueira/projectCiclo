@@ -123,17 +123,8 @@
   font-size: 1.2rem;
 }
 
-.dice-ranking-card .game-ranking-header {
-  background-color: #4338ca; /* Indigo */
-  color: white;
-  border-bottom: 2px solid #c7d2fe;
-}
 
-.roulette-ranking-card .game-ranking-header {
-  background-color: #7f1d1d; /* Dark red */
-  color: white;
-  border-bottom: 2px solid #fecaca;
-}
+
 
 .game-icon {
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
