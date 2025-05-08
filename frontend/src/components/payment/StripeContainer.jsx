@@ -3,14 +3,13 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import CheckoutForm from './CheckoutForm';
 import paymentService from '../../services/paymentService';
-import { Container, Row, Col, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Spinner } from 'react-bootstrap';
 
 // We'll load Stripe dynamically once we get the publishable key from the backend
 let stripePromise = null;
 
-const StripeContainer = () => {
+const StripeContainer = ({ setMessage }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [options, setOptions] = useState(null);
 
   useEffect(() => {
@@ -40,20 +39,26 @@ const StripeContainer = () => {
             paymentMethodCreation: 'manual' // Required for createPaymentMethod with PaymentElement
           });
           
-          setError(null);
+          setMessage({ text: '', type: '' });
         } else {
-          setError('Failed to load Stripe configuration: Missing publishable key');
+          setMessage({ 
+            text: 'Failed to load Stripe configuration: Missing publishable key', 
+            type: 'danger' 
+          });
         }
       } catch (err) {
         console.error('Error loading Stripe configuration:', err);
-        setError('Failed to load Stripe configuration. Please try again later.');
+        setMessage({ 
+          text: 'Failed to load Stripe configuration. Please try again later.', 
+          type: 'danger' 
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchConfig();
-  }, []);
+  }, [setMessage]);
 
   if (loading) {
     return (
@@ -66,32 +71,20 @@ const StripeContainer = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container className="my-5">
-        <Alert variant="danger">
-          <Alert.Heading>Payment System Error</Alert.Heading>
-          <p>{error}</p>
-          <p>Please try again later or contact support.</p>
-        </Alert>
-      </Container>
-    );
-  }
-
   if (!options || !stripePromise) {
     return (
       <Container className="text-center my-5">
-        <Alert variant="warning">
-          <Alert.Heading>Payment System Initializing</Alert.Heading>
-          <p>Please wait while we set up the payment system...</p>
-        </Alert>
+        <Spinner animation="border" role="status" variant="primary">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+        <p className="mt-3">Initializing payment system...</p>
       </Container>
     );
   }
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <CheckoutForm />
+      <CheckoutForm setMessage={setMessage} />
     </Elements>
   );
 };

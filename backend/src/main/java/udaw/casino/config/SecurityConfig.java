@@ -62,6 +62,14 @@ public class SecurityConfig {
                 // Logged-in users can GET their own or other users' (public) details
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/username/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/id/**").authenticated()
+                
+                // Allow access to rankings endpoints for authenticated users
+                .requestMatchers(HttpMethod.GET, "/api/rankings/v2/**").authenticated()
+                
+                // Allow access to betting endpoints for authenticated users
+                .requestMatchers(HttpMethod.GET, "/api/apuestas/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/bets/**").authenticated() // In case you have renamed endpoints
+
                 // Add other endpoints here that any authenticated user can access
                 // Example: .requestMatchers("/api/user/profile").authenticated()
 

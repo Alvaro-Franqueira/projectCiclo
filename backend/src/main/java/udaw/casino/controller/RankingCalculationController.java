@@ -40,7 +40,7 @@ public class RankingCalculationController {
         
         // Get global rankings for each type
         for (RankingType tipo : RankingType.values()) {
-            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE) { // Skip game-specific rankings
+            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE && tipo != RankingType.BY_GAME_PROFIT) { // Skip game-specific rankings
                 List<RankingEntry> rankings = rankingCalculationService.obtenerRankingPorTipo(tipo);
                 allRankings.put(tipo.name(), rankings);
             }
@@ -58,7 +58,7 @@ public class RankingCalculationController {
     @GetMapping("/tipo/{tipo}")
     public ResponseEntity<List<RankingEntry>> obtenerRankingGlobalPorTipo(@PathVariable("tipo") RankingType tipo) {
         // Basic validation: Ensure the type is not game-specific if called without a game context
-        if (tipo == RankingType.BY_GAME_WINS) {
+        if (tipo == RankingType.BY_GAME_WINS || tipo == RankingType.BY_GAME_WIN_RATE || tipo == RankingType.BY_GAME_PROFIT) {
             return ResponseEntity.badRequest().build(); // Indicate this endpoint isn't for game-specific types alone
         }
         List<RankingEntry> rankings = rankingCalculationService.obtenerRankingPorTipo(tipo);
@@ -103,7 +103,8 @@ public class RankingCalculationController {
             return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             e.printStackTrace(); // or use a logger
-            return ResponseEntity.status(500).body(null); // or return ResponseEntity.internalServerError().body(e.getMessage());
+            // Return 200 OK with empty list instead of error status to prevent frontend crashes
+            return ResponseEntity.ok(List.of());
         }
     }
 }

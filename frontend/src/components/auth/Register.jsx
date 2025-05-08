@@ -73,6 +73,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control
+                  className="input-form"
                     id='username'
                     type="text"
                     name="username"
@@ -92,6 +93,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='email'>Email</Form.Label>
                   <Form.Control
+                  className="input-form"
                     id='email'
                     type="email"
                     name="email"
@@ -110,6 +112,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='password'>Password</Form.Label>
                   <Form.Control
+                  className="input-form"
                     id='password'
                     type="password"
                     name="password"
@@ -128,6 +131,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='confirmPassword'>Confirm Password</Form.Label>
                   <Form.Control
+                  className="input-form"
                     id='confirmPassword'
                     type="password"
                     name="confirmPassword"
@@ -144,9 +148,8 @@ const Register = () => {
                 </Form.Group>
 
                 <Button 
-                  variant="primary" 
+                  className="w-100 mt-3 btn-primary2" 
                   type="submit" 
-                  className="w-100 mt-3" 
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Registering...' : 'Register'}

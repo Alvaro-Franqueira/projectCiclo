@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination } from 'react-bootstrap';
-import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown, FaMedal, FaMoneyBillWave, FaStar, FaAward } from 'react-icons/fa';
 import userService from '../services/userService';
 import betService from '../services/betService';
 import rankingService from '../services/rankingService';
 import { useAuth } from '../context/AuthContext';
-import { GiRollingDices } from "react-icons/gi";
+import { GiRollingDices, GiCoins } from "react-icons/gi";
 import rouletteImg from '../components/images/rouletteimg.png';
 
 const UserProfile = () => {
@@ -34,16 +34,17 @@ const UserProfile = () => {
         }
         indicateLoading(true);
         setError('');
+        
+        let hasProfileError = false;
+        
         try {
-            const [fetchedUserDetails, userBets, userRankings] = await Promise.all([
+            // Fetch user details and bets first - these are essential
+            const [fetchedUserDetails, userBets] = await Promise.all([
                 userService.getUserById(userId),
-                betService.getUserBets(userId), // Asumimos que esto devuelve TODAS las apuestas
-                rankingService.getUserRankings(userId),
+                betService.getUserBets(userId)
             ]);
-            console.log('Fetched fresh user details for profile:', fetchedUserDetails);
-            console.log('User bets with game info:', userBets);
-            console.log('Fetched user rankings:', userRankings);
-
+            
+            // Handle user details
             if (fetchedUserDetails) {
                 const balance = fetchedUserDetails.saldo !== undefined
                     ? Number(fetchedUserDetails.saldo)
@@ -55,17 +56,47 @@ const UserProfile = () => {
             } else {
                 setProfileData({});
             }
-            console.log('USER BETS:', userBets);
-            setBets(Array.isArray(userBets) ? userBets.sort((a, b) => new Date(b.fechaApuesta) - new Date(a.fechaApuesta)) : []); // Ordenar apuestas por fecha descendente
-            setRankings(Array.isArray(userRankings) ? userRankings : []);
-            await fetchGameSpecificStats(userId);
+            
+            // Handle bets
+            setBets(Array.isArray(userBets) ? userBets.sort((a, b) => new Date(b.fechaApuesta) - new Date(a.fechaApuesta)) : []);
+            
         } catch (err) {
-            setError('Failed to load user profile data. Please try again later.');
-            console.error("Error fetching profile data:", err);
-        } finally {
-            indicateLoading(false);
-            setIsRefreshing(false);
+            console.error("Error fetching essential profile data:", err);
+            setError('Failed to load essential profile data. Please try again later.');
+            hasProfileError = true;
         }
+        
+        // Non-essential data - fetch separately so failures don't break the whole profile
+        if (!hasProfileError) {
+            try {
+                // Fetch rankings with dedicated error handling
+                const userRankings = await rankingService.getUserRankings(userId);
+                console.log('DEBUG - Rankings response:', userRankings);
+                console.log('DEBUG - Rankings length:', Array.isArray(userRankings) ? userRankings.length : 'not an array');
+                
+                if (Array.isArray(userRankings) && userRankings.length > 0) {
+                    console.log('DEBUG - First ranking:', userRankings[0]);
+                    console.log('DEBUG - Game-specific rankings:', userRankings.filter(r => r.juego));
+                    console.log('DEBUG - Global rankings:', userRankings.filter(r => !r.juego));
+                }
+                
+                setRankings(Array.isArray(userRankings) ? userRankings : []);
+            } catch (rankingErr) {
+                console.error("Error fetching rankings:", rankingErr);
+                setRankings([]); // Empty array for clean UI
+            }
+            
+            try {
+                // Fetch game stats with dedicated error handling
+                await fetchGameSpecificStats(userId);
+            } catch (statsErr) {
+                console.error("Error fetching game stats:", statsErr);
+                // Use default empty game stats, which are set in the state initialization
+            }
+        }
+        
+        indicateLoading(false);
+        setIsRefreshing(false);
     }, [isRefreshing]);
 
     const fetchGameSpecificStats = async (userId) => {
@@ -151,12 +182,83 @@ const UserProfile = () => {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    // Check if user has #1 rankings
     const numberOneRankings = Array.isArray(rankings) ? rankings.filter(r => r.posicion === 1) : [];
     const isNumberOne = numberOneRankings.length > 0;
     const numberOneRankingDetails = numberOneRankings.map(r => ({
         type: r.tipo,
         game: r.juego?.nombre || 'Overall'
     }));
+
+    // Helper function to get badge information based on ranking type
+    const getBadgeForRanking = (type, game) => {
+        switch (type) {
+            case 'OVERALL_PROFIT':
+                return {
+                    title: 'Top Profit',
+                    icon: <FaMoneyBillWave size={50} color="#40c057" />,
+                    bgColorStart: '#103221',
+                    bgColorEnd: '#143325',
+                    borderColor: '#40c057',
+                    textColor: '#c0eb75'
+                };
+            case 'TOTAL_BETS_AMOUNT':
+                return {
+                    title: 'Top Better',
+                    icon: <GiCoins size={60} color="#fcc419" />,
+                    bgColorStart: '#312200',
+                    bgColorEnd: '#462f00',
+                    borderColor: '#fcc419',
+                    textColor: '#ffe066'
+                };
+            case 'WIN_RATE':
+                return {
+                    title: 'Best Win %',
+                    icon: <FaPercentage size={40} color="#4dabf7" />,
+                    bgColorStart: '#0b2d4e',
+                    bgColorEnd: '#0e345d',
+                    borderColor: '#4dabf7',
+                    textColor: '#a5d8ff'
+                };
+            case 'BY_GAME_WINS':
+                return {
+                    title: 'Most Wins',
+                    icon: <FaTrophy size={55} color="#f06595" />,
+                    bgColorStart: '#3d0d24',
+                    bgColorEnd: '#4c102d',
+                    borderColor: '#f06595',
+                    textColor: '#ffdeeb'
+                };
+            case 'BY_GAME_WIN_RATE':
+                return {
+                    title: 'Best Win %',
+                    icon: <FaPercentage size={40} color="#4dabf7"  />,
+                    bgColorStart: '#0b2d4e',
+                    bgColorEnd: '#0e345d',
+                    borderColor: '#4dabf7',
+                    textColor: '#a5d8ff'
+                };
+            case 'BY_GAME_PROFIT':
+                return {
+                    title: 'Top Profit',
+                    title: 'Top Profit',
+                    icon: <FaMoneyBillWave size={50} color="#40c057" />,
+                    bgColorStart: '#103221',
+                    bgColorEnd: '#143325',
+                    borderColor: '#40c057',
+                    textColor: '#c0eb75'
+                };
+            default:
+                return {
+                    title: 'Top Player',
+                    icon: <FaMedal size={24} color="#FFD700" />,
+                    bgColorStart: '#312500',
+                    bgColorEnd: '#3d2f00',
+                    borderColor: '#FFD700',
+                    textColor: '#ffe066'
+                };
+        }
+    };
 
     if (loading) {
         return (
@@ -180,14 +282,49 @@ const UserProfile = () => {
                         <Card.Body className="text-center">
                             <div className="avatar-placeholder mb-3">
                                 {isNumberOne ? (<FaCrown size={60} color="#FFD700"/>) : (<FaUser size={60} />)}
-                                {isNumberOne && (
-                                    <div style={{ marginTop: '8px', fontSize: '0.8rem', lineHeight: '1.3' }}>
-                                        {numberOneRankingDetails.map((detail, index) => (<div key={index}>#{1} en {detail.type.replace(/_/g, ' ')} ({detail.game})</div>))}
-                                    </div>
-                                )}
                             </div>
                             <Card.Title style={{ paddingBottom: '10px' }}>{profileData.username || 'User'}</Card.Title>
                             <Card.Subtitle className="mb-3 text-white">{profileData.email || 'No email'}</Card.Subtitle>
+                            
+                            {/* Achievements Section */}
+                            {isNumberOne && (
+                                <div className="achievements-section mb-4">
+                                    <h6 className="text-center mb-3">
+                                        <FaTrophy className="me-2" color="#FFD700" />
+                                        Top Rankings
+                                    </h6>
+                                    <div className="ranking-badges">
+                                        {numberOneRankingDetails.map((detail, index) => {
+                                            // Customize badge based on ranking type
+                                            const badgeInfo = getBadgeForRanking(detail.type, detail.game);
+                                            return (
+                                                <div 
+                                                    key={index} 
+                                                    className="ranking-badge-container text-center p-2 mb-2"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${badgeInfo.bgColorStart} 0%, ${badgeInfo.bgColorEnd} 100%)`,
+                                                        borderRadius: '8px',
+                                                        border: `2px solid ${badgeInfo.borderColor}`,
+                                                        boxShadow: `0 3px 6px rgba(0,0,0,0.2)`,
+                                                        width: '48%'
+                                                    }}
+                                                >
+                                                    <div className="badge-icon mb-1">
+                                                        {badgeInfo.icon}
+                                                    </div>
+                                                    <div className="badge-title" style={{ fontSize: '0.7rem', fontWeight: 'bold', color: badgeInfo.textColor }}>
+                                                        {badgeInfo.title}
+                                                    </div>
+                                                    <div className="badge-game" style={{ fontSize: '0.65rem', color: badgeInfo.textColor }}>
+                                                        {detail.game}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div className="d-flex justify-content-between mb-3">
                                 <div><FaCalendarAlt className="me-2" /><small>Joined</small></div>
                                 <small>{profileData.fechaRegistro ? new Date(profileData.fechaRegistro).toLocaleDateString() : 'N/A'}</small>
@@ -385,45 +522,113 @@ const UserProfile = () => {
                                 <Tab eventKey="myRankings" title={<><FaTrophy className="me-1" /> My Rankings</>}>
                                     <div className="p-3 card-tab-body">
                                         {rankings.length > 0 ? (
-                                            <Table responsive hover variant='dark'>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Ranking Type</th>
-                                                        <th>Game</th>
-                                                        <th>Value</th>
-                                                        <th>Position</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {rankings.map((ranking, index) => (
-                                                        <tr key={ranking.id || index}>
-                                                            <td>{ranking.tipo.replace(/_/g, ' ')}</td>
-                                                            <td>{ranking.juego?.nombre || 'Overall'}</td>
-                                                            <td>
-                                                                {ranking.tipo.includes('PROFIT') || ranking.tipo.includes('AMOUNT')
-                                                                    ? `$${parseFloat(ranking.valor || 0).toFixed(2)}`
-                                                                    : ranking.tipo.includes('WIN_RATE')
-                                                                    ? `${parseFloat(ranking.valor || 0).toFixed(1)}%`
-                                                                    : ranking.valor}
-                                                            </td>
-                                                            <td>
-                                                                <Badge
-                                                                    bg={
-                                                                        ranking.posicion === 1 ? 'warning' :
-                                                                        ranking.posicion === 2 ? 'secondary' :
-                                                                        ranking.posicion === 3 ? 'danger' :
-                                                                        'info'
-                                                                    }
-                                                                >
-                                                                    #{ranking.posicion}
-                                                                </Badge>
-                                                            </td>
+                                            <>
+                                                {/* Group rankings by game */}
+                                                <h5 className="mb-3">Global Rankings</h5>
+                                                <Table responsive hover variant='dark' className="mb-4">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Ranking Type</th>
+                                                            <th>Value</th>
+                                                            <th>Position</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </Table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {rankings
+                                                            .filter(r => !r.juego)
+                                                            .sort((a, b) => (a.posicion || 999) - (b.posicion || 999))
+                                                            .map((ranking, index) => (
+                                                                <tr key={index}>
+                                                                    <td>{ranking.tipo?.replace(/_/g, ' ') || 'Unknown'}</td>
+                                                                    <td>
+                                                                        {ranking.tipo?.includes('PROFIT') || ranking.tipo?.includes('AMOUNT')
+                                                                            ? `$${parseFloat(ranking.valor || 0).toFixed(2)}`
+                                                                            : ranking.tipo?.includes('WIN_RATE')
+                                                                            ? `${parseFloat(ranking.valor || 0).toFixed(1)}%`
+                                                                            : ranking.valor}
+                                                                    </td>
+                                                                    <td>
+                                                                        <Badge
+                                                                            bg={
+                                                                                ranking.posicion === 1 ? 'warning' :
+                                                                                ranking.posicion <= 10  ? 'info' :
+                                                                                'danger'
+                                                                            }
+                                                                        >
+                                                                            #{ranking.posicion}
+                                                                        </Badge>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                    </tbody>
+                                                </Table>
+
+                                                {/* Group game-specific rankings by game */}
+                                                {Array.from(new Set(rankings.filter(r => r.juego).map(r => r.juego?.id))).map(gameId => {
+                                                    const gameRankings = rankings.filter(r => r.juego?.id === gameId);
+                                                    const gameName = gameRankings[0]?.juego?.nombre || 'Unknown Game';
+                                                    
+                                                    return (
+                                                        <div key={gameId} className="mb-4">
+                                                            <h5 className="mb-3">{gameName} Rankings</h5>
+                                                            <Table responsive hover variant='dark'>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Ranking Type</th>
+                                                                        <th>Value</th>
+                                                                        <th>Position</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {gameRankings
+                                                                        .sort((a, b) => (a.posicion || 999) - (b.posicion || 999))
+                                                                        .map((ranking, index) => (
+                                                                            <tr key={index}>
+                                                                                <td>{ranking.tipo?.replace(/_/g, ' ') || 'Unknown'}</td>
+                                                                                <td>
+                                                                                    {ranking.tipo?.includes('PROFIT') || ranking.tipo?.includes('AMOUNT')
+                                                                                        ? `$${parseFloat(ranking.valor || 0).toFixed(2)}`
+                                                                                        : ranking.tipo?.includes('WIN_RATE')
+                                                                                        ? `${parseFloat(ranking.valor || 0).toFixed(1)}%`
+                                                                                        : ranking.valor}
+                                                                                </td>
+                                                                                <td>
+                                                                                    <Badge
+                                                                                        bg={
+                                                                                            ranking.posicion === 1 ? 'warning' :
+                                                                                            ranking.posicion <= 10  ? 'info' :
+                                                                                            'danger'
+                                                                                        }
+                                                                                    >
+                                                                                        #{ranking.posicion}
+                                                                                    </Badge>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                </tbody>
+                                                            </Table>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </>
                                         ) : (
-                                            <p className="text-center my-3">No ranking data available.</p>
+                                            <div className="text-center my-4">
+                                                <FaTrophy size={40} className="mb-3 text-secondary" />
+                                                <p>No ranking data available yet.</p>
+                                                <p className="text-muted small">This might be due to insufficient game history or a temporary system issue.</p>
+                                                <Button 
+                                                    variant="outline-primary" 
+                                                    size="sm" 
+                                                    onClick={() => {
+                                                        console.log("Attempting to refresh rankings");
+                                                        setIsRefreshing(true);
+                                                        fetchProfileData(user?.id);
+                                                    }}
+                                                    className="mt-2"
+                                                >
+                                                    <FaSync className="me-1" /> Try Again
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 </Tab>

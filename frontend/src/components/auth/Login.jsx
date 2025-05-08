@@ -47,10 +47,11 @@ const Login = () => {
               handleSubmit,
               isSubmitting,
             }) => (
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} >
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control
+                    className="input-form"
                     id='username'
                     type="text"
                     name="username"
@@ -68,6 +69,7 @@ const Login = () => {
                 <Form.Group className="mb-3">
                   <Form.Label >Password</Form.Label>
                   <Form.Control
+                    className="input-form"
                     type="password"
                     name="password"
                     autoComplete="current-password"
@@ -82,9 +84,9 @@ const Login = () => {
                 </Form.Group>
 
                 <Button 
-                  variant="primary" 
+                   
                   type="submit" 
-                  className="w-100 mt-3" 
+                  className="w-100 mt-3 btn-primary2" 
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Logging in...' : 'Login'}

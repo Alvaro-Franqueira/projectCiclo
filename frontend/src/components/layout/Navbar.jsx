@@ -16,7 +16,7 @@ import {
   FaDice,
   FaCreditCard
 } from 'react-icons/fa';
-import { GiAbstract013 } from 'react-icons/gi';
+import { GiAbstract013, GiCoins} from 'react-icons/gi';
 import { useAuth } from '../../context/AuthContext';
 import neonFavicon from '../images/neonfavicon.png';
 import logoCasino from '../images/logo-casino.png';

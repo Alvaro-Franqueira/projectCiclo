@@ -330,7 +330,7 @@ setTimeout(loadUserBetHistory, 1500);
 
   // Component Return (JSX)
   return (
-    <Container className="py-4">
+    <Container className="py-4 dice-body">
       {/* Floating message */}
       {resultMessage.text && (
         <div 

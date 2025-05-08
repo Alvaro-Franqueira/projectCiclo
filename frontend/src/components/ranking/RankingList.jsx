@@ -58,28 +58,36 @@ const RankingList = () => {
   }, []);
 
   const fetchGameRankings = async (gameId, rankingType, setRankingsState, setLoadingState) => {
+    if (!gameId) {
+      console.error('Cannot fetch game rankings without a valid game ID');
+      setRankingsState([]);
+      setLoadingState(false);
+      return;
+    }
+    
     setLoadingState(true);
     try {
       let gameRankings;
       
-      switch (rankingType) {
-        case 'BY_GAME_WINS':
-          gameRankings = await rankingService.getRankingsByGameAndType(gameId, rankingType);
-          break;
-        case 'BY_GAME_WIN_RATE':
-          gameRankings = await rankingService.getGameWinRateRankings(gameId);
-          break;
-        case 'BY_GAME_PROFIT':
+      // Default to BY_GAME_WINS if BY_GAME_PROFIT causes errors
+      if (rankingType === 'BY_GAME_PROFIT') {
+        try {
           gameRankings = await rankingService.getGameProfitRankings(gameId);
-          break;
-        default:
+        } catch (err) {
+          console.error('Error fetching BY_GAME_PROFIT, falling back to BY_GAME_WINS:', err);
+          // If BY_GAME_PROFIT fails, fall back to BY_GAME_WINS
           gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
+        }
+      } else if (rankingType === 'BY_GAME_WIN_RATE') {
+        gameRankings = await rankingService.getGameWinRateRankings(gameId);
+      } else {
+        // Default to BY_GAME_WINS
+        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
       }
       
       setRankingsState(gameRankings || []);
     } catch (err) {
       console.error(`Failed to fetch game rankings for ID ${gameId} and type ${rankingType}:`, err);
-      // Set empty array but include error handling in the UI
       setRankingsState([]);
     } finally {
       setLoadingState(false);
@@ -106,18 +114,21 @@ const RankingList = () => {
         let rankingsData;
         
         if (activeTab === 'by-game' && selectedGameId) {
-          switch (gameRankingType) {
-            case 'BY_GAME_WINS':
-              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, gameRankingType);
-              break;
-            case 'BY_GAME_WIN_RATE':
-              rankingsData = await rankingService.getGameWinRateRankings(selectedGameId);
-              break;
-            case 'BY_GAME_PROFIT':
+          // Use a try/catch block specifically for potentially problematic rankings
+          if (gameRankingType === 'BY_GAME_PROFIT') {
+            try {
               rankingsData = await rankingService.getGameProfitRankings(selectedGameId);
-              break;
-            default:
+            } catch (err) {
+              console.error('Error with BY_GAME_PROFIT, falling back to BY_GAME_WINS:', err);
+              // If BY_GAME_PROFIT fails, fall back to BY_GAME_WINS
               rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_WINS');
+              // If we fell back to WIN_RATE, update UI state
+              setGameRankingType('BY_GAME_WINS');
+            }
+          } else if (gameRankingType === 'BY_GAME_WIN_RATE') {
+            rankingsData = await rankingService.getGameWinRateRankings(selectedGameId);
+          } else {
+            rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, gameRankingType);
           }
         } else {
           rankingsData = await rankingService.getRankingsByType(rankingType);
@@ -209,11 +220,14 @@ const RankingList = () => {
 
     // Check if rankings is an array before attempting to map
     if (!Array.isArray(rankingsData) || rankingsData.length === 0) {
-      // Show a special message for BY_GAME_PROFIT if it's not implemented yet
+      // Show a special message for BY_GAME_PROFIT if it's not working
       if (rankingTypeToUse === 'BY_GAME_PROFIT') {
         return (
           <Alert variant="warning">
-            Game profit rankings are currently unavailable. The backend may need to implement this feature.
+            Game profit rankings are currently unavailable. The feature may still be in development.
+            <div className="mt-2">
+              <small>Please try using the Wins or Win Rate rankings instead.</small>
+            </div>
           </Alert>
         );
       }
@@ -302,30 +316,24 @@ const RankingList = () => {
       <Tabs
         activeKey={gameRankingType}
         onSelect={handleGameRankingTypeSelect}
-        className="ranking-subtabs game-subtabs mb-4"
+        className="ranking-subtabs-sub"
       >
         <Tab 
-          eventKey="BY_GAME_PROFIT" 
-          title={<><FaDollarSign className="me-1" /> Profit</>}
-        >
-        
-            <p className="tab-description">Players ranked by their profit in specific games.</p>
-          
-        </Tab>
-        <Tab 
-          eventKey="BY_GAME_WINS" 
+          eventKey="BY_GAME_WINS"
           title={<><FaTrophy className="me-1" /> Wins</>}
         >
-          
-            <p className="tab-description">Players ranked by their number of wins in specific games.</p>
-          
+
         </Tab>
         <Tab 
           eventKey="BY_GAME_WIN_RATE" 
           title={<><FaPercentage className="me-1" /> Win Rate</>}
         >
-          
-           
+
+        </Tab>
+        <Tab 
+          eventKey="BY_GAME_PROFIT" 
+          title={<><FaDollarSign className="me-1" /> Profit</>}
+        >
         </Tab>
       </Tabs>
     );
@@ -335,10 +343,7 @@ const RankingList = () => {
     return (
       <div className="game-specific-rankings">
         {renderGameRankingsTabs()}
-        
 
-        
-        
         <div className="game-tabs mb-4">
           <div className="game-badges">
             {games.map(game => (

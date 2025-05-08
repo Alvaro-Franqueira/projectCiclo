@@ -57,7 +57,9 @@ const rankingService = {
       const response = await api.get(RANKING_ENDPOINTS.USER_RANKINGS(userId));
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch user rankings' };
+      console.error("Failed to fetch user rankings:", error);
+      // Return empty array instead of throwing error to prevent UI breaks
+      return [];
     }
   },
   

@@ -30,7 +30,7 @@
 
 /* Main tabs styling */
 .ranking-tabs .nav-link {
-  color: #f3f4f6;
+  color: white;
   padding: 0.75rem 1rem;
   background-color: #334155;
   margin-right: 5px;
@@ -63,6 +63,7 @@
   padding: 0.6rem 0.8rem;
   background-color: #293548;
   border-bottom: none;
+  color: white;
 }
 
 .ranking-subtabs .nav-link.active {
@@ -72,8 +73,19 @@
   font-weight: bold;
 }
 
-.ranking-subtab-content {
+.ranking-subtabs-sub .nav-link {
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  background-color: #293548;
+  border-bottom: none;
+  color: white;
+}
 
+.ranking-subtabs-sub .nav-link.active {
+  background-color: #1e293b;
+  border-bottom: 2px solid var(--accent-color);
+  color: var(--accent-color);
+  font-weight: bold;
 }
 
 .tab-description {

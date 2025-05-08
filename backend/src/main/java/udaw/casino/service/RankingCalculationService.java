@@ -66,6 +66,12 @@ public class RankingCalculationService {
     public List<RankingEntry> obtenerRankingPorTipo(RankingType tipo) {
         log.info("Calculating on-demand ranking for type: {}", tipo);
         
+        // Check if the ranking type requires a game
+        if (tipo == RankingType.BY_GAME_WINS || tipo == RankingType.BY_GAME_WIN_RATE || tipo == RankingType.BY_GAME_PROFIT) {
+            log.warn("Requested game-specific ranking type {} without specifying a game - returning empty list", tipo);
+            return new ArrayList<>(); // Return empty list for game-specific ranking types
+        }
+        
         List<Usuario> usuarios = usuarioRepository.findAll();
         List<RankingEntry> rankings = new ArrayList<>();
         
@@ -121,48 +127,122 @@ public class RankingCalculationService {
     public List<RankingEntry> obtenerRankingsDelUsuario(Long usuarioId) {
         log.info("Calculating on-demand rankings for user ID: {}", usuarioId);
         
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Usuario usuario;
+        try {
+            usuario = usuarioRepository.findById(usuarioId)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        } catch (Exception e) {
+            log.error("Error finding user with ID {}: {}", usuarioId, e.getMessage());
+            return new ArrayList<>(); // Return empty list instead of throwing exception
+        }
         
         List<RankingEntry> rankings = new ArrayList<>();
         
         // Add global rankings
         for (RankingType tipo : RankingType.values()) {
-            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE) { // Exclude game-specific rankings
-                Double score = calcularScore(usuario, tipo, null);
-                RankingEntry entry = new RankingEntry(usuario, null, tipo, score);
-                
-                // Calculate position
-                List<RankingEntry> allRankings = obtenerRankingPorTipo(tipo);
-                for (int i = 0; i < allRankings.size(); i++) {
-                    if (allRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
-                        entry.setPosicion(i + 1);
-                        break;
+            if (tipo != RankingType.BY_GAME_WINS && tipo != RankingType.BY_GAME_WIN_RATE && tipo != RankingType.BY_GAME_PROFIT) {
+                try {
+                    Double score = calcularScore(usuario, tipo, null);
+                    RankingEntry entry = new RankingEntry(usuario, null, tipo, score);
+                    
+                    // Calculate position
+                    List<RankingEntry> allRankings = obtenerRankingPorTipo(tipo);
+                    for (int i = 0; i < allRankings.size(); i++) {
+                        if (allRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
+                            entry.setPosicion(i + 1);
+                            break;
+                        }
                     }
+                    
+                    rankings.add(entry);
+                    log.debug("Added global ranking for user {}: type={}, score={}, position={}", 
+                              usuarioId, tipo, score, entry.getPosicion());
+                } catch (Exception e) {
+                    log.error("Error calculating {} ranking for user {}: {}", tipo, usuarioId, e.getMessage());
+                    // Continue to next ranking type
                 }
-                
-                rankings.add(entry);
             }
         }
         
         // Add game-specific rankings
-        List<Juego> juegos = apuestaRepository.findDistinctJuegosByUsuarioId(usuarioId);
-        for (Juego juego : juegos) {
-            Double score = calcularScore(usuario, RankingType.BY_GAME_WINS, juego);
-            RankingEntry entry = new RankingEntry(usuario, juego, RankingType.BY_GAME_WINS, score);
-            
-            // Calculate position
-            List<RankingEntry> allRankings = obtenerRankingPorJuegoYTipo(RankingType.BY_GAME_WINS, juego);
-            for (int i = 0; i < allRankings.size(); i++) {
-                if (allRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
-                    entry.setPosicion(i + 1);
-                    break;
-                }
-            }
-            
-            rankings.add(entry);
+        List<Juego> juegos;
+        try {
+            juegos = apuestaRepository.findDistinctJuegosByUsuarioId(usuarioId);
+            log.info("Found {} distinct games for user {}", juegos.size(), usuarioId);
+        } catch (Exception e) {
+            log.error("Error finding games for user {}: {}", usuarioId, e.getMessage());
+            juegos = new ArrayList<>(); // Empty list to safely continue
         }
         
+        for (Juego juego : juegos) {
+            log.debug("Processing game rankings for user {} and game {} (ID: {})", 
+                      usuarioId, juego.getNombre(), juego.getId());
+            
+            // BY_GAME_WINS ranking
+            try {
+                Double winsScore = calcularScore(usuario, RankingType.BY_GAME_WINS, juego);
+                RankingEntry winsEntry = new RankingEntry(usuario, juego, RankingType.BY_GAME_WINS, winsScore);
+                
+                // Calculate position for BY_GAME_WINS
+                List<RankingEntry> allWinsRankings = obtenerRankingPorJuegoYTipo(RankingType.BY_GAME_WINS, juego);
+                for (int i = 0; i < allWinsRankings.size(); i++) {
+                    if (allWinsRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
+                        winsEntry.setPosicion(i + 1);
+                        break;
+                    }
+                }
+                rankings.add(winsEntry);
+                log.debug("Added BY_GAME_WINS ranking for user {} and game {}: score={}, position={}", 
+                          usuarioId, juego.getNombre(), winsScore, winsEntry.getPosicion());
+            } catch (Exception e) {
+                log.error("Error calculating BY_GAME_WINS ranking for user {} and game {}: {}", 
+                          usuarioId, juego.getNombre(), e.getMessage());
+            }
+            
+            // BY_GAME_WIN_RATE ranking
+            try {
+                Double winRateScore = calcularScore(usuario, RankingType.BY_GAME_WIN_RATE, juego);
+                RankingEntry winRateEntry = new RankingEntry(usuario, juego, RankingType.BY_GAME_WIN_RATE, winRateScore);
+                
+                // Calculate position for BY_GAME_WIN_RATE
+                List<RankingEntry> allWinRateRankings = obtenerRankingPorJuegoYTipo(RankingType.BY_GAME_WIN_RATE, juego);
+                for (int i = 0; i < allWinRateRankings.size(); i++) {
+                    if (allWinRateRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
+                        winRateEntry.setPosicion(i + 1);
+                        break;
+                    }
+                }
+                rankings.add(winRateEntry);
+                log.debug("Added BY_GAME_WIN_RATE ranking for user {} and game {}: score={}, position={}", 
+                          usuarioId, juego.getNombre(), winRateScore, winRateEntry.getPosicion());
+            } catch (Exception e) {
+                log.error("Error calculating BY_GAME_WIN_RATE ranking for user {} and game {}: {}", 
+                          usuarioId, juego.getNombre(), e.getMessage());
+            }
+            
+            // BY_GAME_PROFIT ranking
+            try {
+                Double profitScore = calcularScore(usuario, RankingType.BY_GAME_PROFIT, juego);
+                RankingEntry profitEntry = new RankingEntry(usuario, juego, RankingType.BY_GAME_PROFIT, profitScore);
+                
+                // Calculate position for BY_GAME_PROFIT
+                List<RankingEntry> allProfitRankings = obtenerRankingPorJuegoYTipo(RankingType.BY_GAME_PROFIT, juego);
+                for (int i = 0; i < allProfitRankings.size(); i++) {
+                    if (allProfitRankings.get(i).getUsuario().getId().equals(usuario.getId())) {
+                        profitEntry.setPosicion(i + 1);
+                        break;
+                    }
+                }
+                rankings.add(profitEntry);
+                log.debug("Added BY_GAME_PROFIT ranking for user {} and game {}: score={}, position={}", 
+                          usuarioId, juego.getNombre(), profitScore, profitEntry.getPosicion());
+            } catch (Exception e) {
+                log.error("Error calculating BY_GAME_PROFIT ranking for user {} and game {}: {}", 
+                          usuarioId, juego.getNombre(), e.getMessage());
+            }
+        }
+        
+        log.info("Returning {} rankings for user {}", rankings.size(), usuarioId);
         return rankings;
     }
 
