@@ -56,25 +56,25 @@ const AppNavbar = ({ noSticky }) => {
       expand="lg"
       expanded={expanded}
       onToggle={() => setExpanded((prev) => !prev)}
-      className="mb-4"
+      className="mb-4 rounded-3 shadow-sm"
       sticky={noSticky ? undefined : "top"}
       ref={navRef}
     >
-      <Container fluid>
-        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
+      <Container fluid className="d-flex justify-content-around align-items-center">
+        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center ">
           <img
             src={logoCasino}
             alt="Logo"
             className="me-2 navbar-logo"
             style={{ width: '40px', height: '40px' }}
           />
-          <span className="fw-bold fs-4 casino-navbar">Virtual Casino</span>
+          <span className="fw-bold casino-navbar">Virtual Casino</span>
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="navbar-nav" />
 
         <Navbar.Collapse id="navbar-nav">
-          <Nav className="me-auto">
+          <Nav className="me-auto navbar-nav align-items-center justify-content-center">
             {isAuthenticated && (
               <>
                 <Dropdown as={Nav.Item}>
@@ -108,7 +108,7 @@ const AppNavbar = ({ noSticky }) => {
             )}
           </Nav>
 
-          <Nav className="ms-auto d-flex align-items-center">
+          <Nav className="ms-auto d-flex align-items-center justify-content-center">
             {isAuthenticated ? (
               <>
                 <Nav.Link as={Link} to="/payment">

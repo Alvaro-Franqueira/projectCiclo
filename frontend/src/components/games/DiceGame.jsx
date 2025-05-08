@@ -19,6 +19,7 @@ const DiceGame = () => {
   const [diceValues, setDiceValues] = useState([1, 1]);
   const [isRolling, setIsRolling] = useState(false);
   const [resultMessage, setResultMessage] = useState({ text: '', type: '' });
+  const [messageVisible, setMessageVisible] = useState(false);
   const [history, setHistory] = useState([]);
   const [clickPosition, setClickPosition] = useState({ x: 0.5, y: 0.5 });
 
@@ -52,6 +53,39 @@ const DiceGame = () => {
   useEffect(() => {
     console.log("Auth Context User State:", user);
   }, [user]);
+
+  // Simulate random dice values during rolling animation
+  useEffect(() => {
+    let animationInterval;
+    if (isRolling) {
+      // Create an interval that changes dice values rapidly during rolling
+      animationInterval = setInterval(() => {
+        // Generate two random dice values (1-6)
+        const randomDice1 = Math.floor(Math.random() * 6) + 1;
+        const randomDice2 = Math.floor(Math.random() * 6) + 1;
+        setDiceValues([randomDice1, randomDice2]);
+      }, 150); // Change dice values every 150ms
+    }
+
+    return () => {
+      if (animationInterval) clearInterval(animationInterval);
+    };
+  }, [isRolling]);
+
+  // Message visibility management
+  useEffect(() => {
+    if (resultMessage.text) {
+      // When a new message is set, make it visible
+      setMessageVisible(true);
+      
+      // After 5 seconds, trigger the fade-out by setting visibility to false
+      const visibilityTimer = setTimeout(() => {
+        setMessageVisible(false);
+      }, 5000);
+      
+      return () => clearTimeout(visibilityTimer);
+    }
+  }, [resultMessage]);
 
   // --- Data Fetching ---
   const loadUserBetHistory = () => {
@@ -247,16 +281,20 @@ setTimeout(loadUserBetHistory, 1500);
   // --- UI Rendering ---
 
   const getDiceIcon = (value) => {
-    const iconStyle = { color: 'white' }; 
+    const iconStyle = { 
+      color: 'white',
+      fontSize: isRolling ? '60px' : '50px',
+      transition: 'font-size 0.3s'
+    }; 
 
     switch (value) {
-      case 1: return <FaDiceOne size={50} style={iconStyle} />;
-      case 2: return <FaDiceTwo size={50} style={iconStyle} />;
-      case 3: return <FaDiceThree size={50} style={iconStyle} />;
-      case 4: return <FaDiceFour size={50} style={iconStyle} />;
-      case 5: return <FaDiceFive size={50} style={iconStyle} />;
-      case 6: return <FaDiceSix size={50} style={iconStyle} />;
-      default: return <FaDice size={50} style={iconStyle} />; // Fallback
+      case 1: return <FaDiceOne size={isRolling ? 60 : 50} style={iconStyle} />;
+      case 2: return <FaDiceTwo size={isRolling ? 60 : 50} style={iconStyle} />;
+      case 3: return <FaDiceThree size={isRolling ? 60 : 50} style={iconStyle} />;
+      case 4: return <FaDiceFour size={isRolling ? 60 : 50} style={iconStyle} />;
+      case 5: return <FaDiceFive size={isRolling ? 60 : 50} style={iconStyle} />;
+      case 6: return <FaDiceSix size={isRolling ? 60 : 50} style={iconStyle} />;
+      default: return <FaDice size={isRolling ? 60 : 50} style={iconStyle} />; // Fallback
     }
   };
 
@@ -293,6 +331,35 @@ setTimeout(loadUserBetHistory, 1500);
   // Component Return (JSX)
   return (
     <Container className="py-4">
+      {/* Floating message */}
+      {resultMessage.text && (
+        <div 
+          className={`floating-message alert alert-${resultMessage.type}`}
+          style={{
+            position: 'fixed',
+            bottom: messageVisible ? '30px' : '-100px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1050,
+            minWidth: '300px',
+            maxWidth: '80%',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            padding: '15px',
+            borderRadius: '10px',
+            opacity: messageVisible ? 0.95 : 0,
+            fontWeight: 'bold',
+            border: '2px solid',
+            transition: 'all 0.8s ease-in-out',
+            borderColor: resultMessage.type === 'success' ? 'var(--success-color)' : 
+                         resultMessage.type === 'danger' ? 'var(--danger-color)' : 
+                         resultMessage.type === 'warning' ? '#f59e0b' : '#0d6efd'
+          }}
+        >
+          {resultMessage.text}
+        </div>
+      )}
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>
           <FaDice className="me-2" /> Casino Dice
@@ -317,21 +384,17 @@ setTimeout(loadUserBetHistory, 1500);
               {/* Dice Display - Apply color via getDiceIcon */}
               <div className="d-flex justify-content-center gap-4 my-4">
                 {diceValues.map((value, index) => (
-                  <div key={index} style={{ opacity: isRolling ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                  <div 
+                    key={index} 
+                    className={isRolling ? 'dice-rolling' : ''}
+                    style={{ 
+                      transition: 'opacity 0.2s, transform 0.3s'
+                    }}
+                  >
                     {getDiceIcon(value)}
                   </div>
                 ))}                
               </div>
-
-              {/* Result Message */}
-                  {resultMessage.text && (
-                    <div className="result-message-container mt-3 text-center">
-                      <Alert variant={resultMessage.type}>
-                        {resultMessage.text}
-                      </Alert>
-                      
-                    </div>
-                  )}
 
               {/* Bet Form */}
               <Form className="text-white" onSubmit={(e) => { e.preventDefault(); placeBetAndRoll(); }}>
