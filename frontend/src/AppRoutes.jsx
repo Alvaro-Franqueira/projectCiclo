@@ -15,6 +15,7 @@ import GameSelection from './pages/GameSelection';
 import RouletteGame from './components/games/Roulette';
 import DiceGame from './components/games/DiceGame';
 import BlackjackPage from './pages/BlackjackPage';
+import SlotMachinePage from './pages/SlotMachinePage';
 import ComingSoon from './pages/ComingSoon';
 
 // Ranking component
@@ -53,7 +54,8 @@ function AppRoutes() {
             <Route path="/games/roulette" element={<RouletteGame />} />
             <Route path="/games/dice" element={<DiceGame />} />
             <Route path="/games/poker" element={<ComingSoon />} />
-            <Route path="/games/tragaperras" element={<ComingSoon />} />
+            <Route path="/games/tragaperras" element={<SlotMachinePage />} />
+            <Route path="/games/slotmachine" element={<SlotMachinePage />} />
             <Route path="/games/blackjack" element={<BlackjackPage />} />
             <Route path="/games/sportsbetting" element={<ComingSoon />} />
             <Route path="/rankings" element={<RankingList />} />

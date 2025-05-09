@@ -91,6 +91,9 @@ const AppNavbar = ({ noSticky }) => {
                     <Dropdown.Item as={Link} to="/games/blackjack">
                       <GiPokerHand className="me-2" /> Blackjack
                     </Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/games/slotmachine">
+                      <GiCoins className="me-2" /> Slot Machine
+                    </Dropdown.Item>
                     <Dropdown.Divider />
                     <Dropdown.Item as={Link} to="/games">
                       <FaGamepad className="me-2" /> All Games

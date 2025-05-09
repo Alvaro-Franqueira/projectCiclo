@@ -34,6 +34,7 @@
     "react-roulette-pro": "^3.2.2",
     "react-router-dom": "^6.22.0",
     "react-use": "^17.6.0",
+    "slot-machine-gen": "^1.3.6",
     "three": "^0.175.0",
     "yup": "^1.3.2"
   },

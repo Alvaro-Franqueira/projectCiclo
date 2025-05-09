@@ -1,0 +1,296 @@
+.slot-machine-container {
+  background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+  border-radius: 10px;
+  padding: 20px;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.slot-machine {
+  margin: 20px auto;
+  max-width: 100%;
+  height: 240px;
+  background-color: #222;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 215, 0, 0.5);
+  border: 3px solid gold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden !important;
+}
+
+.balance-display {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid gold;
+  display: inline-block;
+}
+
+.bet-controls {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid silver;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bet-amount {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+}
+
+.spin-button {
+  background: linear-gradient(to bottom, #ff416c, #ff4b2b);
+  border: none;
+  border-radius: 50px;
+  padding: 15px 40px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 15px rgba(255, 75, 43, 0.5);
+  transition: all 0.3s ease;
+}
+
+.spin-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(255, 75, 43, 0.7);
+}
+
+.spin-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(255, 75, 43, 0.5);
+}
+
+.spin-button:disabled {
+  background: linear-gradient(to bottom, #a0a0a0, #808080);
+  cursor: not-allowed;
+}
+
+.payout-table {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 20px;
+  border: 2px solid gold;
+}
+
+.payout-table h4 {
+  color: gold;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 5px;
+}
+
+/* New styles for the payout grid */
+.payout-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payout-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr 2fr;
+  align-items: center;
+  padding: 8px;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.payout-row:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  transform: translateX(5px);
+}
+
+.combination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.payout-symbol {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  background-color: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.multiplier {
+  font-weight: bold;
+  color: gold;
+  font-size: 1.2rem;
+}
+
+.probability {
+  font-size: 0.9rem;
+  color: #ccc;
+  text-align: right;
+}
+
+/* Odds explanation styles */
+.odds-explanation {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.odds-explanation h5 {
+  color: gold;
+  margin-bottom: 10px;
+}
+
+.odds-list {
+  list-style-type: none;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.odds-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.odds-symbol {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  background-color: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+/* New styles for the custom reels */
+.reels-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 200px;
+  padding: 0 15px;
+  position: relative;
+  z-index: 5;
+}
+
+.reel {
+  width: 28%;
+  height: 180px;
+  background-color: #333;
+  border: 2px solid gold;
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+  position: relative;
+}
+
+.reel.spinning {
+  animation: spin 0.2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
+}
+
+.symbol-container {
+  width: 90%;
+  height: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.symbol-image {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+}
+
+/* Lights decoration */
+.slot-machine::before,
+.slot-machine::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background-color: red;
+  border-radius: 50%;
+  animation: blink 1s infinite alternate;
+  box-shadow: 0 0 10px red, 0 0 20px red;
+  z-index: 100 !important;
+}
+
+/* Add more lights around the machine */
+.slot-machine::before {
+  top: 10px;
+  left: 10px;
+}
+
+.slot-machine::after {
+  top: 10px;
+  right: 10px;
+}
+
+/* Add additional lights */
+.slot-machine .light-bottom-left {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background-color: yellow;
+  border-radius: 50%;
+  animation: blink 1.3s infinite alternate;
+  box-shadow: 0 0 10px yellow, 0 0 20px yellow;
+  bottom: 10px;
+  left: 10px;
+  z-index: 100 !important;
+}
+
+.slot-machine .light-bottom-right {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background-color: green;
+  border-radius: 50%;
+  animation: blink 0.7s infinite alternate;
+  box-shadow: 0 0 10px green, 0 0 20px green;
+  bottom: 10px;
+  right: 10px;
+  z-index: 100 !important;
+}
+
+@keyframes blink {
+  from {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+} 

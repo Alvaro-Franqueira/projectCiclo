@@ -169,9 +169,9 @@ const Blackjack = () => {
       const newBalance = balance - amount;
       await userService.updateUserBalance(user.id, newBalance);
       
-      setBet(amount);
+    setBet(amount);
       setBalance(newBalance);
-      setGameState(GameState.init);
+    setGameState(GameState.init);
       setError('');
     } catch (err) {
       setError('Failed to place bet. Please try again.');
@@ -334,20 +334,20 @@ const Blackjack = () => {
       let isWin = false;
       let isTie = false;
       
-      if (userScore > dealerScore || dealerScore > 21) {
+    if (userScore > dealerScore || dealerScore > 21) {
         // Player wins
         newBalance = balance + (bet * 2);
-        setMessage(Message.userWin);
+      setMessage(Message.userWin);
         isWin = true;
-      }
+    }
       else if (userScore < dealerScore) {
         // Dealer wins
-        setMessage(Message.dealerWin);
-      }
-      else {
+      setMessage(Message.dealerWin);
+    }
+    else {
         // Tie
         newBalance = balance + bet;
-        setMessage(Message.tie);
+      setMessage(Message.tie);
         isTie = true;
       }
       
@@ -594,13 +594,13 @@ const Blackjack = () => {
             <Hand title="" cards={userCards} />
           </div>
 
-          <Controls
-            balance={balance}
-            gameState={gameState}
-            buttonState={buttonState}
-            betEvent={placeBet}
-            hitEvent={hit}
-            standEvent={stand}
+      <Controls
+        balance={balance}
+        gameState={gameState}
+        buttonState={buttonState}
+        betEvent={placeBet}
+        hitEvent={hit}
+        standEvent={stand}
             resetEvent={resetGame} />
         </div>
       </div>
