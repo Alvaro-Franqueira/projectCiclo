@@ -1,0 +1,558 @@
+import React, { useState, useEffect } from 'react';
+import { Container, Alert, Spinner, Badge } from 'react-bootstrap';
+import Status from './Status';
+import Controls from './Controls';
+import Hand from './Hand';
+import jsonData from '../../../utils/deck.json';
+import { useAuth } from '../../../context/AuthContext';
+import userService from '../../../services/userService';
+import betService from '../../../services/betService';
+import { FaChevronDown, FaCoins } from 'react-icons/fa';
+import { GiPokerHand } from 'react-icons/gi';
+
+const Blackjack = () => {
+  const { user, isAuthenticated } = useAuth();
+  
+  // Using objects instead of TypeScript enums
+  const GameState = {
+    bet: 0,
+    init: 1,
+    userTurn: 2,
+    dealerTurn: 3
+  };
+
+  const Deal = {
+    user: 0,
+    dealer: 1,
+    hidden: 2
+  };
+
+  const Message = {
+    bet: 'Place a Bet!',
+    hitStand: 'Hit or Stand?',
+    bust: 'Bust!',
+    userWin: 'You Win!',
+    dealerWin: 'Dealer Wins!',
+    tie: 'Tie!'
+  };
+
+  const data = JSON.parse(JSON.stringify(jsonData.cards));
+  const [deck, setDeck] = useState(data);
+
+  const [userCards, setUserCards] = useState([]);
+  const [userScore, setUserScore] = useState(0);
+  const [userCount, setUserCount] = useState(0);
+
+  const [dealerCards, setDealerCards] = useState([]);
+  const [dealerScore, setDealerScore] = useState(0);
+  const [dealerCount, setDealerCount] = useState(0);
+
+  const [balance, setBalance] = useState(0);
+  const [bet, setBet] = useState(0);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showScores, setShowScores] = useState(true);
+
+  const [gameState, setGameState] = useState(GameState.bet);
+  const [message, setMessage] = useState(Message.bet);
+  const [buttonState, setButtonState] = useState({
+    hitDisabled: false,
+    standDisabled: false,
+    resetDisabled: true
+  });
+
+  // Load user balance from the server
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      loadUserBalance();
+    }
+  }, [isAuthenticated, user]);
+
+  const loadUserBalance = async () => {
+    try {
+      setLoading(true);
+      const balanceData = await userService.getUserBalance(user.id);
+      setBalance(balanceData);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load balance. Please refresh the page.');
+      setLoading(false);
+      console.error('Error loading balance:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (gameState === GameState.init) {
+      drawCard(Deal.user);
+      drawCard(Deal.hidden);
+      drawCard(Deal.user);
+      drawCard(Deal.dealer);
+      setGameState(GameState.userTurn);
+      setMessage(Message.hitStand);
+    }
+  }, [gameState]);
+
+  useEffect(() => {
+    calculate(userCards, setUserScore);
+    setUserCount(userCount + 1);
+  }, [userCards]);
+
+  useEffect(() => {
+    calculate(dealerCards, setDealerScore);
+    setDealerCount(dealerCount + 1);
+  }, [dealerCards]);
+
+  useEffect(() => {
+    if (gameState === GameState.userTurn) {
+      if (userScore === 21) {
+        buttonState.hitDisabled = true;
+        setButtonState({ ...buttonState });
+      }
+      else if (userScore > 21) {
+        bust();
+      }
+    }
+  }, [userCount]);
+
+  useEffect(() => {
+    if (gameState === GameState.dealerTurn) {
+      if (dealerScore >= 17) {
+        checkWin();
+      }
+      else {
+        drawCard(Deal.dealer);
+      }
+    }
+  }, [dealerCount]);
+
+  const resetGame = () => {
+    console.clear();
+    setDeck(data);
+
+    setUserCards([]);
+    setUserScore(0);
+    setUserCount(0);
+
+    setDealerCards([]);
+    setDealerScore(0);
+    setDealerCount(0);
+
+    setBet(0);
+
+    setGameState(GameState.bet);
+    setMessage(Message.bet);
+    setButtonState({
+      hitDisabled: false,
+      standDisabled: false,
+      resetDisabled: true
+    });
+  }
+
+  const placeBet = async (amount) => {
+    try {
+      // Deduct from balance on the server
+      const newBalance = balance - amount;
+      await userService.updateUserBalance(user.id, newBalance);
+      
+      setBet(amount);
+      setBalance(newBalance);
+      setGameState(GameState.init);
+      setError('');
+    } catch (err) {
+      setError('Failed to place bet. Please try again.');
+      console.error('Error placing bet:', err);
+    }
+  }
+
+  const drawCard = (dealType) => {
+    if (deck.length > 0) {
+      const randomIndex = Math.floor(Math.random() * deck.length);
+      const card = deck[randomIndex];
+      deck.splice(randomIndex, 1);
+      setDeck([...deck]);
+      console.log('Remaining Cards:', deck.length);
+      switch (card.suit) {
+        case 'spades':
+          dealCard(dealType, card.value, '♠');
+          break;
+        case 'diamonds':
+          dealCard(dealType, card.value, '♦');
+          break;
+        case 'clubs':
+          dealCard(dealType, card.value, '♣');
+          break;
+        case 'hearts':
+          dealCard(dealType, card.value, '♥');
+          break;
+        default:
+          break;
+      }
+    }
+    else {
+      alert('All cards have been drawn');
+    }
+  }
+
+  const dealCard = (dealType, value, suit) => {
+    switch (dealType) {
+      case Deal.user:
+        userCards.push({ 'value': value, 'suit': suit, 'hidden': false });
+        setUserCards([...userCards]);
+        break;
+      case Deal.dealer:
+        dealerCards.push({ 'value': value, 'suit': suit, 'hidden': false });
+        setDealerCards([...dealerCards]);
+        break;
+      case Deal.hidden:
+        dealerCards.push({ 'value': value, 'suit': suit, 'hidden': true });
+        setDealerCards([...dealerCards]);
+        break;
+      default:
+        break;
+    }
+  }
+
+  const revealCard = () => {
+    dealerCards.filter((card) => {
+      if (card.hidden === true) {
+        card.hidden = false;
+      }
+      return card;
+    });
+    setDealerCards([...dealerCards])
+  }
+
+  const calculate = (cards, setScore) => {
+    let total = 0;
+    cards.forEach((card) => {
+      if (card.hidden === false && card.value !== 'A') {
+        switch (card.value) {
+          case 'K':
+            total += 10;
+            break;
+          case 'Q':
+            total += 10;
+            break;
+          case 'J':
+            total += 10;
+            break;
+          default:
+            total += Number(card.value);
+            break;
+        }
+      }
+    });
+    const aces = cards.filter((card) => {
+      return card.value === 'A';
+    });
+    aces.forEach((card) => {
+      if (card.hidden === false) {
+        if ((total + 11) > 21) {
+          total += 1;
+        }
+        else if ((total + 11) === 21) {
+          if (aces.length > 1) {
+            total += 1;
+          }
+          else {
+            total += 11;
+          }
+        }
+        else {
+          total += 11;
+        }
+      }
+    });
+    setScore(total);
+  }
+
+  const hit = () => {
+    drawCard(Deal.user);
+  }
+
+  const stand = () => {
+    buttonState.hitDisabled = true;
+    buttonState.standDisabled = true;
+    buttonState.resetDisabled = false;
+    setButtonState({ ...buttonState });
+    setGameState(GameState.dealerTurn);
+    revealCard();
+  }
+
+  const bust = () => {
+    buttonState.hitDisabled = true;
+    buttonState.standDisabled = true;
+    buttonState.resetDisabled = false;
+    setButtonState({ ...buttonState });
+    setMessage(Message.bust);
+    
+    // Record the loss bet
+    recordBet(false);
+  }
+
+  const recordBet = async (isWin, tieGame = false) => {
+    if (!user?.id) return;
+    
+    try {
+      // Create bet record
+      const betData = {
+        usuarioId: user.id,
+        juegoId: 3, // Assuming 3 is for Blackjack, adjust as needed
+        cantidad: bet,
+        resultado: isWin ? 'GANADA' : tieGame ? 'EMPATE' : 'PERDIDA',
+        tipoApuesta: 'BLACKJACK'
+      };
+      
+      await betService.createBet(betData);
+    } catch (err) {
+      console.error('Error recording bet:', err);
+    }
+  };
+
+  const checkWin = async () => {
+    try {
+      let newBalance = balance;
+      let isWin = false;
+      let isTie = false;
+      
+      if (userScore > dealerScore || dealerScore > 21) {
+        // Player wins
+        newBalance = balance + (bet * 2);
+        setMessage(Message.userWin);
+        isWin = true;
+      }
+      else if (userScore < dealerScore) {
+        // Dealer wins
+        setMessage(Message.dealerWin);
+      }
+      else {
+        // Tie
+        newBalance = balance + bet;
+        setMessage(Message.tie);
+        isTie = true;
+      }
+      
+      // Update balance
+      setBalance(newBalance);
+      
+      // Record bet result
+      recordBet(isWin, isTie);
+      
+      // Update balance on server
+      await userService.updateUserBalance(user.id, newBalance);
+      
+      buttonState.resetDisabled = false;
+      setButtonState({ ...buttonState });
+    } catch (err) {
+      setError('Failed to update balance. Please contact support.');
+      console.error('Error updating balance:', err);
+    }
+  }
+
+  const toggleScores = () => {
+    setShowScores(!showScores);
+  };
+
+  // Function to get score badge styling
+  const getScoreBadgeStyle = (score) => {
+    let bgColor = 'rgba(0,0,0,0.7)';
+    let textColor = 'white';
+    
+    if (score > 21) {
+      bgColor = 'rgba(220,53,69,0.9)'; // red for bust
+      textColor = 'white';
+    } else if (score === 21) {
+      bgColor = 'rgba(255,215,0,0.9)'; // gold for 21
+      textColor = 'black';
+    } else if (score >= 17) {
+      bgColor = 'rgba(40,167,69,0.9)'; // green for strong hand
+      textColor = 'white';
+    }
+    
+    return {
+      backgroundColor: bgColor,
+      color: textColor,
+      padding: '4px 10px',
+      borderRadius: '10px',
+      fontWeight: 'bold',
+      fontSize: '1.1rem',
+      display: 'inline-block',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+      border: score === 21 ? '1px solid white' : 'none'
+    };
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Container className="text-center mt-5">
+        <Alert variant="warning">
+          Please log in to play Blackjack.
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Container className="text-center mt-5">
+        <Spinner animation="border" variant="light" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="mt-4 game-wrapper">
+      {error && <Alert variant="danger">{error}</Alert>}
+      
+      <div className="game-container" style={{ 
+        width: '100%', 
+        minHeight: '70vh', 
+        background: 'radial-gradient(circle, #004d00, #003300)',
+        borderRadius: '20px', 
+        padding: '20px',
+        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.7), 0 10px 30px rgba(0, 0, 0, 0.5)',
+        border: '2px solid rgba(255, 215, 0, 0.2)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Background pattern */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0, 0, 0, 0.1) 20px, rgba(0, 0, 0, 0.1) 40px)',
+          pointerEvents: 'none',
+          zIndex: 1
+        }}></div>
+
+        {/* Game info */}
+        <div style={{ position: 'absolute', top: '10px', right: '20px', display: 'flex', alignItems: 'center', zIndex: 5 }}>
+          <div style={{ 
+            background: 'rgba(0, 0, 0, 0.6)', 
+            padding: '5px 10px', 
+            borderRadius: '15px', 
+            display: 'flex', 
+            alignItems: 'center',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+          }}>
+            <FaCoins style={{ color: 'gold', marginRight: '5px' }} />
+            <span style={{ color: 'white' }}>Current Bet: ${bet}</span>
+          </div>
+          <div style={{ 
+            background: 'rgba(0, 0, 0, 0.6)', 
+            padding: '5px 10px', 
+            borderRadius: '15px', 
+            marginLeft: '10px',
+            display: 'flex', 
+            alignItems: 'center',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+          }}>
+            <GiPokerHand style={{ color: 'white', marginRight: '5px' }} />
+            <span style={{ color: 'white' }}>Cards: {deck.length}</span>
+          </div>
+        </div>
+
+        {/* Main game content */}
+        <div style={{ position: 'relative', zIndex: 5 }}>
+          <Status message={message} balance={balance} />
+
+          <div className="hand-container">
+            <div className="hand-title-wrapper" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '15px 0 10px',
+              position: 'relative'
+            }}>
+              <h2 style={{ 
+                color: 'white', 
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+                margin: '0',
+                display: 'flex',
+                alignItems: 'center', 
+                gap: '10px'
+              }}>
+                Dealer's Hand
+              </h2>
+              
+              {/* Always show dealer score badge */}
+              {dealerCards.length > 0 && dealerCards.some(card => !card.hidden) && (
+                <div style={{ 
+                  position: 'absolute',
+                  right: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px' 
+                }}>
+                  <div style={getScoreBadgeStyle(dealerScore)}>
+                    {dealerScore}
+                  </div>
+                </div>
+              )}
+            </div>
+            <Hand title="" cards={dealerCards} />
+          </div>
+
+          <div className="table-divider" style={{
+            height: '2px',
+            background: 'linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), transparent)',
+            margin: '10px 0 20px 0',
+            width: '100%'
+          }}></div>
+
+          <div className="hand-container">
+            <div className="hand-title-wrapper" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '15px 0 10px',
+              position: 'relative'
+            }}>
+              <h2 style={{ 
+                color: 'white', 
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+                margin: '0',
+                display: 'flex',
+                alignItems: 'center', 
+                gap: '10px'
+              }}>
+                Your Hand
+              </h2>
+              
+              {/* Always show player score badge */}
+              {userCards.length > 0 && (
+                <div style={{ 
+                  position: 'absolute',
+                  right: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px' 
+                }}>
+                  <div style={getScoreBadgeStyle(userScore)}>
+                    {userScore}
+                  </div>
+                </div>
+              )}
+            </div>
+            <Hand title="" cards={userCards} />
+          </div>
+
+          <Controls
+            balance={balance}
+            gameState={gameState}
+            buttonState={buttonState}
+            betEvent={placeBet}
+            hitEvent={hit}
+            standEvent={stand}
+            resetEvent={resetGame} />
+        </div>
+      </div>
+    </Container>
+  );
+}
+
+export default Blackjack;

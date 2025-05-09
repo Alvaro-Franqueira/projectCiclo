@@ -1,0 +1,214 @@
+.controlsContainer {
+    display: flex;
+    justify-content: center;
+    margin: 0.5em 1em 1em 1em;
+  }
+  
+  .bettingControls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 15px;
+    margin: 0.5em 1em 1em 1em;
+  }
+  
+  .gameControls {
+    display: flex;
+    justify-content: center;
+    margin: 0.5em 1em 1em 1em;
+  }
+  
+  .betContainer {
+    display: flex;
+    align-items: center;
+    color: white;
+    margin: 0 0.5em;
+    padding: 0 1em;
+    width: 300px;
+    background: black;
+    border: 3px solid rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    box-shadow: 0px 1px 10px rgb(0, 0, 0);
+  }
+  
+  .betInputGroup {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin-left: 10px;
+  }
+  
+  .adjustButton {
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .adjustButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  .adjustButton:hover:not(:disabled) {
+    background: rgba(255, 215, 0, 0.3);
+  }
+  
+  .quickBetContainer {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .quickBetButton {
+    background: linear-gradient(145deg, #333333, #1a1a1a);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    padding: 5px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .quickBetButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  .quickBetButton:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 215, 0, 0.5);
+  }
+  
+  .selectedBet {
+    background: linear-gradient(145deg, #0a4e0a, #063d06);
+    border-color: gold;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  }
+  
+  .input {
+    width: 1px;
+    flex-grow: 1;
+    font-size: 200%;
+    text-align: center;
+    margin: 5px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: black;
+    color: white;
+  }
+  
+  .inputError {
+    width: 1px;
+    flex-grow: 1;
+    font-size: 200%;
+    text-align: center;
+    margin: 5px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: black;
+    color: red;
+  }
+  
+  .input::-webkit-inner-spin-button, 
+  .inputError::-webkit-inner-spin-button {
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  
+  .button {
+    color: white;
+    font-weight: bold;
+    margin: 0 0.5em;
+    padding: 1em;
+    width: 30%;
+    background: black;
+    outline: none;
+    border: 5px solid white;
+    border-radius: 15px;
+    box-shadow: 0px 1px 10px rgb(0, 0, 0);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  @media (hover: hover) {
+    .button:hover:not(:disabled) {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+    }
+  }
+  
+  .button:disabled {
+    color: gray;
+    background: rgb(60, 60, 60);
+    border: 5px solid gray;
+    cursor: not-allowed;
+  }
+  
+  @media screen and (max-width: 992px) {
+    .betContainer {
+      width: 80%;    
+    }
+    
+    .button {
+      width: 80%;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    .gameControls {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .button {
+      margin: 0;
+      width: 80%;
+    }
+    
+    .quickBetContainer {
+      gap: 5px;
+    }
+    
+    .quickBetButton {
+      padding: 5px 10px;
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media screen and (max-width: 576px) {
+    .betContainer {
+      width: 100%;  
+      padding: 0 10px;      
+    }
+    
+    .betContainer h4 {
+      font-size: 75%;        
+    }
+    
+    .input, .inputError {
+      font-size: 150%;        
+    }
+    
+    .quickBetButton {
+      padding: 3px 8px;
+      font-size: 0.8rem;
+    }
+  }

@@ -1,0 +1,69 @@
+.handContainer {
+    color: white;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0.5em;
+    position: relative;
+  }
+  
+  .cardContainer {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 160px;
+    position: relative;
+    width: 100%;
+    margin-top: 0.5em;
+  }
+  
+  .title {
+    text-align: center;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+  }
+  
+  /* Overlapping cards effect */
+  .cardContainer > div {
+    margin-left: -25px;
+    transition: transform 0.2s ease;
+  }
+  
+  .cardContainer > div:first-child {
+    margin-left: 0;
+  }
+  
+  .cardContainer > div:hover {
+    transform: translateY(-10px);
+    z-index: 10;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .cardContainer {
+      min-height: 130px;
+    }
+    
+    .cardContainer > div {
+      margin-left: -15px;
+    }
+    
+    .title {
+      font-size: 1.2rem;
+    }
+  }
+  
+  @media screen and (max-width: 576px) {
+    .cardContainer {
+      min-height: 100px;
+    }
+    
+    .cardContainer > div {
+      margin-left: -10px;
+    }
+    
+    .title {
+      font-size: 1rem;
+    }
+  }
