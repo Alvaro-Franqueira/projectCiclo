@@ -1,0 +1,54 @@
+.message-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 1000;
+  padding: 20px 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  text-align: center;
+  min-width: 300px;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.message-popup.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  animation: popupPulse 1.5s ease-in-out;
+}
+
+.message-popup.hide {
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+}
+
+/* Pulse animation to draw attention */
+@keyframes popupPulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Different popup animations for different message types */
+.message-popup h1 {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add shine effect for win messages */
+.message-popup[style*="gold"] {
+  overflow: hidden;
+  animation: popupPulse 1.5s ease-in-out, shine 2s ease-in-out;
+}
+
+@keyframes shine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+} 

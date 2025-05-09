@@ -22,6 +22,7 @@
     "cannon-es": "^0.20.0",
     "canvas-confetti": "^1.9.3",
     "formik": "^2.4.5",
+    "framer-motion": "^12.10.4",
     "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
     "react-bootstrap": "^2.9.1",

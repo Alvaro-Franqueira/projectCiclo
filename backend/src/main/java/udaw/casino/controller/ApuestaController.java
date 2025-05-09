@@ -4,6 +4,8 @@ import udaw.casino.dto.ApuestaDTO;
 import udaw.casino.exception.ResourceNotFoundException;
 import udaw.casino.model.Apuesta;
 import udaw.casino.service.ApuestaService;
+import udaw.casino.service.JuegoService;
+import udaw.casino.service.UsuarioService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +21,12 @@ public class ApuestaController {
 
     @Autowired
     private final ApuestaService apuestaService;
-
-    public ApuestaController(ApuestaService apuestaService) {
+    private final UsuarioService usuarioService;
+    private final JuegoService juegoService;
+    public ApuestaController(ApuestaService apuestaService, UsuarioService usuarioService, JuegoService juegoService) {
         this.apuestaService = apuestaService;
+        this.usuarioService = usuarioService;
+        this.juegoService = juegoService;
     }
 
     // GET /api/apuestas/{id} - Get a specific bet by ID
@@ -78,6 +83,22 @@ public class ApuestaController {
     public ResponseEntity<List<Apuesta>> obtenerTodasLasApuestas() {
         List<Apuesta> apuestas = apuestaService.obtenerTodasLasApuestas();
         return ResponseEntity.ok(apuestas);
+    }
+
+    // POST /api/apuestas - Create a new bet
+    @PostMapping
+    public ResponseEntity<ApuestaDTO> crearApuesta(@RequestBody ApuestaDTO apuestaDTO) {
+        Apuesta apuesta = new Apuesta();
+        apuesta.setUsuario(usuarioService.obtenerUsuarioPorId(apuestaDTO.getUsuarioId()));
+        apuesta.setJuego(juegoService.obtenerJuegoPorId(apuestaDTO.getJuegoId()));
+        apuesta.setCantidad(apuestaDTO.getCantidad());
+        apuesta.setFechaApuesta(apuestaDTO.getFechaApuesta());
+        apuesta.setEstado(apuestaDTO.getEstado());
+        apuesta.setWinloss(apuestaDTO.getWinloss());
+        apuesta.setTipoApuesta(apuestaDTO.getTipo());
+        apuesta.setValorApostado(apuestaDTO.getValorApostado());
+        Apuesta apuestasaved = apuestaService.guardarApuesta(apuesta);
+        return ResponseEntity.ok(new ApuestaDTO(apuestasaved));
     }
 
 }

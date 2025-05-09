@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Container, Alert, Spinner, Badge, Button } from 'react-bootstrap';
 import Status from './Status';
 import Controls from './Controls';
 import Hand from './Hand';
+import MessagePopup from './MessagePopup';
 import jsonData from '../../../utils/deck.json';
 import { useAuth } from '../../../context/AuthContext';
 import userService from '../../../services/userService';
@@ -13,7 +14,6 @@ import { GiPokerHand } from 'react-icons/gi';
 const Blackjack = () => {
   const { user, isAuthenticated } = useAuth();
   
-  // Using objects instead of TypeScript enums
   const GameState = {
     bet: 0,
     init: 1,
@@ -55,6 +55,7 @@ const Blackjack = () => {
 
   const [gameState, setGameState] = useState(GameState.bet);
   const [message, setMessage] = useState(Message.bet);
+  const [showPopup, setShowPopup] = useState(false);
   const [buttonState, setButtonState] = useState({
     hitDisabled: false,
     standDisabled: false,
@@ -67,6 +68,20 @@ const Blackjack = () => {
       loadUserBalance();
     }
   }, [isAuthenticated, user]);
+
+  // Effect to show popup when message changes
+  useEffect(() => {
+    // Only show popup for important game messages
+    if (
+      message === Message.bust || 
+      message === Message.userWin || 
+      message === Message.dealerWin || 
+      message === Message.tie ||
+      message === Message.bet
+    ) {
+      setShowPopup(true);
+    }
+  }, [message]);
 
   const loadUserBalance = async () => {
     try {
@@ -297,10 +312,14 @@ const Blackjack = () => {
       // Create bet record
       const betData = {
         usuarioId: user.id,
-        juegoId: 3, // Assuming 3 is for Blackjack, adjust as needed
+        juegoId: 9, 
         cantidad: bet,
-        resultado: isWin ? 'GANADA' : tieGame ? 'EMPATE' : 'PERDIDA',
-        tipoApuesta: 'BLACKJACK'
+        estado: isWin ? 'GANADA' : tieGame ? 'EMPATE' : 'PERDIDA',
+        tipoApuesta: 'BLACKJACK',
+        fechaApuesta: new Date().toISOString(),
+        winloss: isWin ? bet : -bet,
+        valorApostado: 'userScore',
+        valorGanador: isWin ? 'userScore' : 'dealerScore'
       };
       
       await betService.createBet(betData);
@@ -382,6 +401,11 @@ const Blackjack = () => {
     };
   };
 
+  // Handle popup close
+  const handlePopupClose = () => {
+    setShowPopup(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <Container className="text-center mt-5">
@@ -429,6 +453,37 @@ const Blackjack = () => {
           zIndex: 1
         }}></div>
 
+        {/* Balance Display - Replacing Status Component */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          marginBottom: '20px', 
+          position: 'relative', 
+          zIndex: 5 
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '1em',
+            width: '300px',
+            background: 'black',
+            border: '5px solid white',
+            borderRadius: '15px',
+            boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.5)'
+          }}>
+            <h1 style={{ 
+              color: 'white', 
+              margin: 0, 
+              display: 'flex', 
+              alignItems: 'center' 
+            }}>
+              <FaCoins style={{ color: 'gold', marginRight: '10px', fontSize: '0.8em' }} />
+              ${balance.toFixed(2)}
+            </h1>
+          </div>
+        </div>
+
         {/* Game info */}
         <div style={{ position: 'absolute', top: '10px', right: '20px', display: 'flex', alignItems: 'center', zIndex: 5 }}>
           <div style={{ 
@@ -458,8 +513,6 @@ const Blackjack = () => {
 
         {/* Main game content */}
         <div style={{ position: 'relative', zIndex: 5 }}>
-          <Status message={message} balance={balance} />
-
           <div className="hand-container">
             <div className="hand-title-wrapper" style={{ 
               display: 'flex', 
@@ -551,6 +604,13 @@ const Blackjack = () => {
             resetEvent={resetGame} />
         </div>
       </div>
+
+      {/* Message Popup */}
+      <MessagePopup 
+        message={message} 
+        isVisible={showPopup} 
+        onClose={handlePopupClose}
+      />
     </Container>
   );
 }

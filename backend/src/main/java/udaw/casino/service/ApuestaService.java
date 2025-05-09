@@ -113,4 +113,8 @@ public class ApuestaService {
     public List<Apuesta> obtenerTodasLasApuestas() {
         return apuestaRepository.findAll();
     }
+
+    public Apuesta guardarApuesta(Apuesta apuesta) {
+     return apuestaRepository.save(apuesta);
+    }
 }

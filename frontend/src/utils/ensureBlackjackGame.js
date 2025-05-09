@@ -2,33 +2,33 @@ import gameService from '../services/gameService';
 
 /**
  * Ensures that the Blackjack game exists in the database
- * This can be called at application startup to make sure the game is available
+ * If it doesn't exist, it will create it
+ * @returns {Promise<Object>} The Blackjack game object
  */
-const ensureBlackjackGame = async () => {
+export const ensureBlackjackGame = async () => {
   try {
-    // First check if the game already exists
+    // Try to fetch the Blackjack game
+    const blackjackGame = await gameService.getGameByName('Blackjack');
+    console.log('Blackjack game found in the database:', blackjackGame);
+    return blackjackGame;
+  } catch (error) {
+    console.log('Blackjack game not found in the database, creating it...');
+    
+    // Create the Blackjack game
+    const gameData = {
+      nombre: 'Blackjack',
+      descripcion: 'Classic card game where the objective is to get a hand total of 21 or as close as possible without going over.'
+    };
+    
     try {
-      const existingGame = await gameService.getGameByName('Blackjack');
-      console.log('Blackjack game already exists in database:', existingGame);
-      return existingGame;
-    } catch (error) {
-      // Game doesn't exist, create it
-      console.log('Blackjack game not found, creating it...');
-      
-      const blackjackGame = {
-        nombre: 'Blackjack',
-        descripcion: 'Classic card game where the objective is to get a hand total of 21 or as close as possible without going over.',
-        
-      };
-      
-      const createdGame = await gameService.addGame(blackjackGame);
+      const createdGame = await gameService.addGame(gameData);
       console.log('Blackjack game created successfully:', createdGame);
       return createdGame;
+    } catch (createError) {
+      console.error('Failed to create Blackjack game:', createError);
+      throw createError;
     }
-  } catch (error) {
-    console.error('Error ensuring Blackjack game exists:', error);
-    return null;
   }
 };
 
-export default ensureBlackjackGame; 
+export default ensureBlackjackGame;

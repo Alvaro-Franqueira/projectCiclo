@@ -16,7 +16,7 @@ import {
   FaDice,
   FaCreditCard
 } from 'react-icons/fa';
-import { GiAbstract013, GiCoins} from 'react-icons/gi';
+import { GiAbstract013, GiCoins, GiPokerHand } from 'react-icons/gi';
 import { useAuth } from '../../context/AuthContext';
 import neonFavicon from '../images/neonfavicon.png';
 import logoCasino from '../images/logo-casino.png';
@@ -87,6 +87,9 @@ const AppNavbar = ({ noSticky }) => {
                     </Dropdown.Item>
                     <Dropdown.Item as={Link} to="/games/dice">
                       <FaDice className="me-2" /> Dice Game
+                    </Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/games/blackjack">
+                      <GiPokerHand className="me-2" /> Blackjack
                     </Dropdown.Item>
                     <Dropdown.Divider />
                     <Dropdown.Item as={Link} to="/games">

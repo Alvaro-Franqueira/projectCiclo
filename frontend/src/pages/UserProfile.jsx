@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {  Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination, Image } from 'react-bootstrap';
 import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown, FaMedal, FaMoneyBillWave, FaStar, FaAward } from 'react-icons/fa';
 import userService from '../services/userService';
+
 import betService from '../services/betService';
 import rankingService from '../services/rankingService';
 import { useAuth } from '../context/AuthContext';
 import { GiRollingDices, GiCoins } from "react-icons/gi";
 import rouletteImg from '../components/images/rouletteimg.png';
 import kingLogo from '../components/images/king-logo.png';
+import blackjackImg from '../components/images/blackjack-white.png';
 
 const UserProfile = () => {
     const { user } = useAuth();
@@ -122,7 +124,17 @@ const UserProfile = () => {
                 const rouletteWinRate = totalRouletteBets > 0 ? (winningRouletteBets / totalRouletteBets) * 100 : 0;
                 rouletteStats = { totalBets: totalRouletteBets, winRate: rouletteWinRate, totalWins: winningRouletteBets, totalProfit: rouletteProfitLoss };
             }
-            setGameStats({ dice: diceStats, roulette: rouletteStats });
+            const blackjackBets = await betService.getUserGameBets(userId, 9);
+            let blackjackStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
+            if (Array.isArray(blackjackBets)) {
+                const totalBlackjackBets = blackjackBets.length;
+                const winningBlackjackBets = blackjackBets.filter(bet => bet.estado === 'GANADA').length;
+                const blackjackProfitLoss = blackjackBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
+                const blackjackWinRate = totalBlackjackBets > 0 ? (winningBlackjackBets / totalBlackjackBets) * 100 : 0;
+                blackjackStats = { totalBets: totalBlackjackBets, winRate: blackjackWinRate, totalWins: winningBlackjackBets, totalProfit: blackjackProfitLoss };
+            }
+            
+            setGameStats({ dice: diceStats, roulette: rouletteStats, blackjack: blackjackStats });
         } catch (error) {
             console.error('Error fetching game-specific stats:', error);
             setError(prev => prev ? prev + '\nFailed to load game stats.' : 'Failed to load game stats.');
@@ -430,6 +442,32 @@ const UserProfile = () => {
                                                     </Card.Body>
                                                 </Card>
                                             </Col>
+                                            <Col md={6} className="mb-3">
+                                                <Card className="h-100" style={{ backgroundColor: '#294c85' }}>
+                                                    <Card.Header className="d-flex justify-content-between align-items-center" style={{ backgroundColor: '#011b45' }}>
+                                                        <span>Blackjack</span> <img src={blackjackImg} alt="Blackjack Icon" width={40} height={30} />
+                                                    </Card.Header>
+                                                    <Card.Body>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Total Bets:</span> <span>{gameStats.blackjack.totalBets}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Win Rate:</span>
+                                                            <span className="text-info"><FaPercentage className="me-1" />{(gameStats.blackjack.winRate ?? 0).toFixed(1)}%</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Total Wins:</span>
+                                                            <span className="text-warning"><FaTrophy className="me-1" />{gameStats.blackjack.totalWins}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between">
+                                                            <span>Net Profit:</span>
+                                                            <span className={gameStats.blackjack.totalProfit >= 0 ? 'text-success' : 'text-danger'}>
+                                                                <FaCoins className="me-1" />${(gameStats.blackjack.totalProfit ?? 0).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </Card.Body>
+                                                </Card>
+                                            </Col>
                                         </Row>
                                     </div>
                                 </Tab>
@@ -457,6 +495,8 @@ const UserProfile = () => {
                                                                         <div className="d-flex align-items-center"><GiRollingDices size={20} color="#3498db" className="me-2" /><span>Dice Game</span></div>
                                                                     ) : (bet.juego?.nombre === 'Ruleta' || bet.juegoId === 1) ? (
                                                                         <div className="d-flex align-items-center"><img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" /><span>Roulette Game</span></div>
+                                                                    ) : (bet.juegoId === 9) ? (
+                                                                        <div className="d-flex align-items-center"><img src={blackjackImg} alt="Blackjack" width={25} height={20} className="me-2" /><span>Blackjack Game</span></div>
                                                                     ) : (
                                                                         <span>{bet.juego?.nombre || 'Unknown Game'}</span>
                                                                     )}
@@ -471,8 +511,10 @@ const UserProfile = () => {
                                                                         bet.tipo === 'COLOR' ? `Color: ${bet.valorApostado}` :
                                                                         bet.tipo === 'PARIDAD' ? `Parity: ${bet.valorApostado}` :
                                                                         `${bet.tipo}: ${bet.valorApostado}`
+                                                                    ) : (bet.juegoId === 9) ? (
+                                                                        `${bet.tipo || 'BLACKJACK'}` 
                                                                     ) : (
-                                                                        `${bet.tipo || 'N/A'}: ${bet.valorApostado || 'N/A'}`
+                                                                        'na'
                                                                     )}
                                                                 </td>
                                                                 <td>${(bet.cantidad ?? 0).toFixed(2)}</td>
