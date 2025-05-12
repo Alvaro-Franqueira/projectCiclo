@@ -504,7 +504,9 @@ setTimeout(loadUserBetHistory, 1500);
                       <div className="d-flex justify-content-between">
                         <span>
                         
-                          {bet.tipo === 'parimpar' ? bet.valorApostado : `Número ${bet.valorApostado}`}
+                          {bet.type || bet.tipo === 'parimpar' 
+                            ? (bet.betValue || bet.valorApostado) 
+                            : `Número ${bet.betValue || bet.valorApostado}`}
                        
 
                         </span>

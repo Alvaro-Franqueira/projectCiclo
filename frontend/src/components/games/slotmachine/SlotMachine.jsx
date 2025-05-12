@@ -89,7 +89,7 @@ const SlotMachine = () => {
     try {
       const betData = {
         userId: user.id,
-        gameId: 10, // Assuming 10 is the Slot Machine game ID
+        gameId: 7, // Slot Machine game ID is 7, not 10
         amount: bet,
         status: isWin ? 'WON' : 'LOST',
         type: 'SLOT_MACHINE',

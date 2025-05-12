@@ -80,6 +80,9 @@ const UserProfile = () => {
                 
                 if (Array.isArray(userRankings) && userRankings.length > 0) {
                     console.log('DEBUG - First ranking:', userRankings[0]);
+                    console.log('DEBUG - Score:', userRankings[0].score);
+                    console.log('DEBUG - Position:', userRankings[0].position);
+                    console.log('DEBUG - Type:', userRankings[0].type);
                     console.log('DEBUG - Game-specific rankings:', userRankings.filter(r => r.game));
                     console.log('DEBUG - Global rankings:', userRankings.filter(r => !r.game));
                 }
@@ -125,6 +128,7 @@ const UserProfile = () => {
                 const rouletteWinRate = totalRouletteBets > 0 ? (winningRouletteBets / totalRouletteBets) * 100 : 0;
                 rouletteStats = { totalBets: totalRouletteBets, winRate: rouletteWinRate, totalWins: winningRouletteBets, totalProfit: rouletteProfitLoss };
             }
+            
             const blackjackBets = await betService.getUserGameBets(userId, 9);
             let blackjackStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
             if (Array.isArray(blackjackBets)) {
@@ -135,7 +139,31 @@ const UserProfile = () => {
                 blackjackStats = { totalBets: totalBlackjackBets, winRate: blackjackWinRate, totalWins: winningBlackjackBets, totalProfit: blackjackProfitLoss };
             }
             
-            setGameStats({ dice: diceStats, roulette: rouletteStats, blackjack: blackjackStats });
+            // Add slot machine bets - check both IDs (7 and 10)
+            const slotBets7 = await betService.getUserGameBets(userId, 7);
+            const slotBets10 = await betService.getUserGameBets(userId, 10);
+            
+            // Combine bets from both possible IDs
+            const slotBets = [
+                ...(Array.isArray(slotBets7) ? slotBets7 : []),
+                ...(Array.isArray(slotBets10) ? slotBets10 : [])
+            ];
+            
+            let slotMachineStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
+            if (slotBets.length > 0) {
+                const totalSlotBets = slotBets.length;
+                const winningSlotBets = slotBets.filter(bet => bet.status === 'WON').length;
+                const slotProfitLoss = slotBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
+                const slotWinRate = totalSlotBets > 0 ? (winningSlotBets / totalSlotBets) * 100 : 0;
+                slotMachineStats = { totalBets: totalSlotBets, winRate: slotWinRate, totalWins: winningSlotBets, totalProfit: slotProfitLoss };
+            }
+            
+            setGameStats({ 
+                dice: diceStats, 
+                roulette: rouletteStats, 
+                blackjack: blackjackStats,
+                slotMachine: slotMachineStats
+            });
         } catch (error) {
             console.error('Error fetching game-specific stats:', error);
             setError(prev => prev ? prev + '\nFailed to load game stats.' : 'Failed to load game stats.');
@@ -197,15 +225,25 @@ const UserProfile = () => {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Check if user has #1 rankings
-    const numberOneRankings = Array.isArray(rankings) ? rankings.filter(r => r.posicion === 1) : [];
+    const numberOneRankings = Array.isArray(rankings) ? rankings.filter(r => r.position === 1) : [];
     const isNumberOne = numberOneRankings.length > 0;
     const numberOneRankingDetails = numberOneRankings.map(r => ({
-        type: r.tipo,
+        type: r.type,
         game: r.game?.name || 'Overall'
     }));
 
+    // Debugging ranking data
+    if (Array.isArray(rankings) && rankings.length > 0) {
+        console.log('Displaying rankings:', rankings);
+        console.log('Number one rankings:', numberOneRankings);
+        console.log('Number one ranking details:', numberOneRankingDetails);
+    }
+
     // Helper function to get badge information based on ranking type
     const getBadgeForRanking = (type, game) => {
+        // For debugging
+        console.log('Getting badge for ranking type:', type);
+        
         switch (type) {
             case 'OVERALL_PROFIT':
                 return {
@@ -254,7 +292,6 @@ const UserProfile = () => {
                 };
             case 'BY_GAME_PROFIT':
                 return {
-                    title: 'Top Profit',
                     title: 'Top Profit',
                     icon: <FaMoneyBillWave size={50} color="#40c057" />,
                     bgColorStart: '#103221',
@@ -315,6 +352,9 @@ const UserProfile = () => {
                                     </h6>
                                     <div className="ranking-badges">
                                         {numberOneRankingDetails.map((detail, index) => {
+                                            // Log badge details for debugging
+                                            console.log(`Badge ${index}:`, detail);
+                                            
                                             // Customize badge based on ranking type
                                             const badgeInfo = getBadgeForRanking(detail.type, detail.game);
                                             return (
@@ -469,6 +509,32 @@ const UserProfile = () => {
                                                     </Card.Body>
                                                 </Card>
                                             </Col>
+                                            <Col md={6} className="mb-3">
+                                                <Card className="h-100" style={{ backgroundColor: '#294c85' }}>
+                                                    <Card.Header className="d-flex justify-content-between align-items-center" style={{ backgroundColor: '#011b45' }}>
+                                                        <span>Slot Machine</span> <img src={slotMachineImg} alt="Slot Machine Icon" width={40} height={30} />
+                                                    </Card.Header>
+                                                    <Card.Body>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Total Bets:</span> <span>{gameStats.slotMachine.totalBets}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Win Rate:</span>
+                                                            <span className="text-info"><FaPercentage className="me-1" />{(gameStats.slotMachine.winRate ?? 0).toFixed(1)}%</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between mb-2">
+                                                            <span>Total Wins:</span>
+                                                            <span className="text-warning"><FaTrophy className="me-1" />{gameStats.blackjack.totalWins}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between">
+                                                            <span>Net Profit:</span>
+                                                            <span className={gameStats.blackjack.totalProfit >= 0 ? 'text-success' : 'text-danger'}>
+                                                                <FaCoins className="me-1" />${(gameStats.blackjack.totalProfit ?? 0).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </Card.Body>
+                                                </Card>
+                                            </Col>
                                         </Row>
                                     </div>
                                 </Tab>
@@ -498,7 +564,7 @@ const UserProfile = () => {
                                                                         <div className="d-flex align-items-center"><img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" /><span>Roulette Game</span></div>
                                                                     ) : (bet.game?.name === 'Blackjack' || bet.gameId === 9) ? (
                                                                         <div className="d-flex align-items-center"><img src={blackjackImg} alt="Blackjack" width={25} height={20} className="me-2" /><span>Blackjack Game</span></div>
-                                                                    ) : (bet.game?.name === 'Slot Machine' || bet.gameId === 7 || bet.type === 'SLOT_MACHINE') ? (
+                                                                    ) : (bet.game?.name === 'Slot Machine' || bet.gameId === 7 || bet.gameId === 10 || bet.type === 'SLOT_MACHINE') ? (
                                                                         <div className="d-flex align-items-center"><img src={slotMachineImg} alt="Slot Machine" width={25} height={20} className="me-2" /><span>Slot Machine Game</span></div>
                                                                     ) : (
                                                                         <span>{bet.game?.name || 'Unknown Game'}</span>
@@ -590,26 +656,26 @@ const UserProfile = () => {
                                                     <tbody>
                                                         {rankings
                                                             .filter(r => !r.game)
-                                                            .sort((a, b) => (a.posicion || 999) - (b.posicion || 999))
+                                                            .sort((a, b) => (a.position || 999) - (b.position || 999))
                                                             .map((ranking, index) => (
                                                                 <tr key={index}>
                                                                     <td>{ranking.type?.replace(/_/g, ' ') || 'Unknown'}</td>
                                                                     <td>
                                                                         {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')
-                                                                            ? `$${parseFloat(ranking.value || 0).toFixed(2)}`
+                                                                            ? `$${parseFloat(ranking.score || 0).toFixed(2)}`
                                                                             : ranking.type?.includes('WIN_RATE')
-                                                                            ? `${parseFloat(ranking.value || 0).toFixed(1)}%`
-                                                                            : ranking.value}
+                                                                            ? `${parseFloat(ranking.score || 0).toFixed(1)}%`
+                                                                            : ranking.score}
                                                                     </td>
                                                                     <td>
                                                                         <Badge
                                                                             bg={
-                                                                                ranking.posicion === 1 ? 'warning' :
-                                                                                ranking.posicion <= 10  ? 'info' :
+                                                                                ranking.position === 1 ? 'warning' :
+                                                                                ranking.position <= 10  ? 'info' :
                                                                                 'danger'
                                                                             }
                                                                         >
-                                                                            #{ranking.posicion}
+                                                                            #{ranking.position}
                                                                         </Badge>
                                                                     </td>
                                                                 </tr>
@@ -635,26 +701,26 @@ const UserProfile = () => {
                                                                 </thead>
                                                                 <tbody>
                                                                     {gameRankings
-                                                                        .sort((a, b) => (a.posicion || 999) - (b.posicion || 999))
+                                                                        .sort((a, b) => (a.position || 999) - (b.position || 999))
                                                                         .map((ranking, index) => (
                                                                             <tr key={index}>
-                                                                                <td>{ranking.tipo?.replace(/_/g, ' ') || 'Unknown'}</td>
+                                                                                <td>{ranking.type?.replace(/_/g, ' ') || 'Unknown'}</td>
                                                                                 <td>
-                                                                                    {ranking.tipo?.includes('PROFIT') || ranking.tipo?.includes('AMOUNT')
-                                                                                        ? `$${parseFloat(ranking.valor || 0).toFixed(2)}`
-                                                                                        : ranking.tipo?.includes('WIN_RATE')
-                                                                                        ? `${parseFloat(ranking.valor || 0).toFixed(1)}%`
-                                                                                        : ranking.valor}
+                                                                                    {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')
+                                                                                        ? `$${parseFloat(ranking.score || 0).toFixed(2)}`
+                                                                                        : ranking.type?.includes('WIN_RATE')
+                                                                                        ? `${parseFloat(ranking.score || 0).toFixed(1)}%`
+                                                                                        : ranking.score}
                                                                                 </td>
                                                                                 <td>
                                                                                     <Badge
                                                                                         bg={
-                                                                                            ranking.posicion === 1 ? 'warning' :
-                                                                                            ranking.posicion <= 10  ? 'info' :
+                                                                                            ranking.position === 1 ? 'warning' :
+                                                                                            ranking.position <= 10  ? 'info' :
                                                                                             'danger'
                                                                                         }
                                                                                     >
-                                                                                        #{ranking.posicion}
+                                                                                        #{ranking.position}
                                                                                     </Badge>
                                                                                 </td>
                                                                             </tr>

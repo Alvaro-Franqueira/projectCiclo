@@ -52,6 +52,58 @@ const betService = {
     }
   },
 
+  // Helper to normalize bet properties from Spanish to English
+  normalizeBetProperties: (bet) => {
+    // Spanish to English property mappings
+    const propertyMappings = {
+      juegoId: 'gameId',
+      tipo: 'type',
+      tipoApuesta: 'type',
+      juego: 'game',
+      valorApostado: 'betValue',
+      valorGanador: 'winningValue',
+      fechaApuesta: 'betDate',
+      estado: 'status',
+      gananciaPerdida: 'winloss'
+    };
+    
+    // First handle special case for tipoApuesta
+    if (bet.tipoApuesta && !bet.tipo) {
+      bet.tipo = bet.tipoApuesta;
+    }
+    
+    // Map all Spanish properties to English
+    Object.entries(propertyMappings).forEach(([spanishProp, englishProp]) => {
+      if (bet[spanishProp] !== undefined && bet[englishProp] === undefined) {
+        bet[englishProp] = bet[spanishProp];
+      }
+    });
+    
+    // Handle slot machine game IDs - normalize both IDs 7 and 10 to be consistent
+    // This ensures all slot machine bets are recognized regardless of which ID was used
+    if (bet.gameId === 10 && bet.type === 'SLOT_MACHINE') {
+      bet.gameId = 7; // Use 7 as the canonical ID for slot machines
+    }
+    
+    // Special case for game object
+    if (bet.juego && !bet.game) {
+      bet.game = {
+        ...bet.juego,
+        // Ensure game has an English name
+        name: bet.juego.name || 
+              (bet.juego.nombre ? 
+              (bet.juego.id === 1 ? 'Roulette' : 
+               bet.juego.id === 2 ? 'Dice' : 
+               bet.juego.id === 9 ? 'Blackjack' :
+               bet.juego.id === 7 || bet.juego.id === 10 ? 'Slot Machine' :
+               bet.juego.id === 11 ? 'Sports Betting' : bet.juego.nombre) : 
+               'Unknown Game')
+      };
+    }
+    
+    return bet;
+  },
+
   // Get all bets for a user with detailed game information
   getUserBets: async (userId) => {
     try {
@@ -60,39 +112,13 @@ const betService = {
       
       // If we have bets, fetch detailed information for each
       if (Array.isArray(bets) && bets.length > 0) {
-        // Get unique game IDs from the bets that have juegoId
+        // Get unique game IDs from the bets that have juegoId or gameId
         const gameIds = [...new Set(bets
-          .filter(bet => bet.juegoId)
-          .map(bet => bet.juegoId))];
+          .filter(bet => bet.gameId || bet.juegoId)
+          .map(bet => bet.gameId || bet.juegoId))];
         
-        // For bets without juegoId, try to determine from bet type
-        const processedBets = await Promise.all(bets.map(async (bet) => {
-          // If bet already has juego object, return as is
-          if (bet.juego) return bet;
-          
-          // If bet has juegoId but no juego object, fetch game details
-          if (bet.juegoId) {
-            try {
-              // Attempt to get game details - in a real app, you'd have an API for this
-              // For now, we'll create a placeholder based on known game IDs
-              bet.juego = {
-                id: bet.juegoId,
-                nombre: bet.juegoId === 1 ? 'Ruleta' : bet.juegoId === 2 ? 'Dados' : `Game ${bet.juegoId}`
-              };
-            } catch (err) {
-              console.error(`Failed to fetch game details for game ID ${bet.juegoId}:`, err);
-            }
-          } 
-
-          
-          
-          // Normalize property names for UI consistency
-          if (bet.tipoApuesta && !bet.tipo) {
-            bet.tipo = bet.tipoApuesta;
-          }
-          
-          return bet;
-        }));
+        // Process each bet to normalize properties
+        const processedBets = bets.map(bet => betService.normalizeBetProperties(bet));
         
         return processedBets;
       }
@@ -131,9 +157,9 @@ const betService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch user game bets' };
     }
-  }
-,
-// Get user balance
+  },
+
+  // Get user balance
   getUserBalance: async (userId) => {
     try {
       const response = await api.get(BET_ENDPOINTS.GET_BALANCE(userId));
