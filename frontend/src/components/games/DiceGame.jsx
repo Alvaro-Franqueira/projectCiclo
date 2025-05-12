@@ -15,8 +15,8 @@ const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
   const [userBalance, setUserBalance] = useState(); //update in useEffect
   const [betAmount, setBetAmount] = useState(5);
-  const [betType, setBetType] = useState('parimpar');
-  const [betValue, setBetValue] = useState('par');
+  const [betType, setBetType] = useState('evenodd');
+  const [betValue, setBetValue] = useState('even');
   const [diceValues, setDiceValues] = useState([1, 1]);
   const [isRolling, setIsRolling] = useState(false);
   const [resultMessage, setResultMessage] = useState({ text: '', type: '' });
@@ -98,7 +98,7 @@ const DiceGame = () => {
         .then(bets => {
           if (Array.isArray(bets)) {
             const sortedBets = bets
-              .sort((a, b) => new Date(b.fechaApuesta) - new Date(a.fechaApuesta))
+              .sort((a, b) => new Date(b.betDate) - new Date(a.betDate))
               .slice(0, 5);
             setHistory(sortedBets);
           } else {
@@ -128,9 +128,9 @@ const DiceGame = () => {
     const type = e.target.value;
     setBetType(type);
     // Reset bet value based on new type
-    if (type === 'parimpar') {
-      setBetValue('par');
-    } else if (type === 'numero') {
+    if (type === 'evenodd') {
+      setBetValue('even');
+    } else if (type === 'number') {
       setBetValue('2'); // Default to sum 2
     }
   };
@@ -158,17 +158,17 @@ const DiceGame = () => {
     // We'll update the dice display when we get the response
 
     const betData = {
-      usuarioId: user.id,
-      juegoId: 2, // Hardcoded game ID for Dice game
-      cantidad: betAmount,
-      tipo: betType,
-      valorApostado: betValue,
-      valorGanador: null
+      userId: user.id,
+      gameId: 2, // Hardcoded game ID for Dice game
+      amount: betAmount,
+      type: betType,
+      betValue: betValue,
+      winningValue: null
     };
     console.log('Placing bet with data:', betData, `Current local balance: ${currentBalanceBeforeBet}`);
 
     // Use Promise chain instead of async/await
-  diceService.jugar(betData)
+  diceService.play(betData)
       .then(response => {
         const { diceResults, resolvedBet } = response;
         // Log the RAW response from the backend
@@ -182,7 +182,7 @@ const DiceGame = () => {
 
         // Check for user data in the DTO
         console.log('Parsed Response:', { diceResults, resolvedBet });
-        console.log('User data within resolvedBet - ID:', resolvedBet.usuarioId, 'Balance:', resolvedBet.userBalance);
+        console.log('User data within resolvedBet - ID:', resolvedBet.userId, 'Balance:', resolvedBet.userBalance);
 
         // Use the userBalance field from the ApuestaDTO - this is the authoritative balance from the backend
         let backendNewBalance = resolvedBet.userBalance;
@@ -217,11 +217,11 @@ const totalResult = diceResults[0] + diceResults[1];
 const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${totalResult}). `;
 
 
-const betAmount = resolvedBet.cantidad;
+const betAmount = resolvedBet.amount;
 
 let payoutExplanation = '';
 
-if (resolvedBet.estado === 'GANADA') {
+if (resolvedBet.status === 'WON') {
   // Trigger confetti animation
   confetti({
     particleCount: 200,
@@ -233,10 +233,10 @@ if (resolvedBet.estado === 'GANADA') {
   });
   // Add explanation of the payout calculation based on bet type
 
-  if (resolvedBet.tipo === 'parimpar') {
+  if (resolvedBet.type === 'evenodd') {
       // For even/odd bets, payout is 95% of bet amount
       payoutExplanation = ` (95% of your $${betAmount} bet)`;
-  } else if (resolvedBet.tipo === 'numero') {
+  } else if (resolvedBet.type === 'number') {
       // For number bets, payout depends on the number (using odds table from backend)
       const odds = totalResult === 7 ? 5.0 : 
                   (totalResult === 6 || totalResult === 8) ? 6.0 :
@@ -245,7 +245,7 @@ if (resolvedBet.estado === 'GANADA') {
                   (totalResult === 3 || totalResult === 11) ? 15.0 :
                   (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
       payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
-  } else if (resolvedBet.tipo === 'mitad') {
+  } else if (resolvedBet.type === 'half') {
       // For half bets, payout is 95% of bet amount
       payoutExplanation = ` (95% of your $${betAmount} bet)`;
   }
@@ -301,14 +301,14 @@ setTimeout(loadUserBetHistory, 1500);
 
   const renderBetValueInput = () => {
     switch (betType) {
-      case 'parimpar': // Even/Odd
+      case 'evenodd': // Even/Odd
         return (
           <Form.Select value={betValue} onChange={handleBetValueChange} disabled={isRolling}>
-            <option value="par">Even Sum</option>
-            <option value="impar">Odd Sum</option>
+            <option value="even">Even Sum</option>
+            <option value="odd">Odd Sum</option>
           </Form.Select>
         );
-      case 'numero': // Specific sum
+      case 'number': // Specific sum
         return (
           <Form.Select value={betValue} onChange={handleBetValueChange} disabled={isRolling}>
             {Array.from({ length: 11 }, (_, i) => i + 2).map(num => (
@@ -472,8 +472,8 @@ setTimeout(loadUserBetHistory, 1500);
                   <Form.Label column sm={4}>Bet Type:</Form.Label>
                   <Col sm={8}>
                     <Form.Select value={betType} onChange={handleBetTypeChange} disabled={isRolling}>
-                      <option value="parimpar">Odd/Even Sum</option>
-                      <option value="numero">Specific Sum</option>
+                      <option value="evenodd">Odd/Even Sum</option>
+                      <option value="number">Specific Sum</option>
                     </Form.Select>
                   </Col>
                 </Form.Group>

@@ -21,8 +21,8 @@ const SlotMachinePage = () => {
         console.log('Game info not available from API, using default');
         // Set default game info if not available from API
         setGameInfo({
-          nombre: 'Slot Machine',
-          descripcion: 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'
+          name: 'Slot Machine',
+          description: 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'
         });
       } finally {
         setLoading(false);
@@ -87,10 +87,10 @@ const SlotMachinePage = () => {
                 textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
                 fontFamily: '"Playfair Display", serif'
               }}>
-                {gameInfo?.nombre || 'Slot Machine'}
+                {gameInfo?.name || 'Slot Machine'}
               </h1>
               <p className="text-center" style={{ color: 'white' }}>
-                {gameInfo?.descripcion || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+                {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
               </p>
             </div>
 

@@ -51,35 +51,36 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // --- PUBLICLY ACCESSIBLE ENDPOINTS (Unauthenticated access) ---
                 .requestMatchers(
-                    "/api/usuarios/login",          // User login
-                    "/api/usuarios/registrar",      // User registration
-                    "/api/payments/webhook"         // Payment webhook
+                    "/api/users/login",          // User login
+                    "/api/users/register",       // User registration
+                    "/api/payments/webhook"      // Payment webhook
                 ).permitAll()
 
                 // --- AUTHENTICATED USER ENDPOINTS (Any logged-in user: USER or ADMIN) ---
                 // Logged-in users can GET game information
-                .requestMatchers(HttpMethod.GET, "/api/juegos", "/api/juegos/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/games", "/api/games/**").authenticated()
                 // Logged-in users can GET their own or other users' (public) details
-                .requestMatchers(HttpMethod.GET, "/api/usuarios/username/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/usuarios/id/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/username/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/id/**").authenticated()
                 
                 // Allow access to rankings endpoints for authenticated users
                 .requestMatchers(HttpMethod.GET, "/api/rankings/v2/**").authenticated()
                 
                 // Allow access to betting endpoints for authenticated users
-                .requestMatchers(HttpMethod.GET, "/api/apuestas/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/bets/**").authenticated() // In case you have renamed endpoints
+                .requestMatchers(HttpMethod.GET, "/api/bets/**").authenticated()
+                // Allow authenticated users to POST to betting endpoints
+                .requestMatchers(HttpMethod.POST, "/api/bets/**").authenticated()
 
                 // Add other endpoints here that any authenticated user can access
                 // Example: .requestMatchers("/api/user/profile").authenticated()
 
                 // --- ADMIN ONLY ENDPOINTS ---
                 // For user management operations restricted to ADMINs
-                .requestMatchers("/api/usuarios/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                 // Only ADMINS can create, update, or delete games
-                .requestMatchers(HttpMethod.POST, "/api/juegos").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/juegos/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/juegos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/games").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/games/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasRole("ADMIN")
                 // Add other endpoints here that only ADMINs can access
                 // Example: .requestMatchers("/api/reports/**").hasRole("ADMIN")
 

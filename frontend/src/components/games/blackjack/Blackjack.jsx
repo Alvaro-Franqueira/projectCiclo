@@ -307,24 +307,28 @@ const Blackjack = () => {
 
   const recordBet = async (isWin, tieGame = false) => {
     if (!user?.id) return;
-    
+
     try {
       // Create bet record
       const betData = {
-        usuarioId: user.id,
-        juegoId: 9, 
-        cantidad: bet,
-        estado: isWin ? 'GANADA' : tieGame ? 'EMPATE' : 'PERDIDA',
-        tipoApuesta: 'BLACKJACK',
-        fechaApuesta: new Date().toISOString(),
+        userId: user.id,
+        gameId: 9, 
+        amount: bet,
+        status: isWin ? 'WON' : tieGame ? 'TIE' : 'LOST',
+        type: 'BLACKJACK',
+        betDate: new Date().toISOString(),
         winloss: isWin ? bet : -bet,
-        valorApostado: 'userScore',
-        valorGanador: isWin ? 'userScore' : 'dealerScore'
+        betValue: userScore.toString(),
+        winningValue: isWin ? userScore.toString() : dealerScore.toString()
       };
       
-      await betService.createBet(betData);
+      console.log('Attempting to record bet with data:', betData);
+      const response = await betService.createBet(betData);
+      console.log('Bet recorded successfully, server response:', response);
     } catch (err) {
       console.error('Error recording bet:', err);
+      console.error('Error details:', err.response?.data || err.message);
+      setError(`Failed to record bet: ${err.response?.data?.message || err.message}`);
     }
   };
 

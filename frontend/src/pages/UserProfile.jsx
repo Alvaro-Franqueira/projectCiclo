@@ -10,6 +10,7 @@ import { GiRollingDices, GiCoins } from "react-icons/gi";
 import rouletteImg from '../components/images/rouletteimg.png';
 import kingLogo from '../components/images/king-logo.png';
 import blackjackImg from '../components/images/blackjack-white.png';
+import slotMachineImg from '../components/images/seven-icon.png';
 
 const UserProfile = () => {
     const { user } = useAuth();
@@ -25,9 +26,9 @@ const UserProfile = () => {
         roulette: { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 }
     });
 
-    // Estados para la paginación del historial de apuestas
+    // States for bet history pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const [betsPerPage] = useState(10); // Puedes ajustar este número
+    const [betsPerPage] = useState(10); // You can adjust this number
 
     const fetchProfileData = useCallback(async (userId) => {
         if (!userId) return;
@@ -49,11 +50,11 @@ const UserProfile = () => {
             
             // Handle user details
             if (fetchedUserDetails) {
-                const balance = fetchedUserDetails.saldo !== undefined
-                    ? Number(fetchedUserDetails.saldo)
-                    : (fetchedUserDetails.balance !== undefined ? Number(fetchedUserDetails.balance) : 0);
+                const balance = fetchedUserDetails.balance !== undefined
+                    ? Number(fetchedUserDetails.balance)
+                    : 0;
                 if (isNaN(balance)) {
-                    console.warn("Fetched balance is NaN:", fetchedUserDetails.saldo ?? fetchedUserDetails.balance);
+                    console.warn("Fetched balance is NaN:", fetchedUserDetails.balance);
                 }
                 setProfileData({ ...fetchedUserDetails, balance: isNaN(balance) ? 0 : balance });
             } else {
@@ -61,7 +62,7 @@ const UserProfile = () => {
             }
             
             // Handle bets
-            setBets(Array.isArray(userBets) ? userBets.sort((a, b) => new Date(b.fechaApuesta) - new Date(a.fechaApuesta)) : []);
+            setBets(Array.isArray(userBets) ? userBets.sort((a, b) => new Date(b.betDate) - new Date(a.betDate)) : []);
             
         } catch (err) {
             console.error("Error fetching essential profile data:", err);
@@ -79,8 +80,8 @@ const UserProfile = () => {
                 
                 if (Array.isArray(userRankings) && userRankings.length > 0) {
                     console.log('DEBUG - First ranking:', userRankings[0]);
-                    console.log('DEBUG - Game-specific rankings:', userRankings.filter(r => r.juego));
-                    console.log('DEBUG - Global rankings:', userRankings.filter(r => !r.juego));
+                    console.log('DEBUG - Game-specific rankings:', userRankings.filter(r => r.game));
+                    console.log('DEBUG - Global rankings:', userRankings.filter(r => !r.game));
                 }
                 
                 setRankings(Array.isArray(userRankings) ? userRankings : []);
@@ -109,7 +110,7 @@ const UserProfile = () => {
             let diceStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
             if (Array.isArray(diceBets)) {
                 const totalDiceBets = diceBets.length;
-                const winningDiceBets = diceBets.filter(bet => bet.estado === 'GANADA').length;
+                const winningDiceBets = diceBets.filter(bet => bet.status === 'WON').length;
                 const diceProfitLoss = diceBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
                 const diceWinRate = totalDiceBets > 0 ? (winningDiceBets / totalDiceBets) * 100 : 0;
                 diceStats = { totalBets: totalDiceBets, winRate: diceWinRate, totalWins: winningDiceBets, totalProfit: diceProfitLoss };
@@ -119,7 +120,7 @@ const UserProfile = () => {
             let rouletteStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
             if (Array.isArray(rouletteBets)) {
                 const totalRouletteBets = rouletteBets.length;
-                const winningRouletteBets = rouletteBets.filter(bet => bet.estado === 'GANADA').length;
+                const winningRouletteBets = rouletteBets.filter(bet => bet.status === 'WON').length;
                 const rouletteProfitLoss = rouletteBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
                 const rouletteWinRate = totalRouletteBets > 0 ? (winningRouletteBets / totalRouletteBets) * 100 : 0;
                 rouletteStats = { totalBets: totalRouletteBets, winRate: rouletteWinRate, totalWins: winningRouletteBets, totalProfit: rouletteProfitLoss };
@@ -128,7 +129,7 @@ const UserProfile = () => {
             let blackjackStats = { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 };
             if (Array.isArray(blackjackBets)) {
                 const totalBlackjackBets = blackjackBets.length;
-                const winningBlackjackBets = blackjackBets.filter(bet => bet.estado === 'GANADA').length;
+                const winningBlackjackBets = blackjackBets.filter(bet => bet.status === 'WON').length;
                 const blackjackProfitLoss = blackjackBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
                 const blackjackWinRate = totalBlackjackBets > 0 ? (winningBlackjackBets / totalBlackjackBets) * 100 : 0;
                 blackjackStats = { totalBets: totalBlackjackBets, winRate: blackjackWinRate, totalWins: winningBlackjackBets, totalProfit: blackjackProfitLoss };
@@ -172,14 +173,14 @@ const UserProfile = () => {
             return { totalBets: 0, totalWagered: 0, totalWon: 0, totalLost: 0, netProfit: 0, winRate: 0, maxBet: 0, maxLoss: 0, maxWin: 0 };
         }
         const totalBets = bets.length;
-        const totalWagered = bets.reduce((sum, bet) => sum + (bet.cantidad || 0), 0);
-        const wonBets = bets.filter(bet => bet.estado === 'GANADA');
-        const lostBets = bets.filter(bet => bet.estado === 'PERDIDA');
+        const totalWagered = bets.reduce((sum, bet) => sum + (bet.amount || 0), 0);
+        const wonBets = bets.filter(bet => bet.status === 'WON');
+        const lostBets = bets.filter(bet => bet.status === 'LOST');
         const totalWon = wonBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
         const totalLost = lostBets.reduce((sum, bet) => sum + Math.abs(bet.winloss || 0), 0);
         const netProfit = totalWon - totalLost;
         const winRate = totalBets > 0 ? (wonBets.length / totalBets) * 100 : 0;
-        const maxBet = bets.reduce((max, bet) => Math.max(max, bet.cantidad || 0), 0);
+        const maxBet = bets.reduce((max, bet) => Math.max(max, bet.amount || 0), 0);
         const maxLoss = lostBets.reduce((min, bet) => Math.min(min, bet.winloss || 0), 0); // Esto dará un número negativo o cero
         const maxWin = wonBets.reduce((max, bet) => Math.max(max, bet.winloss || 0), 0);
         return { totalBets, totalWagered, totalWon, totalLost, netProfit, winRate, maxBet, maxLoss: Math.abs(maxLoss), maxWin };
@@ -187,7 +188,7 @@ const UserProfile = () => {
 
     const stats = calculateStats();
 
-    // Lógica de paginación para el historial de apuestas
+    // Pagination logic for bet history
     const indexOfLastBet = currentPage * betsPerPage;
     const indexOfFirstBet = indexOfLastBet - betsPerPage;
     const currentBets = bets.slice(indexOfFirstBet, indexOfLastBet);
@@ -200,7 +201,7 @@ const UserProfile = () => {
     const isNumberOne = numberOneRankings.length > 0;
     const numberOneRankingDetails = numberOneRankings.map(r => ({
         type: r.tipo,
-        game: r.juego?.nombre || 'Overall'
+        game: r.game?.name || 'Overall'
     }));
 
     // Helper function to get badge information based on ranking type
@@ -491,49 +492,53 @@ const UserProfile = () => {
                                                         {currentBets.map((bet, index) => (
                                                             <tr key={bet.id || index}>
                                                                 <td className="align-middle">
-                                                                    {(bet.juego?.nombre === 'Dados' || bet.juegoId === 2) ? (
+                                                                    {(bet.game?.name === 'Dice' || bet.gameId === 2) ? (
                                                                         <div className="d-flex align-items-center"><GiRollingDices size={20} color="#3498db" className="me-2" /><span>Dice Game</span></div>
-                                                                    ) : (bet.juego?.nombre === 'Ruleta' || bet.juegoId === 1) ? (
+                                                                    ) : (bet.game?.name === 'Roulette' || bet.gameId === 1) ? (
                                                                         <div className="d-flex align-items-center"><img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" /><span>Roulette Game</span></div>
-                                                                    ) : (bet.juegoId === 9) ? (
+                                                                    ) : (bet.game?.name === 'Blackjack' || bet.gameId === 9) ? (
                                                                         <div className="d-flex align-items-center"><img src={blackjackImg} alt="Blackjack" width={25} height={20} className="me-2" /><span>Blackjack Game</span></div>
+                                                                    ) : (bet.game?.name === 'Slot Machine' || bet.gameId === 7 || bet.type === 'SLOT_MACHINE') ? (
+                                                                        <div className="d-flex align-items-center"><img src={slotMachineImg} alt="Slot Machine" width={25} height={20} className="me-2" /><span>Slot Machine Game</span></div>
                                                                     ) : (
-                                                                        <span>{bet.juego?.nombre || 'Unknown Game'}</span>
+                                                                        <span>{bet.game?.name || 'Unknown Game'}</span>
                                                                     )}
                                                                 </td>
                                                                 <td>
-                                                                    {(bet.juegoId === 2) ? (
-                                                                        bet.tipo === 'parimpar' ? `Even/Odd: ${bet.valorApostado}` :
-                                                                        bet.tipo === 'numero' ? `Sum: ${bet.valorApostado}` :
-                                                                        `${bet.tipo}: ${bet.valorApostado}`
-                                                                    ) : (bet.juegoId === 1) ? (
-                                                                        bet.tipo === 'NUMERO' ? `Number: ${bet.valorApostado}` :
-                                                                        bet.tipo === 'COLOR' ? `Color: ${bet.valorApostado}` :
-                                                                        bet.tipo === 'PARIDAD' ? `Parity: ${bet.valorApostado}` :
-                                                                        `${bet.tipo}: ${bet.valorApostado}`
-                                                                    ) : (bet.juegoId === 9) ? (
-                                                                        `${bet.tipo || 'BLACKJACK'}` 
+                                                                    {(bet.gameId === 2) ? (
+                                                                        bet.type === 'evenodd' ? `Even/Odd: ${bet.betValue}` :
+                                                                        bet.type === 'number' ? `Sum: ${bet.betValue}` :
+                                                                        `${bet.type}: ${bet.betValue}`
+                                                                    ) : (bet.gameId === 1) ? (
+                                                                        bet.type === 'NUMBER' ? `Number: ${bet.betValue}` :
+                                                                        bet.type === 'COLOR' ? `Color: ${bet.betValue}` :
+                                                                        bet.type === 'PARITY' ? `Parity: ${bet.betValue}` :
+                                                                        `${bet.type}: ${bet.betValue}`
+                                                                    ) : (bet.gameId === 9) ? (
+                                                                        'Blackjack'
+                                                                    ) : (bet.type === 'SLOT_MACHINE') ? ( 
+                                                                        'Slot Machine'
                                                                     ) : (
-                                                                        'na'
+                                                                        bet.type || 'Unknown Bet Type'
                                                                     )}
                                                                 </td>
-                                                                <td>${(bet.cantidad ?? 0).toFixed(2)}</td>
+                                                                <td>${(bet.amount ?? 0).toFixed(2)}</td>
                                                                 <td>
                                                                     <Badge
-                                                                        bg={bet.estado === 'GANADA' ? 'success' : bet.estado === 'PERDIDA' ? 'danger' : 'secondary'}
+                                                                        bg={bet.status === 'WON' ? 'success' : bet.status === 'LOST' ? 'danger' : 'secondary'}
                                                                         className="d-flex align-items-center justify-content-center px-2 py-1"
                                                                         style={{ minWidth: '100px' }}
                                                                     >
-                                                                        {bet.estado === 'GANADA' ? (
+                                                                        {bet.status === 'WON' ? (
                                                                             <><FaTrophy className="me-1" size={12} />WON ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : '0.00'}</>
-                                                                        ) : bet.estado === 'PERDIDA' ? (
-                                                                            <>LOST ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : (bet.cantidad ?? 0).toFixed(2)}</>
+                                                                        ) : bet.status === 'LOST' ? (
+                                                                            <>LOST ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : (bet.amount ?? 0).toFixed(2)}</>
                                                                         ) : (
-                                                                            bet.estado
+                                                                            bet.status
                                                                         )}
                                                                     </Badge>
                                                                 </td>
-                                                                <td>{bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'N/A'}</td>
+                                                                <td>{bet.betDate ? new Date(bet.betDate).toLocaleString() : 'N/A'}</td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -584,17 +589,17 @@ const UserProfile = () => {
                                                     </thead>
                                                     <tbody>
                                                         {rankings
-                                                            .filter(r => !r.juego)
+                                                            .filter(r => !r.game)
                                                             .sort((a, b) => (a.posicion || 999) - (b.posicion || 999))
                                                             .map((ranking, index) => (
                                                                 <tr key={index}>
-                                                                    <td>{ranking.tipo?.replace(/_/g, ' ') || 'Unknown'}</td>
+                                                                    <td>{ranking.type?.replace(/_/g, ' ') || 'Unknown'}</td>
                                                                     <td>
-                                                                        {ranking.tipo?.includes('PROFIT') || ranking.tipo?.includes('AMOUNT')
-                                                                            ? `$${parseFloat(ranking.valor || 0).toFixed(2)}`
-                                                                            : ranking.tipo?.includes('WIN_RATE')
-                                                                            ? `${parseFloat(ranking.valor || 0).toFixed(1)}%`
-                                                                            : ranking.valor}
+                                                                        {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')
+                                                                            ? `$${parseFloat(ranking.value || 0).toFixed(2)}`
+                                                                            : ranking.type?.includes('WIN_RATE')
+                                                                            ? `${parseFloat(ranking.value || 0).toFixed(1)}%`
+                                                                            : ranking.value}
                                                                     </td>
                                                                     <td>
                                                                         <Badge
@@ -613,9 +618,9 @@ const UserProfile = () => {
                                                 </Table>
 
                                                 {/* Group game-specific rankings by game */}
-                                                {Array.from(new Set(rankings.filter(r => r.juego).map(r => r.juego?.id))).map(gameId => {
-                                                    const gameRankings = rankings.filter(r => r.juego?.id === gameId);
-                                                    const gameName = gameRankings[0]?.juego?.nombre || 'Unknown Game';
+                                                {Array.from(new Set(rankings.filter(r => r.game).map(r => r.game?.id))).map(gameId => {
+                                                    const gameRankings = rankings.filter(r => r.game?.id === gameId);
+                                                    const gameName = gameRankings[0]?.game?.name || 'Unknown Game';
                                                     
                                                     return (
                                                         <div key={gameId} className="mb-4">

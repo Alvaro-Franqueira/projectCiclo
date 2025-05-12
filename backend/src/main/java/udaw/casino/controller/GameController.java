@@ -1,9 +1,9 @@
 package udaw.casino.controller;
 
-import udaw.casino.dto.JuegoDTO;
+import udaw.casino.dto.GameDTO;
 import udaw.casino.exception.ResourceNotFoundException;
-import udaw.casino.model.Juego;
-import udaw.casino.service.JuegoService;
+import udaw.casino.model.Game;
+import udaw.casino.service.GameService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,36 +28,30 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
-@RequestMapping("/api/juegos")
-public class JuegoController {
-
-
-
+@RequestMapping("/api/games")
+public class GameController {
 
     @Autowired
-    private JuegoService juegoService;
+    private GameService gameService;
 
-
-
-    private static final Logger log = LoggerFactory.getLogger(JuegoController.class);
+    private static final Logger log = LoggerFactory.getLogger(GameController.class);
 
     /**
      * Create a new game.
      * 
-     * @param juego Game details
+     * @param gameDTO Game details
      * @return Created game
      */
     @PostMapping
-    public ResponseEntity<?> crearJuego(@Valid @RequestBody JuegoDTO juegoDTO) {
+    public ResponseEntity<?> createGame(@Valid @RequestBody GameDTO gameDTO) {
         try {
-            Juego juego = new Juego();
-            juego.setNombre(juegoDTO.getNombre());
-            juego.setDescripcion(juegoDTO.getDescripcion());
-            Juego nuevoJuego = juegoService.crearJuego(juego);
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoJuego);
+            Game game = new Game();
+            game.setName(gameDTO.getName());
+            game.setDescription(gameDTO.getDescription());
+            Game newGame = gameService.createGame(game);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newGame);
         } catch (Exception e) {
-            
-            log.error("Error creating game with name: {}", juegoDTO.getNombre(), e);
+            log.error("Error creating game with name: {}", gameDTO.getName(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to create game"));
         }
@@ -68,31 +62,30 @@ public class JuegoController {
      * 
      * @return List of all games
      */
-
      @GetMapping
-     public ResponseEntity<?> obtenerJuegos() { // Use wildcard or a specific error DTO
+     public ResponseEntity<?> getAllGames() { // Use wildcard or a specific error DTO
          try {
-             List<Juego> juegos = juegoService.obtenerTodosLosJuegos();
+             List<Game> games = gameService.getAllGames();
  
              // Optional: Log basic info if needed, *without* calling toString on entities
-             log.info("Retrieved {} juegos from service.", juegos.size());
+             log.info("Retrieved {} games from service.", games.size());
  
-             List<JuegoDTO> juegoDTOs = new ArrayList<>();
-             for (Juego juego : juegos) {
-                 juegoDTOs.add(new JuegoDTO(juego));
+             List<GameDTO> gameDTOs = new ArrayList<>();
+             for (Game game : games) {
+                 gameDTOs.add(new GameDTO(game));
              }
  
              // Or using streams:
-             // List<JuegoDTO> juegoDTOs = juegos.stream()
-             //                                 .map(JuegoDTO::new) // Equivalent to .map(juego -> new JuegoDTO(juego))
+             // List<GameDTO> gameDTOs = games.stream()
+             //                                 .map(GameDTO::new) // Equivalent to .map(game -> new GameDTO(game))
              //                                 .collect(Collectors.toList());
  
-             log.debug("Returning {} JuegoDTOs.", juegoDTOs.size()); // Log DTO count if useful
-             return ResponseEntity.ok(juegoDTOs);
+             log.debug("Returning {} GameDTOs.", gameDTOs.size()); // Log DTO count if useful
+             return ResponseEntity.ok(gameDTOs);
  
          } catch (Exception e) {
              // Log the exception! Otherwise, you won't know what went wrong in production.
-             log.error("Error fetching juegos", e);
+             log.error("Error fetching games", e);
              // Consider returning a more informative error response instead of just status
              // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving games.");
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -106,10 +99,10 @@ public class JuegoController {
      * @return Game details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerJuegoPorId(@PathVariable Long id) {
+    public ResponseEntity<?> getGameById(@PathVariable Long id) {
         try {
-            Juego juego = juegoService.obtenerJuegoPorId(id);
-            return ResponseEntity.ok(juego);
+            Game game = gameService.getGameById(id);
+            return ResponseEntity.ok(game);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -118,37 +111,34 @@ public class JuegoController {
         }
     }
 
-    //obtener juego by nombre
-    
-    @GetMapping("/nombre/{nombre}")
-    public ResponseEntity<JuegoDTO> obtenerJuegoPorNombre(@PathVariable String nombre) {
-        Juego juego = juegoService.obtenerJuegoPorNombre(nombre);
-        JuegoDTO juegoDTO = new JuegoDTO(juego);
-        return ResponseEntity.ok(juegoDTO);
+    //get game by name
+    @GetMapping("/name/{name}")
+    public ResponseEntity<GameDTO> getGameByName(@PathVariable String name) {
+        Game game = gameService.getGameByName(name);
+        GameDTO gameDTO = new GameDTO(game);
+        return ResponseEntity.ok(gameDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarJuego(@PathVariable Long id, @RequestBody JuegoDTO juegoDTO) {
+    public ResponseEntity<?> updateGame(@PathVariable Long id, @RequestBody GameDTO gameDTO) {
         try {
-            Juego juego = new Juego();
-            juego.setId(id);
-            juego.setNombre(juegoDTO.getNombre());
-            juego.setDescripcion(juegoDTO.getDescripcion());
-            log.info("Attempting to update game with ID: {} and name: {}", id, juegoDTO.getNombre());
-            Juego juegoActualizado = juegoService.updateGame(id, juego);
+            Game game = new Game();
+            game.setId(id);
+            game.setName(gameDTO.getName());
+            game.setDescription(gameDTO.getDescription());
+            log.info("Attempting to update game with ID: {} and name: {}", id, gameDTO.getName());
+            Game updatedGame = gameService.updateGame(id, game);
             
-            log.info("Successfully updated game with ID: {}", juegoActualizado.getId());
-            return ResponseEntity.ok(juegoActualizado);
+            log.info("Successfully updated game with ID: {}", updatedGame.getId());
+            return ResponseEntity.ok(updatedGame);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            
             log.warn("Game not found for update with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to update game"));
         }
     }
-
 
     /**
      * Delete a game by ID.
@@ -157,9 +147,9 @@ public class JuegoController {
      * @return Response status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarJuego(@PathVariable Long id) {
+    public ResponseEntity<?> deleteGame(@PathVariable Long id) {
         try {
-            juegoService.eliminarJuego(id);
+            gameService.deleteGame(id);
             return ResponseEntity.ok(Map.of("message", "Game deleted successfully"));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -168,6 +158,4 @@ public class JuegoController {
                 .body(Map.of("message", "Failed to delete game"));
         }
     }
-
-    
 }

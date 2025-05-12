@@ -1,24 +1,28 @@
 import api from './api';
 
 const BET_ENDPOINTS = {
-  CREATE_BET: '/apuestas',
-  GET_USER_BETS: (userId) => `/apuestas/usuario/${userId}`,
-  GET_GAME_BETS: (gameId) => `/apuestas/juego/${gameId}`,
-  GET_USER_GAME_BETS: (userId, gameId) => `/apuestas/usuario/${userId}/juego/${gameId}`,
-  GET_BET_BY_ID: (betId) => `/apuestas/${betId}`,
+  CREATE_BET: '/bets',
+  GET_USER_BETS: (userId) => `/bets/user/${userId}`,
+  GET_GAME_BETS: (gameId) => `/bets/game/${gameId}`,
+  GET_USER_GAME_BETS: (userId, gameId) => `/bets/user/${userId}/game/${gameId}`,
+  GET_BET_BY_ID: (betId) => `/bets/${betId}`,
   // These paths are relative to the API_BASE_URL which already includes '/api'
-  PLACE_ROULETTE_BET: '/juegos/ruleta/jugar',
-  PLACE_DICE_BET: '/dados/jugar', 
-  GET_BALANCE: (userId) => `/usuarios/balance/${userId}`,
+  PLACE_ROULETTE_BET: '/games/roulette/play',
+  PLACE_DICE_BET: '/dice/play', 
+  GET_BALANCE: (userId) => `/users/balance/${userId}`,
 };
 
 const betService = {
   // Create a new bet (generic)
   createBet: async (betData) => {
     try {
+      console.log('Making API request to create bet:', betData);
       const response = await api.post(BET_ENDPOINTS.CREATE_BET, betData);
+      console.log('API response for create bet:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API error creating bet:', error);
+      console.error('Error details:', error.response?.data || 'No response data');
       throw error.response?.data || { message: 'Failed to place bet' };
     }
   },
@@ -30,11 +34,9 @@ const betService = {
       
       // Select the appropriate endpoint based on game type
       switch (gameType.toLowerCase()) {
-        case 'ruleta':
         case 'roulette':
           endpoint = BET_ENDPOINTS.PLACE_ROULETTE_BET;
           break;
-        case 'dados':
         case 'dice':
           endpoint = BET_ENDPOINTS.PLACE_DICE_BET;
           break;

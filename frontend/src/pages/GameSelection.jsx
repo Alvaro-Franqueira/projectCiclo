@@ -8,7 +8,6 @@ import rouletteImg from '../components/images/rouletteimg.png';
 import gameService from '../services/gameService';
 import { GiRollingDices } from "react-icons/gi";
 
-
 import Icon from '@mdi/react';
 import { mdiSlotMachineOutline } from '@mdi/js';
 import pokerChip from '../components/images/poker-chip.png';
@@ -45,7 +44,7 @@ const GameSelection = () => {
 
     if (name.includes('dice')) return <GiRollingDices size={70} color="#3498db" />;
   
-    if (name.includes('slots') || name.includes('tragaperras')) return <Icon path={mdiSlotMachineOutline} size={3} color="#e74c3c" />;  
+    if (name.includes('slot machine') || name.includes('tragaperras')) return <Icon path={mdiSlotMachineOutline} size={3} color="#e74c3c" />;  
     
     if (name.includes('blackjack')) return <img src={blackjackImg} alt="Blackjack Icon" width={80} height={80} />;
 
@@ -78,15 +77,15 @@ const GameSelection = () => {
                 <div 
                     className="text-center mb-3 game-icon-container" 
                     style={{ cursor: 'pointer' }} 
-                    onClick={() => navigate(`/games/${game.nombre}`)}
+                    onClick={() => navigate(`/games/${game.name}`)}
                 >
-                  {getGameIcon(game.nombre)}
+                  {getGameIcon(game.name)}
                 </div>
-                <Card.Title className="text-light">{game.nombre}</Card.Title>
-                <Card.Text className="text-light">{game.descripcion}</Card.Text>
+                <Card.Title className="text-light">{game.name}</Card.Title>
+                <Card.Text className="text-light">{game.description}</Card.Text>
                 <Button 
                   className="w-100 mt-auto"
-                  onClick={() => navigate(`/games/${game.nombre.replace(/\s+/g, '')}`)}
+                  onClick={() => navigate(`/games/${game.name.replace(/\s+/g, '')}`)}
                 >
                   Play Now
                 </Button>

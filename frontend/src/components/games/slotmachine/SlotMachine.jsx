@@ -88,15 +88,15 @@ const SlotMachine = () => {
     
     try {
       const betData = {
-        usuarioId: user.id,
-        juegoId: 10, // Assuming 10 is the Slot Machine game ID
-        cantidad: bet,
-        estado: isWin ? 'GANADA' : 'PERDIDA',
-        tipoApuesta: 'SLOT_MACHINE',
-        fechaApuesta: new Date().toISOString(),
+        userId: user.id,
+        gameId: 10, // Assuming 10 is the Slot Machine game ID
+        amount: bet,
+        status: isWin ? 'WON' : 'LOST',
+        type: 'SLOT_MACHINE',
+        betDate: new Date().toISOString(),
         winloss: isWin ? amount : -bet,
-        valorApostado: 'spin',
-        valorGanador: isWin ? 'combination' : 'none'
+        betValue: 'spin',
+        winningValue: isWin ? 'combination' : 'none'
       };
       
       await betService.createBet(betData);
@@ -247,9 +247,6 @@ const SlotMachine = () => {
       // Deduct bet amount from balance
       updateBalance(currentBalance => currentBalance - bet);
       
-      // Record the bet
-      recordBet(false);
-      
       // Start spinning
       setSpinning(true);
       
@@ -309,9 +306,12 @@ const SlotMachine = () => {
     if (result.win) {
       setMessage(`You won $${result.amount}!`);
       updateBalance(currentBalance => currentBalance + result.amount);
+      // Record a winning bet
       recordBet(true, result.amount);
     } else {
       setMessage('Better luck next time!');
+      // Record a losing bet
+      recordBet(false);
     }
     
     setSpinning(false);

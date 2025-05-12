@@ -2,25 +2,25 @@ import axios from './api';
 
 // The base URL is already set in the api.js file as 'http://localhost:8080/api'
 // So we need to use the path relative to that base URL
-// Let's try with '/dados' as the API path since that might be what the backend is currently using
-// (The server needs to be restarted to pick up the new controller mapping)
-const API_URL = '/dados';
+// Using '/dice' as the API path for the English version
+
+const API_URL = '/dice';
 
 const diceService = {
-    jugar: (betData) => {
+    play: (betData) => {
         console.log('Sending dice bet to backend with params:', betData);
 
-        if (!betData.usuarioId || betData.cantidad == null || !betData.tipo || !betData.valorApostado) {
+        if (!betData.userId || betData.amount == null || !betData.type || !betData.betValue) {
             console.error('Missing required bet data fields:', betData);
             return Promise.reject(new Error('Missing required bet data fields'));
         }
 
         // Log the full URL being used
-        const fullUrl = `${axios.defaults.baseURL}${API_URL}/jugar`;
+        const fullUrl = `${axios.defaults.baseURL}${API_URL}/play`;
         console.log('Full URL being called:', fullUrl);
         console.log('Request data:', JSON.stringify(betData));
         
-        return axios.post(`${API_URL}/jugar`, betData)
+        return axios.post(`${API_URL}/play`, betData)
             .then(response => {
                 console.log('Backend response:', response.data); // Should be DiceGameResponseDTO
 
@@ -39,9 +39,9 @@ const diceService = {
                 const resolvedBet = gameResult.resolvedBet;
                 
                 // Basic validation of important fields
-                if (!resolvedBet.fechaApuesta) {
-                    console.warn('Backend did not return fechaApuesta, adding default value.');
-                    resolvedBet.fechaApuesta = new Date().toISOString();
+                if (!resolvedBet.betDate) {
+                    console.warn('Backend did not return betDate, adding default value.');
+                    resolvedBet.betDate = new Date().toISOString();
                 }
                 
                 // Check for user balance information

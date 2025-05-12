@@ -1,0 +1,115 @@
+package udaw.casino.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import udaw.casino.exception.ResourceNotFoundException;
+import udaw.casino.exception.InsufficientBalanceException;
+import udaw.casino.model.Bet;
+import udaw.casino.model.Game;
+import udaw.casino.model.User;
+
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class DiceService {
+
+    private final BetService betService;
+    private final UserService userService;
+    private final GameService gameService;
+
+    @Transactional
+    public Bet playDice(Bet bet, int diceSum) {
+        log.info("Processing dice game with bet: {}", bet);
+        log.info("Received dice game request: {}", bet);
+
+        // Validations
+        if (bet.getAmount() <= 0) {
+            log.error("Invalid bet amount: {}. Must be greater than 0.", bet.getAmount());
+            throw new IllegalArgumentException("Invalid bet amount: " + bet.getAmount() + ". Must be greater than 0.");
+        }
+        if (bet.getBetType() == null || bet.getBetValue() == null) {
+            log.error("Bet type or value is null.");
+            throw new IllegalArgumentException("Bet type or value cannot be null.");
+        }
+        // Fetch user and game
+        User user = userService.getUserById(bet.getUser().getId());
+        Game game = gameService.getGameById(bet.getGame().getId());
+        if (user == null || game == null) {
+            log.error("User or game not found. User ID: {}, Game ID: {}", bet.getUser().getId(), bet.getGame().getId());
+            throw new ResourceNotFoundException("User or game not found.");
+        }
+        // Check user balance
+        if (user.getBalance() < bet.getAmount()) {
+            log.error("Insufficient balance for user ID: {}. Required: {}, Available: {}", user.getId(), bet.getAmount(), user.getBalance());
+            throw new InsufficientBalanceException("Insufficient balance to place this bet.");
+        }
+        
+        
+        Bet createdBet = betService.createBet(bet);
+
+        // Set the winning number and calculate win/loss amount
+        createdBet.setWinningValue(String.valueOf(diceSum));
+        
+        double winAmount = determineDiceResult(createdBet, diceSum);
+        
+        createdBet.setWinloss(winAmount);
+        
+
+        // Update the user's balance
+        user.setBalance(user.getBalance() + winAmount);
+        userService.updateUserBalance(user.getId(), user.getBalance());
+        
+        // Resolve the bet using the BetService
+        return betService.resolveBet(createdBet);
+    }
+
+    private static final Map<Integer, Double> NUMBER_ODDS = Map.ofEntries(
+        Map.entry(2, 30.0),
+        Map.entry(3, 15.0),
+        Map.entry(4, 10.0),
+        Map.entry(5, 8.0),
+        Map.entry(6, 6.0),
+        Map.entry(7, 5.0),
+        Map.entry(8, 6.0),
+        Map.entry(9, 8.0),
+        Map.entry(10, 10.0),
+        Map.entry(11, 15.0),
+        Map.entry(12, 30.0)
+    );
+    
+    
+    private Double determineDiceResult(Bet bet, int totalSum) {
+        String type = bet.getBetType().toLowerCase();
+        String betValue = bet.getBetValue().toLowerCase();
+        double amount = bet.getAmount();
+    
+        switch (type) {
+            case "number":
+                int bettedNumber = Integer.parseInt(betValue);
+                if (bettedNumber == totalSum) {
+                    double payout = NUMBER_ODDS.getOrDefault(bettedNumber, 0.0);
+                    return amount * payout;
+                } else {
+                    return -amount;
+                }
+    
+            case "highlow":
+                // half 1: 2–6, half 2: 7–12
+                int half = totalSum <= 6 ? 1 : 2;
+                return betValue.equals(String.valueOf(half)) ? amount * 0.95 : -amount;
+    
+            case "evenodd":
+                boolean isEven = totalSum % 2 == 0;
+                boolean choseEven = betValue.equals("even");
+                return (isEven == choseEven) ? amount * 0.95 : -amount;
+
+            default:
+                log.warn("Unknown bet type encountered: {}", type);
+                return null; // invalid bet
+        }
+    }
+}

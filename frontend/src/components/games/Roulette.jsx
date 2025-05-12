@@ -6,7 +6,7 @@ import {RouletteWheel} from '../../../react-casino-roulette/src/components/Roule
 import '../../../react-casino-roulette/dist/index.css'; // Adjust path if needed
 import './Roulette.css'; // Your custom styles
 import betService from '../../services/betService';
-import ruletaService from '../../services/ruletaService';
+import rouletteService from '../../services/rouletteService';
 import { useAuth } from '../../context/AuthContext';
 import gameService from '../../services/gameService';
 import userService from '../../services/userService';
@@ -47,15 +47,15 @@ const isSpecialBetType = (betId) => {
 // Function to get bet type and value for special bets
 const getSpecialBetTypeAndValue = (betId) => {
     if (betId === 'RED' || betId === 'BLACK') {
-        return { tipoApuesta: 'color', valorApuesta: betId === 'RED' ? '1' : '2' };
+        return { betType: 'color', betValue: betId === 'RED' ? '1' : '2' };
     } else if (betId === 'EVEN' || betId === 'ODD') {
-        return { tipoApuesta: 'paridad', valorApuesta: betId === 'EVEN' ? 'par' : 'impar' };
+        return { betType: 'parity', betValue: betId === 'EVEN' ? 'even' : 'odd' };
     } else if (betId === '1_TO_18' || betId === '19_TO_36') {
-        return { tipoApuesta: 'mitad', valorApuesta: betId === '1_TO_18' ? 'bajo' : 'alto' };
+        return { betType: 'half', betValue: betId === '1_TO_18' ? 'low' : 'high' };
     } else if (betId === '1ST_DOZEN' || betId === '2ND_DOZEN' || betId === '3RD_DOZEN') {
-        return { tipoApuesta: 'docena', valorApuesta: betId === '1ST_DOZEN' ? '1' : betId === '2ND_DOZEN' ? '2' : '3' };
+        return { betType: 'dozen', betValue: betId === '1ST_DOZEN' ? '1' : betId === '2ND_DOZEN' ? '2' : '3' };
     } else if (betId === '1ST_COLUMN' || betId === '2ND_COLUMN' || betId === '3RD_COLUMN') {
-        return { tipoApuesta: 'columna', valorApuesta: betId === '1ST_COLUMN' ? '1' : betId === '2ND_COLUMN' ? '2' : '3' };
+        return { betType: 'column', betValue: betId === '1ST_COLUMN' ? '1' : betId === '2ND_COLUMN' ? '2' : '3' };
     }
     return null;
 };
@@ -227,15 +227,15 @@ const handleSpinClick = async () => {
             if (isSpecialBetType(betId)) {
                 const specialBet = getSpecialBetTypeAndValue(betId);
                 if (specialBet) {
-                    return [{ usuarioId: user.id, cantidad: betData.number, tipoApuesta: specialBet.tipoApuesta, valorApuesta: specialBet.valorApuesta }];
+                    return [{ userId: user.id, amount: betData.number, betType: specialBet.betType, betValue: specialBet.betValue }];
                 }
             }
             else if (multiNumberBetRegex.test(betId)) {
                  const numbers = betId.split('-');
-                 return numbers.map(num => ({ usuarioId: user.id, cantidad: betData.number / numbers.length, tipoApuesta: 'numero', valorApuesta: String(num) })); // Example: split amount
+                 return numbers.map(num => ({ userId: user.id, amount: betData.number / numbers.length, betType: 'number', betValue: String(num) })); // Example: split amount
             }
             else if (/^\d+$/.test(betId) || betId === '00') {
-                return [{ usuarioId: user.id, cantidad: betData.number, tipoApuesta: 'numero', valorApuesta: betId }];
+                return [{ userId: user.id, amount: betData.number, betType: 'number', betValue: betId }];
             } else {
                 console.warn("Unknown bet type ID:", betId);
                 return [];
@@ -254,14 +254,14 @@ const handleSpinClick = async () => {
                                  betsToProcess.length === 1;
 
         if (isSingleSimpleBet) {
-            apiResponse = await ruletaService.jugar(betsToProcess[0]);
+            apiResponse = await rouletteService.play(betsToProcess[0]);
             finalWinningNumber = apiResponse.winningNumber;
             finalTotalWinLoss = apiResponse.resolvedBet?.winloss ?? apiResponse.totalWinLoss ?? 0;
         } else {
             if (betsToProcess.length < 1) {
                 throw new Error("No valid bets to send to the multi-bet API.");
             }
-            apiResponse = await ruletaService.jugarMultibet(betsToProcess);
+            apiResponse = await rouletteService.playMultibet(betsToProcess);
             finalWinningNumber = apiResponse.winningNumber;
             finalTotalWinLoss = apiResponse.totalWinLoss ?? 0;
         }
@@ -385,9 +385,9 @@ const handleSpinEnd = () => {
         )}
 
         <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex align-items-center titulon-ruleta">
+            <div className="d-flex align-items-center roulette-title">
             <GiAbstract013 size={50} />
-            <h2 className='titulo-ruleta'>Roulette</h2>
+            <h2 className='roulette-heading'>Roulette</h2>
             </div>
 
         </div>
@@ -513,12 +513,12 @@ const handleSpinEnd = () => {
                             <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
                                 <div className="d-flex justify-content-around align-items-center">
                                 <span className="text-white">
-                                        {bet.cantidad ? `Bet: $${bet.cantidad}` : '0.00'}
+                                        {bet.amount ? `Bet: $${bet.amount}` : '0.00'}
                                     </span>
                                     <span>
-                                        {bet.tipoApuesta.toLowerCase() === 'color'
-                                            ? bet.valorApostado=== '1' ? `color: rojo` : `color: negro`
-                                            : `${bet.tipoApuesta}: ${bet.valorApostado}`
+                                        {bet.betType.toLowerCase() === 'color'
+                                            ? bet.betValue=== '1' ? `color: red` : `color: black`
+                                            : `${bet.betType}: ${bet.betValue}`
                                         }
                                     </span>
 
@@ -528,14 +528,14 @@ const handleSpinEnd = () => {
                                             alignItems: 'center',
                                             padding: '0.35em 0.65em'
                                         }}
-                                        bg={bet.estado === 'GANADA' ? 'success' : 'danger'}
+                                        bg={bet.status === 'won' ? 'success' : 'danger'}
                                     >
-                                        {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
+                                        {bet.status === 'won' ? 'WON' : 'LOST'}
                                         <span className="ms-1">
                                             $
                                             {typeof bet.winloss === 'number'
                                                 ? Math.abs(bet.winloss).toFixed(2)
-                                                : (bet.cantidad ? bet.cantidad.toFixed(2) : '0.00')
+                                                : (bet.amount ? bet.amount.toFixed(2) : '0.00')
                                             }
                                         </span>
                                     </Badge>
@@ -547,7 +547,7 @@ const handleSpinEnd = () => {
                                         marginTop: '0.5rem'
                                     }}
                                 >
-                                    Rolled: {bet.valorGanador} | {bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'Unknown date'}
+                                    Rolled: {bet.winningValue} | {bet.betDate ? new Date(bet.betDate).toLocaleString() : 'Unknown date'}
                                 </div>
                             </div>
                         ))}

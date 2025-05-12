@@ -1,9 +1,9 @@
 package udaw.casino.controller;
 
 import udaw.casino.exception.ResourceNotFoundException;
-import udaw.casino.exception.UsuarioNoEncontradoException;
-import udaw.casino.model.Usuario;
-import udaw.casino.service.UsuarioService;
+import udaw.casino.exception.UserNotFoundException;
+import udaw.casino.model.User;
+import udaw.casino.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +16,10 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UsuarioService usuarioService;
+    private final UserService userService;
 
-    public AuthController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    public AuthController(UserService userService) {
+        this.userService = userService;
     }
 
 
@@ -31,10 +31,10 @@ public class AuthController {
             
             // In a real implementation, you would validate credentials and generate a JWT token
             // For now, we'll just fetch the user and return it
-            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+            User user = userService.getUserByUsername(username);
             
             // Simple password check (in a real app, you'd use a password encoder)
-            if (!usuario.getPassword().equals(password)) {
+            if (!user.getPassword().equals(password)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid credentials"));
             }
@@ -44,8 +44,8 @@ public class AuthController {
             response.put("token", "mock-jwt-token-" + System.currentTimeMillis()); // Replace with real JWT
             
             // Don't return the password
-            usuario.setPassword(null);
-            response.put("user", usuario);
+            user.setPassword(null);
+            response.put("user", user);
             
             return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {
@@ -60,17 +60,17 @@ public class AuthController {
     /**
      * Registration endpoint.
      * 
-     * @param usuario User details for registration
+     * @param user User details for registration
      * @return Created user if registration is successful
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody Usuario usuario) {
+    public ResponseEntity<?> register(@Valid @RequestBody User user) {
         try {
-            Usuario nuevoUsuario = usuarioService.registrarUsuario(usuario);
-            nuevoUsuario.setPassword(null); // Don't return the password
+            User newUser = userService.registerUser(user);
+            newUser.setPassword(null); // Don't return the password
             
-            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
-        } catch (UsuarioNoEncontradoException e) {
+            return new ResponseEntity<>(newUser, HttpStatus.CREATED);
+        } catch (UserNotFoundException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -88,9 +88,9 @@ public class AuthController {
     public ResponseEntity<?> getCurrentUser(@RequestParam Long userId) {
         // In a real implementation, you would extract the user ID from the JWT token
         try {
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(userId);
-            usuario.setPassword(null); // Don't return the password
-            return ResponseEntity.ok(usuario);
+            User user = userService.getUserById(userId);
+            user.setPassword(null); // Don't return the password
+            return ResponseEntity.ok(user);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "User not found"));

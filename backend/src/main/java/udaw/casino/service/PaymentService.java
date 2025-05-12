@@ -19,7 +19,7 @@ import udaw.casino.dto.PaymentIntentDTO;
 import udaw.casino.dto.PaymentIntentResponseDTO;
 import udaw.casino.dto.ProcessPaymentDTO;
 import udaw.casino.exception.ResourceNotFoundException;
-import udaw.casino.model.Usuario;
+import udaw.casino.model.User;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,11 +40,11 @@ public class PaymentService {
     @Value("${stripe.credit.multiplier}")
     private int creditMultiplier;
 
-    private final UsuarioService usuarioService;
+    private final UserService userService;
 
     @Autowired
-    public PaymentService(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    public PaymentService(UserService userService) {
+        this.userService = userService;
     }
     @PostConstruct
     public void init() {
@@ -61,9 +61,9 @@ public class PaymentService {
     public PaymentIntentResponseDTO createPaymentIntent(PaymentIntentDTO paymentIntentDTO) throws StripeException {
         try {
             // Validate user exists
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(paymentIntentDTO.getUserId());
+            User user = userService.getUserById(paymentIntentDTO.getUserId());
             
-            System.out.println("Creating payment intent for user: " + usuario.getUsername() + 
+            System.out.println("Creating payment intent for user: " + user.getUsername() + 
                               ", amount: " + paymentIntentDTO.getAmount() + 
                               ", currency: " + paymentIntentDTO.getCurrency());
             
@@ -72,7 +72,7 @@ public class PaymentService {
                     .setAmount(paymentIntentDTO.getAmount())
                     .setCurrency(paymentIntentDTO.getCurrency())
                     .addAllPaymentMethodType(Arrays.asList("card", "paypal"))
-                    .putMetadata("userId", usuario.getId().toString())
+                    .putMetadata("userId", user.getId().toString())
                     .build();
             
             PaymentIntent paymentIntent = PaymentIntent.create(params);
@@ -144,7 +144,7 @@ public class PaymentService {
             }
             
             Long userId = Long.parseLong(userIdStr);
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(userId);
+            User user = userService.getUserById(userId);
             
             // Calculate credits to add (1000 credits per EUR/USD)
             long amountPaid = paymentIntent.getAmount();
@@ -152,8 +152,8 @@ public class PaymentService {
             double creditsToAdd = realAmount * creditMultiplier;
             
             // Update user balance
-            double newBalance = usuario.getBalance() + creditsToAdd;
-            usuarioService.actualizarBalance(userId, newBalance);
+            double newBalance = user.getBalance() + creditsToAdd;
+            userService.updateBalance(userId, newBalance);
             
             return "Payment processed successfully. Added " + creditsToAdd + " credits to user " + userId;
         } catch (ResourceNotFoundException e) {
@@ -176,9 +176,9 @@ public class PaymentService {
         
         try {
             // Validate user exists
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(paymentDTO.getUserId());
+            User user = userService.getUserById(paymentDTO.getUserId());
             
-            System.out.println("Processing direct payment for user: " + usuario.getUsername() + 
+            System.out.println("Processing direct payment for user: " + user.getUsername() + 
                               ", amount: " + paymentDTO.getAmount() + 
                               ", card: **** **** **** " + paymentDTO.getCardNumber());
             
@@ -186,8 +186,8 @@ public class PaymentService {
             double creditsToAdd = paymentDTO.getAmount() * creditMultiplier;
             
             // Update user balance in the database
-            double newBalance = usuario.getBalance() + creditsToAdd;
-            usuarioService.actualizarBalance(paymentDTO.getUserId(), newBalance);
+            double newBalance = user.getBalance() + creditsToAdd;
+            userService.updateBalance(paymentDTO.getUserId(), newBalance);
             
             // Return the result
             result.put("success", true);

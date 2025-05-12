@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data // Lombok annotation for getters, setters, toString, etc.
 public class PlaceBetRequestDTO {
-    private Long usuarioId;
-    private Long juegoId;
-    private double cantidad;
-    private String tipo; // e.g., "parimpar", "numero"
-    private String valorApostado; // e.g., "par", "impar", "7"
-    private String valorGanador;
+    private Long userId;
+    private Long gameId;
+    private double amount;
+    private String type; // e.g., "evenodd", "number"
+    private String betValue; // e.g., "even", "odd", "7"
+    private String winningValue;
 }

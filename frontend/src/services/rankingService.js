@@ -2,9 +2,9 @@ import api from './api';
 
 const RANKING_ENDPOINTS = {
   ALL_RANKINGS: '/rankings/v2',
-  RANKINGS_BY_TYPE: (type) => `/rankings/v2/tipo/${type}`,
-  RANKINGS_BY_GAME_AND_TYPE: (gameId, type) => `/rankings/v2/juego/${gameId}/tipo/${type}`,
-  USER_RANKINGS: (userId) => `/rankings/v2/usuario/${userId}`,
+  RANKINGS_BY_TYPE: (type) => `/rankings/v2/type/${type}`,
+  RANKINGS_BY_GAME_AND_TYPE: (gameId, type) => `/rankings/v2/game/${gameId}/type/${type}`,
+  USER_RANKINGS: (userId) => `/rankings/v2/user/${userId}`,
 };
 
 // Ranking types enum to match backend RankingType.java

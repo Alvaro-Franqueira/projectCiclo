@@ -10,7 +10,7 @@ public class UserDTO {
     private String email;    
     private Double balance;
     private String password; // This should be hashed in the database
-    private String rol; // e.g., "USER", "ADMIN"
+    private String role; // e.g., "USER", "ADMIN"
     
     
 }

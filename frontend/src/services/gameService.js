@@ -1,9 +1,9 @@
 import api from './api';
 
 const GAME_ENDPOINTS = {
-  ALL_GAMES: '/juegos',
-  GAME_BY_ID: (id) => `/juegos/${id}`,
-  GAME_BY_NAME: (name) => `/juegos/nombre/${name}`
+  ALL_GAMES: '/games',
+  GAME_BY_ID: (id) => `/games/${id}`,
+  GAME_BY_NAME: (name) => `/games/name/${name}`
 };
 
 const gameService = {
@@ -38,7 +38,7 @@ const gameService = {
   // Update an existing game
   updateGame: async (gameId, gameData) => {
     try {
-      // Assuming gameData includes: nombre, descripcion, urlImagen, precio, genero
+      // Assuming gameData includes: name, description, imageUrl, price, genre
       const response = await api.put(GAME_ENDPOINTS.GAME_BY_ID(gameId), gameData);
       return response.data;
     } catch (error) {

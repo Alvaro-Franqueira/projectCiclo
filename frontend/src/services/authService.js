@@ -2,9 +2,9 @@ import api from './api';
 import { jwtDecode } from 'jwt-decode';
 
 const AUTH_ENDPOINTS = {
-  LOGIN: '/usuarios/login',
-  REGISTER: '/usuarios/registrar',
-  CURRENT_USER: '/usuarios/me',
+  LOGIN: '/users/login',
+  REGISTER: '/users/register',
+  CURRENT_USER: '/users/me',
 };
 
 // Helper to store user data in localStorage
@@ -97,7 +97,7 @@ const authService = {
       // If we don't have a valid balance in localStorage, fetch from server
       if (userId) {
         try {
-          const response = await api.get(`/usuarios/${userId}`);
+          const response = await api.get(`/users/${userId}`);
           const user = response.data;
           
           // Update localStorage with the fetched user data

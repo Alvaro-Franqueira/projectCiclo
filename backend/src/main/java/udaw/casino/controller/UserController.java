@@ -2,12 +2,12 @@ package udaw.casino.controller;
 
 import udaw.casino.dto.UserDTO;
 import udaw.casino.exception.ResourceNotFoundException;
-import udaw.casino.exception.UsuarioNoEncontradoException;
-import udaw.casino.model.Rol;
-import udaw.casino.model.Usuario;
+import udaw.casino.exception.UserNotFoundException;
+import udaw.casino.model.Role;
+import udaw.casino.model.User;
 import udaw.casino.security.JwtUtils;
-import udaw.casino.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
+import udaw.casino.service.UserService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,17 +24,17 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/usuarios") 
-public class UsuarioController {
+@RequestMapping("/api/users") 
+public class UserController {
 
-    private final UsuarioService usuarioService;
+    private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    public UsuarioController(UsuarioService usuarioService, 
+    public UserController(UserService userService, 
                             AuthenticationManager authenticationManager,
                             JwtUtils jwtUtils) {
-        this.usuarioService = usuarioService;
+        this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
     }
@@ -63,15 +63,15 @@ public class UsuarioController {
             String token = jwtUtils.generateToken(username);
             
             // Get user details
-            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+            User user = userService.getUserByUsername(username);
             
             // Create response with token and user data
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             
             // Don't return the password
-            usuario.setPassword(null);
-            response.put("user", usuario);
+            user.setPassword(null);
+            response.put("user", user);
             
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
@@ -86,20 +86,20 @@ public class UsuarioController {
     /**
      * Registers a new user.
      * Expects user details in the request body.
-     * Uses @Valid to trigger bean validation defined in the Usuario model.
+     * Uses @Valid to trigger bean validation defined in the User model.
      *
-     * @param usuario User details from the request body.
+     * @param user User details from the request body.
      * @return ResponseEntity with the created user (excluding sensitive data ideally) or an error.
      */
-    @PostMapping("/registrar")
-    public ResponseEntity<?> registrarUsuario(@Valid @RequestBody Usuario usuario) {
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody User user) {
         // Consider using a DTO here to avoid exposing/requiring fields like balance, role, id
         try {
-            Usuario nuevoUsuario = usuarioService.registrarUsuario(usuario);
+            User newUser = userService.registerUser(user);
             // Avoid returning the password hash in the response
-            nuevoUsuario.setPassword(null); // Or use a DTO
-            return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
-        } catch (UsuarioNoEncontradoException e) { // Catch specific exception for existing user/email
+            newUser.setPassword(null); // Or use a DTO
+            return new ResponseEntity<>(newUser, HttpStatus.CREATED);
+        } catch (UserNotFoundException e) { // Catch specific exception for existing user/email
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) { // Catch other potential errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -114,11 +114,11 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/id/{id}")
-    public ResponseEntity<Usuario> obtenerUsuarioPorId(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
         try {
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-            usuario.setPassword(null); // Avoid returning password hash
-            return ResponseEntity.ok(usuario);
+            User user = userService.getUserById(id);
+            user.setPassword(null); // Avoid returning password hash
+            return ResponseEntity.ok(user);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -131,11 +131,11 @@ public class UsuarioController {
      * @return ResponseEntity with the user details or 404 Not Found.
      */
     @GetMapping("/username/{username}")
-    public ResponseEntity<Usuario> obtenerUsuarioPorUsername(@PathVariable String username) {
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
         try {
-            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
-            usuario.setPassword(null); // Avoid returning password hash
-            return ResponseEntity.ok(usuario);
+            User user = userService.getUserByUsername(username);
+            user.setPassword(null); // Avoid returning password hash
+            return ResponseEntity.ok(user);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -143,10 +143,10 @@ public class UsuarioController {
 
     // gets the user balance
     @GetMapping("/balance/{id}")
-    public ResponseEntity<Double> obtenerBalancePorId(@PathVariable Long id) {
+    public ResponseEntity<Double> getBalanceById(@PathVariable Long id) {
         try {
-            Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
-            return ResponseEntity.ok(usuario.getBalance());
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(user.getBalance());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -159,11 +159,11 @@ public class UsuarioController {
      * @return ResponseEntity with a list of all users.
      */
     @GetMapping("/admin/users")
-    public ResponseEntity<List<Usuario>> obtenerTodosLosUsuarios() {
-        List<Usuario> usuarios = usuarioService.obtenerTodosLosUsuarios();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
         // Avoid returning password hashes
-        usuarios.forEach(u -> u.setPassword(null));
-        return ResponseEntity.ok(usuarios);
+        users.forEach(u -> u.setPassword(null));
+        return ResponseEntity.ok(users);
     }
 
     /**
@@ -171,28 +171,28 @@ public class UsuarioController {
      * Requires ADMIN role or the user updating their own profile (to be enforced by Security).
      *
      * @param id            The ID of the user to update.
-     * @param usuarioDetails Updated user details.
+     * @param userDetails Updated user details.
      * @return ResponseEntity with the updated user or an error.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody UserDTO usuarioDetails) {
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDetails) {
         // Important: This currently allows updating any field, including role and balance.
         // Use DTOs and specific service methods for controlled updates (e.g., separate endpoint for balance/role changes by admin).
         // Also, handle password updates separately and securely.
         try {
-            Usuario usuarioExistente = usuarioService.obtenerUsuarioPorId(id);
-            if (usuarioExistente == null) {
+            User existingUser = userService.getUserById(id);
+            if (existingUser == null) {
                 return ResponseEntity.notFound().build();
             }
-            usuarioExistente.setUsername(usuarioDetails.getUsername());
-            usuarioExistente.setEmail(usuarioDetails.getEmail());
-            usuarioExistente.setRol(Rol.valueOf(usuarioDetails.getRol()));
+            existingUser.setUsername(userDetails.getUsername());
+            existingUser.setEmail(userDetails.getEmail());
+            existingUser.setRole(Role.valueOf(userDetails.getRole()));
 
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(usuarioExistente);
-            return ResponseEntity.ok(usuarioActualizado);
+            User updatedUser = userService.updateUser(existingUser);
+            return ResponseEntity.ok(updatedUser);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (UsuarioNoEncontradoException e) { // Catch potential username/email conflicts on update
+        } catch (UserNotFoundException e) { // Catch potential username/email conflicts on update
              return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during update.");
@@ -201,10 +201,10 @@ public class UsuarioController {
 
     // update a balance
     @PutMapping("/balance/{id}")
-    public ResponseEntity<?> actualizarBalance(@PathVariable Long id, @RequestParam double nuevoBalance) {
+    public ResponseEntity<?> updateBalance(@PathVariable Long id, @RequestParam double newBalance) {
         try {
-            Usuario usuario = usuarioService.actualizarBalance(id, nuevoBalance);
-            return ResponseEntity.ok(usuario);
+            User user = userService.updateBalance(id, newBalance);
+            return ResponseEntity.ok(user);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -219,9 +219,9 @@ public class UsuarioController {
      * @return ResponseEntity with status NO_CONTENT or an error.
      */
     @DeleteMapping("/admin/{id}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
          try {
-            usuarioService.eliminarUsuario(id);
+            userService.deleteUser(id);
             return ResponseEntity.noContent().build(); // Standard response for successful DELETE
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -242,10 +242,10 @@ public class UsuarioController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             
-            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
-            usuario.setPassword(null); // Don't return the password
+            User user = userService.getUserByUsername(username);
+            user.setPassword(null); // Don't return the password
             
-            return ResponseEntity.ok(usuario);
+            return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Not authenticated"));

@@ -11,5 +11,5 @@ import java.util.List;
 @AllArgsConstructor
 public class DiceGameResponseDTO {
     private List<Integer> diceResults; // [die1Result, die2Result]
-    private ApuestaDTO resolvedBet; // The final state of the bet (GANADA/PERDIDA, winloss, etc.)
+    private BetDTO resolvedBet; // The final state of the bet (WON/LOST, winloss, etc.)
 }
