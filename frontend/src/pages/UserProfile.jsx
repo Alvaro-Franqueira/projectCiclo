@@ -398,7 +398,7 @@ const UserProfile = () => {
                             
                             <div className="d-flex justify-content-between mb-3">
                                 <div><FaCalendarAlt className="me-2" /><small>Joined</small></div>
-                                <small>{profileData.fechaRegistro ? new Date(profileData.fechaRegistro).toLocaleDateString() : 'N/A'}</small>
+                                <small>{profileData.registrationDate ? new Date(profileData.registrationDate).toLocaleDateString() : 'N/A'}</small>
                             </div>
                             <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155' , borderColor: "#f59e0b", borderWidth: '1px', borderStyle: 'solid' }}>
                                 <h5 className="mb-1">Current Balance</h5>
@@ -408,8 +408,8 @@ const UserProfile = () => {
                                 </h3>
                             </div>
                             <div className="role-badge">
-                                <Badge bg={profileData.rol === 'ADMIN' ? 'danger' : 'info'} className="p-2">
-                                    {profileData.rol || 'USER'}
+                                <Badge bg={profileData.role === 'ADMIN' ? 'danger' : 'info'} className="p-2">
+                                    {profileData.role || 'USER'}
                                 </Badge>
                             </div>
                         </Card.Body>

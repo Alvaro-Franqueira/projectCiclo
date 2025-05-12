@@ -105,7 +105,8 @@ const AppNavbar = ({ noSticky }) => {
                   <FaTrophy className="me-1" /> Rankings
                 </Nav.Link>
 
-                {user?.rol === 'ADMIN' && (
+                {/* Check for admin role directly from user object */}
+                {user?.role === 'ADMIN' && (
                   <Nav.Link as={Link} to="/admin">
                     <FaUserCog className="me-1" /> Admin Panel
                   </Nav.Link>

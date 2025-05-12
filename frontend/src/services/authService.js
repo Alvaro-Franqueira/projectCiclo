@@ -154,19 +154,25 @@ const authService = {
   // Get user role
   getUserRole: () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.rol || 'USER';
+    console.log('Getting user role, user object:', user);
+    // Check both role and rol properties
+    return user.role || user.rol || 'USER';
   },
 
   // Check if user is admin
   isAdmin: () => {
-    return authService.getUserRole() === 'ADMIN';
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('Checking if user is admin:', user);
+    // Check both role and rol properties for ADMIN value
+    return user.role === 'ADMIN' || user.rol === 'ADMIN';
   },
 
   // Get user data from localStorage
   getUserData: () => {
-    return JSON.parse(localStorage.getItem('user') || '{}');
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('User data from localStorage:', userData);
+    return userData;
   }
 };
 
 export default authService;
- 

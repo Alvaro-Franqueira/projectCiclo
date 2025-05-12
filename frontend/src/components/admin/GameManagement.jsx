@@ -13,19 +13,13 @@ const GameManagement = () => {
   const [selectedGame, setSelectedGame] = useState(null); // For editing
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    urlImagen: '',
-    precio: 0,
-    genero: ''
+    name: '',
+    description: '',
   });
 
   const initialFormState = {
-    nombre: '',
-    descripcion: '',
-    urlImagen: '',
-    precio: 0,
-    genero: ''
+    name: '',
+    description: '',
   };
 
   const fetchGames = useCallback(async () => {
@@ -52,9 +46,8 @@ const GameManagement = () => {
   };
 
   const filteredGames = games.filter(game =>
-    (game.nombre && game.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (game.descripcion && game.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (game.genero && game.genero.toLowerCase().includes(searchTerm.toLowerCase()))
+    (game.name && game.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (game.description && game.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleShowAddModal = () => {
@@ -69,11 +62,8 @@ const GameManagement = () => {
     setSelectedGame(game);
     setIsEditMode(true);
     setFormData({
-      nombre: game.nombre,
-      descripcion: game.descripcion,
-      urlImagen: game.urlImagen || '',
-      precio: game.precio || 0,
-      genero: game.genero || ''
+      name: game.name,
+      description: game.description,
     });
     setShowModal(true);
     setError(''); // Clear previous modal errors
@@ -99,8 +89,8 @@ const GameManagement = () => {
     setError(''); // Clear previous errors
 
     // Basic validation
-    if (!formData.nombre || !formData.descripcion || formData.precio < 0) {
-        setError("Name, description are required, and price cannot be negative.");
+    if (!formData.name || !formData.description) {
+        setError("Name and description are required.");
         setLoading(false);
         return;
     }
@@ -157,7 +147,7 @@ const GameManagement = () => {
           <div className="position-relative">
             <Form.Control
               type="text"
-              placeholder="Search games by name, description, genre..."
+              placeholder="Search games by name, description..."
               value={searchTerm}
               onChange={handleSearch}
             />
@@ -178,11 +168,8 @@ const GameManagement = () => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Image</th>
             <th>Name</th>
             <th>Description</th>
-            <th>Price</th>
-            <th>Genre</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -191,19 +178,8 @@ const GameManagement = () => {
             filteredGames.map(game => (
               <tr key={game.id}>
                 <td>{game.id}</td>
-                <td>
-                  {game.urlImagen ? (
-                    <Image src={game.urlImagen} alt={game.nombre} thumbnail style={{ width: '70px', height: 'auto' }} />
-                  ) : (
-                    <div style={{ width: '70px', height: '50px', backgroundColor: '#e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6c757d' }}>
-                      No Image
-                    </div>
-                  )}
-                </td>
-                <td>{game.nombre}</td>
-                <td>{game.descripcion?.substring(0, 50)}{game.descripcion?.length > 50 ? '...' : ''}</td>
-                <td>${game.precio?.toFixed(2) || '0.00'}</td>
-                <td><Badge bg="secondary">{game.genero || 'N/A'}</Badge></td>
+                <td>{game.name}</td>
+                <td>{game.description?.substring(0, 50)}{game.description?.length > 50 ? '...' : ''}</td>
                 <td>
                   <Button
                     variant="outline-primary"
@@ -226,7 +202,7 @@ const GameManagement = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="7" className="text-center">
+              <td colSpan="4" className="text-center">
                 {searchTerm ? 'No games found matching your search.' : 'No games available. Try adding one!'}
               </td>
             </tr>
@@ -246,8 +222,8 @@ const GameManagement = () => {
               <Form.Label>Name <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="text"
-                name="nombre"
-                value={formData.nombre}
+                name="name"
+                value={formData.name}
                 onChange={handleFormChange}
                 required
               />
@@ -257,41 +233,10 @@ const GameManagement = () => {
               <Form.Control
                 as="textarea"
                 rows={3}
-                name="descripcion"
-                value={formData.descripcion}
+                name="description"
+                value={formData.description}
                 onChange={handleFormChange}
                 required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Image URL</Form.Label>
-              <Form.Control
-                type="text"
-                name="urlImagen"
-                placeholder="https://example.com/image.png"
-                value={formData.urlImagen}
-                onChange={handleFormChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Price ($) <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="number"
-                name="precio"
-                min="0"
-                step="0.01"
-                value={formData.precio}
-                onChange={handleFormChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Genre</Form.Label>
-              <Form.Control
-                type="text"
-                name="genero"
-                value={formData.genero}
-                onChange={handleFormChange}
               />
             </Form.Group>
           </Modal.Body>

@@ -29,7 +29,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
   const [userEditFormData, setUserEditFormData] = useState({ // Renamed for clarity
     username: '',
     email: '',
-    rol: 'USER'
+    role: 'USER'
   });
   // No longer need currentUser state if not used
 
@@ -67,7 +67,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     setUserEditFormData({ // Use renamed state
       username: user.username,
       email: user.email,
-      rol: user.rol
+      role: user.role
     });
     setShowUserEditModal(true); // Use renamed state
     setUserError(''); // Clear errors on opening modal
@@ -145,14 +145,13 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
   const [selectedGame, setSelectedGame] = useState(null); // New state for selected game (edit)
   const [isEditMode, setIsEditMode] = useState(false); // New state to distinguish add/edit
   const [gameFormData, setGameFormData] = useState({ // New state for game form data
-    nombre: '',
-    descripcion: '',
-
+    name: '',
+    description: '',
   });
 
   const initialGameFormState = { // New initial state for game form
-    nombre: '',
-    descripcion: '',
+    name: '',
+    description: '',
   };
 
   // --- Game Management Effects & Handlers ---
@@ -180,8 +179,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
   };
 
   const filteredGames = games.filter(game =>
-    (game.nombre && game.nombre.toLowerCase().includes(gameSearchTerm.toLowerCase())) || // Use new state
-    (game.descripcion && game.descripcion.toLowerCase().includes(gameSearchTerm.toLowerCase()))
+    (game.name && game.name.toLowerCase().includes(gameSearchTerm.toLowerCase())) || // Use new state
+    (game.description && game.description.toLowerCase().includes(gameSearchTerm.toLowerCase()))
   );
 
   const handleShowAddModal = () => {
@@ -196,8 +195,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     setSelectedGame(game);
     setIsEditMode(true);
     setGameFormData({
-      nombre: game.nombre,
-      descripcion: game.descripcion
+      name: game.name,
+      description: game.description
     });
     setShowGameModal(true);
     setGameError(''); // Clear errors on opening modal
@@ -223,18 +222,18 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     setGameError(''); // Clear previous errors
 
     // Basic validation
-    if (!gameFormData.nombre || !gameFormData.descripcion) {
+    if (!gameFormData.name || !gameFormData.description) {
         setGameError("Name and description are required.");
         setGameLoading(false);
         return;
     }
     const gameDataToSend = {
-      nombre: gameFormData.nombre,
-      descripcion: gameFormData.descripcion,
-  };
+      name: gameFormData.name,
+      description: gameFormData.description,
+    };
     try {
       if (isEditMode && selectedGame) {
-        await gameService.updateGame(selectedGame.id,{id: selectedGame.id, ... gameDataToSend} );
+        await gameService.updateGame(selectedGame.id, {id: selectedGame.id, ...gameDataToSend});
       } else {
         await gameService.addGame(gameFormData);
       }
@@ -323,12 +322,12 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
                 <td>{user.username}</td>
                 <td>{user.email}</td>
                 <td>
-                  <Badge bg={user.rol === 'ADMIN' ? 'danger' : 'info'}>
-                    {user.rol}
+                  <Badge bg={user.role === 'ADMIN' ? 'danger' : 'info'}>
+                    {user.role}
                   </Badge>
                 </td>
                 <td>${user.balance?.toFixed(2) || '0.00'}</td>
-                <td>{new Date(user.fechaRegistro).toLocaleDateString()}</td>
+                <td>{new Date(user.registrationDate).toLocaleDateString()}</td>
                 <td>
                   <Button
                     variant="outline-primary"
@@ -390,8 +389,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
             <Form.Group className="mb-3">
               <Form.Label>Role</Form.Label>
               <Form.Select
-                name="rol"
-                value={userEditFormData.rol} // Use userEditFormData
+                name="role"
+                value={userEditFormData.role} // Use userEditFormData
                 onChange={handleUserEditFormChange} // Use handleUserEditFormChange
                 required
               >
@@ -457,7 +456,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
             {/* Note: SearchTerm is now gameSearchTerm */}
             <Form.Control
               type="text"
-              placeholder="Search games by name, description, genre..."
+              placeholder="Search games by name, description..."
               value={gameSearchTerm}
               onChange={handleGameSearch} // Use handleGameSearch
             />
@@ -490,8 +489,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
             filteredGames.map(game => (
               <tr key={game.id}>
                 <td>{game.id}</td>
-                <td>{game.nombre}</td>
-                <td>{game.descripcion?.substring(0, 50)}{game.descripcion?.length > 50 ? '...' : ''}</td>
+                <td>{game.name}</td>
+                <td>{game.description?.substring(0, 50)}{game.description?.length > 50 ? '...' : ''}</td>
                 <td>
                   <Button
                     variant="outline-primary"
@@ -514,7 +513,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
             ))
           ) : (
             <tr>
-              <td colSpan="7" className="text-center">
+              <td colSpan="4" className="text-center">
                 {gameSearchTerm ? 'No games found matching your search.' : 'No games available. Try adding one!'} {/* Use gameSearchTerm */}
               </td>
             </tr>
@@ -535,8 +534,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
               <Form.Label>Name <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="text"
-                name="nombre"
-                value={gameFormData.nombre} // Use gameFormData
+                name="name"
+                value={gameFormData.name} // Use gameFormData
                 onChange={handleGameFormChange} // Use handleGameFormChange
                 required
               />
@@ -546,8 +545,8 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
               <Form.Control
                 as="textarea"
                 rows={3}
-                name="descripcion"
-                value={gameFormData.descripcion} // Use gameFormData
+                name="description"
+                value={gameFormData.description} // Use gameFormData
                 onChange={handleGameFormChange} // Use handleGameFormChange
                 required
               />
