@@ -15,248 +15,235 @@ const RANKING_TYPES = {
   WIN_RATE: 'WIN_RATE',
   BY_GAME_WIN_RATE: 'BY_GAME_WIN_RATE',
   BY_GAME_PROFIT: 'BY_GAME_PROFIT',
-  BIGGEST_LOSERS: 'BIGGEST_LOSERS' // New type for biggest losers
+  TOP_LOSERS: 'TOP_LOSERS',
+  BY_GAME_LOSSES: 'BY_GAME_LOSSES'
+};
+
+// Cache to store ranking results and reduce API calls
+const rankingCache = {
+  // Structure: { cacheKey: { data: [...], timestamp: Date.now() } }
+  cache: {},
+  
+  // Cache expiration time in milliseconds (10 minutes, increased from 5)
+  CACHE_EXPIRY: 10 * 60 * 1000,
+  
+  // Shorter cache for development/debugging (30 seconds)
+  DEBUG_CACHE_EXPIRY: 30 * 1000,
+  
+  // Flag to enable shorter cache expiry for debugging
+  debugMode: false,
+  
+  // Generate cache key based on endpoint and parameters
+  getCacheKey: (endpoint, params = {}) => {
+    return `${endpoint}${params.gameId ? '_game_' + params.gameId : ''}${params.type ? '_type_' + params.type : ''}`;
+  },
+  
+  // Get data from cache if available and not expired
+  get: (key) => {
+    const cachedData = rankingCache.cache[key];
+    const expiryTime = rankingCache.debugMode ? rankingCache.DEBUG_CACHE_EXPIRY : rankingCache.CACHE_EXPIRY;
+    
+    if (cachedData && (Date.now() - cachedData.timestamp < expiryTime)) {
+      return cachedData.data;
+    }
+    return null;
+  },
+  
+  // Set data in cache with current timestamp
+  set: (key, data) => {
+    rankingCache.cache[key] = {
+      data,
+      timestamp: Date.now()
+    };
+    return data;
+  },
+  
+  // Clear entire cache or specific key
+  clear: (key = null) => {
+    if (key) {
+      delete rankingCache.cache[key];
+    } else {
+      rankingCache.cache = {};
+    }
+  },
+  
+  // Clear all game-related caches for a specific game
+  clearGameCaches: (gameId) => {
+    Object.keys(rankingCache.cache).forEach(key => {
+      if (key.includes(`_game_${gameId}`)) {
+        delete rankingCache.cache[key];
+      }
+    });
+  },
+  
+  // Clear all caches for a specific ranking type
+  clearTypeCache: (rankingType) => {
+    Object.keys(rankingCache.cache).forEach(key => {
+      if (key.includes(`_type_${rankingType}`)) {
+        delete rankingCache.cache[key];
+      }
+    });
+  },
+  
+  // Mark an endpoint as failed (to avoid repeated failures)
+  markEndpointFailed: (endpoint, params = {}) => {
+    const key = rankingCache.getCacheKey(endpoint, params);
+    rankingCache.cache[key] = {
+      data: [],
+      timestamp: Date.now(),
+      failed: true
+    };
+  },
+  
+  // Check if an endpoint has previously failed
+  hasEndpointFailed: (endpoint, params = {}) => {
+    const key = rankingCache.getCacheKey(endpoint, params);
+    const cachedData = rankingCache.cache[key];
+    return cachedData && cachedData.failed === true;
+  },
+  
+  // Set debug mode
+  setDebugMode: (isDebug) => {
+    rankingCache.debugMode = isDebug;
+  }
 };
 
 const rankingService = {
   // Expose ranking types enum
   RANKING_TYPES,
   
-  // Helper to normalize ranking properties between Spanish and English
-  normalizeRankingProperties: (ranking) => {
-    // Spanish to English property mappings
-    const propertyMappings = {
-      usuario: 'user',
-      valor: 'score',
-      posicion: 'position',
-      tipo: 'type',
-      juego: 'game'
-    };
+  // Generic function to fetch ranking data with caching
+  fetchRankings: async (endpoint, params = {}, options = {}) => {
+    const { skipCache = false, fallbackFunction = null } = options;
+    const cacheKey = rankingCache.getCacheKey(endpoint, params);
     
-    // For debugging
-    console.log('Before normalization:', ranking);
+    // Try to get from cache first
+    if (!skipCache) {
+      const cachedData = rankingCache.get(cacheKey);
+      if (cachedData) return cachedData;
+    }
     
-    // Map Spanish properties to English
-    Object.entries(propertyMappings).forEach(([spanishProp, englishProp]) => {
-      if (ranking[spanishProp] !== undefined && ranking[englishProp] === undefined) {
-        ranking[englishProp] = ranking[spanishProp];
+    try {
+      // Make API call
+      const response = await api.get(endpoint);
+      
+      // Process data
+      let data = [];
+      if (Array.isArray(response.data)) {
+        data = response.data;
+        
+        // Ensure numeric score values
+        data.forEach(ranking => {
+          if (typeof ranking.score === 'string') {
+            ranking.score = parseFloat(ranking.score);
+          }
+        });
       }
-    });
-    
-    // Handle the reverse mapping for user/usuario
-    if (ranking.user && !ranking.usuario) {
-      ranking.usuario = ranking.user;
-    }
-    
-    // Ensure score is a number and has both English and Spanish properties
-    if (ranking.score !== undefined && ranking.valor === undefined) {
-      ranking.valor = ranking.score;
-    } else if (ranking.valor !== undefined && ranking.score === undefined) {
-      ranking.score = ranking.valor;
-    }
-    
-    // Convert score to number if it's a string
-    if (typeof ranking.score === 'string') {
-      ranking.score = parseFloat(ranking.score);
-    }
-    if (typeof ranking.valor === 'string') {
-      ranking.valor = parseFloat(ranking.valor);
-    }
-    
-    // Special case for game object
-    if (ranking.juego && !ranking.game) {
-      ranking.game = {
-        ...ranking.juego,
-        name: ranking.juego.name || ranking.juego.nombre || 'Unknown Game'
-      };
-    } else if (ranking.game && !ranking.juego) {
-      ranking.juego = {
-        ...ranking.game,
-        nombre: ranking.game.nombre || ranking.game.name || 'Unknown Game'
-      };
-    }
-    
-    if (ranking.game) {
-      // Ensure game has both name and nombre properties
-      if (ranking.game.name && !ranking.game.nombre) {
-        ranking.game.nombre = ranking.game.name;
-      } else if (ranking.game.nombre && !ranking.game.name) {
-        ranking.game.name = ranking.game.nombre;
+      
+      // Cache the result
+      return rankingCache.set(cacheKey, data);
+    } catch (error) {
+      // Try fallback if provided
+      if (fallbackFunction) {
+        try {
+          return await fallbackFunction();
+        } catch (fallbackError) {
+          console.error(`Fallback also failed for ${endpoint}`);
+          return [];
+        }
       }
+      
+      return [];
     }
-    
-    if (ranking.juego) {
-      // Ensure juego has both name and nombre properties
-      if (ranking.juego.name && !ranking.juego.nombre) {
-        ranking.juego.nombre = ranking.juego.name;
-      } else if (ranking.juego.nombre && !ranking.juego.name) {
-        ranking.juego.name = ranking.juego.nombre;
-      }
-    }
-    
-    // For debugging
-    console.log('After normalization:', ranking);
-    
-    return ranking;
   },
   
   // Get all rankings
   getAllRankings: async () => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.ALL_RANKINGS);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch rankings' };
-    }
+    return rankingService.fetchRankings(RANKING_ENDPOINTS.ALL_RANKINGS);
   },
 
   // Get rankings by type (OVERALL_PROFIT, TOTAL_BETS_AMOUNT, WIN_RATE, etc.)
   getRankingsByType: async (rankingType) => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_TYPE(rankingType));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch rankings by type' };
-    }
+    return rankingService.fetchRankings(
+      RANKING_ENDPOINTS.RANKINGS_BY_TYPE(rankingType),
+      { type: rankingType }
+    );
   },
 
   // Get rankings for a specific game and type
   getRankingsByGameAndType: async (gameId, rankingType) => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, rankingType));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch game rankings' };
-    }
+    return rankingService.fetchRankings(
+      RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, rankingType),
+      { gameId, type: rankingType }
+    );
   },
 
   // Get rankings for a specific user
   getUserRankings: async (userId) => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.USER_RANKINGS(userId));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      console.error("Failed to fetch user rankings:", error);
-      // Return empty array instead of throwing error to prevent UI breaks
-      return [];
-    }
+    return rankingService.fetchRankings(
+      RANKING_ENDPOINTS.USER_RANKINGS(userId),
+      { userId }
+    );
   },
   
   // Get game profit rankings
   getGameProfitRankings: async (gameId) => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, RANKING_TYPES.BY_GAME_PROFIT));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch game profit rankings' };
-    }
+    return rankingService.getRankingsByGameAndType(gameId, RANKING_TYPES.BY_GAME_PROFIT);
   },
 
   // Get win rate rankings
   getWinRateRankings: async () => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_TYPE(RANKING_TYPES.WIN_RATE));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch win rate rankings' };
-    }
+    return rankingService.getRankingsByType(RANKING_TYPES.WIN_RATE);
   },
   
   // Get game-specific win rate rankings
   getGameWinRateRankings: async (gameId) => {
-    try {
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, RANKING_TYPES.BY_GAME_WIN_RATE));
-      // Normalize each ranking
-      return Array.isArray(response.data) 
-        ? response.data.map(ranking => rankingService.normalizeRankingProperties(ranking))
-        : [];
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch game win rate rankings' };
-    }
+    return rankingService.getRankingsByGameAndType(gameId, RANKING_TYPES.BY_GAME_WIN_RATE);
   },
   
-  // Get biggest losers rankings - players who have lost the most money
+  // Get biggest losers rankings
   getBiggestLosersRankings: async () => {
-    try {
-      // First get overall profit rankings
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_TYPE(RANKING_TYPES.OVERALL_PROFIT));
-      
-      if (!Array.isArray(response.data)) {
-        return [];
-      }
-      
-      // Normalize and sort by profit ascending (so biggest losers come first)
-      const normalizedRankings = response.data.map(ranking => 
-        rankingService.normalizeRankingProperties(ranking)
-      );
-      
-      // Filter to only include losers (negative profit)
-      const losers = normalizedRankings.filter(ranking => 
-        (ranking.score < 0 || ranking.valor < 0)
-      );
-      
-      // Sort by most negative first (biggest losers)
-      losers.sort((a, b) => (a.score || a.valor) - (b.score || b.valor));
-      
-      // Recalculate positions
-      losers.forEach((ranking, index) => {
-        ranking.position = index + 1;
-      });
-      
-      return losers;
-    } catch (error) {
-      console.error("Failed to fetch biggest losers rankings:", error);
-      return [];
-    }
+    return rankingService.getRankingsByType(RANKING_TYPES.TOP_LOSERS);
   },
   
-  // Get game-specific biggest losers rankings
-  getGameBiggestLosersRankings: async (gameId) => {
+  // Get game-specific losses rankings
+  getGameMostLossesRankings: async (gameId) => {
+    return rankingService.getRankingsByGameAndType(gameId, RANKING_TYPES.BY_GAME_LOSSES);
+  },
+  
+  // Clear all cached rankings data
+  clearCache: () => {
+    rankingCache.clear();
+  },
+  
+  // Reset cache for specific ranking types (useful for debugging)
+  resetRankingTypeCache: (rankingType) => {
+    console.log(`Resetting cache for ranking type: ${rankingType}`);
+    rankingCache.clearTypeCache(rankingType);
+    return true;
+  },
+  
+  // Reset cache for specific game rankings (useful for debugging)
+  resetGameCache: (gameId) => {
+    console.log(`Resetting cache for game ID: ${gameId}`);
+    rankingCache.clearGameCaches(gameId);
+    return true;
+  },
+  
+  // Test endpoint (useful for debugging)
+  testEndpoint: async (endpoint) => {
     try {
-      // First get game profit rankings
-      const response = await api.get(RANKING_ENDPOINTS.RANKINGS_BY_GAME_AND_TYPE(gameId, RANKING_TYPES.BY_GAME_PROFIT));
-      
-      if (!Array.isArray(response.data)) {
-        return [];
-      }
-      
-      // Normalize and sort by profit ascending (so biggest losers come first)
-      const normalizedRankings = response.data.map(ranking => 
-        rankingService.normalizeRankingProperties(ranking)
-      );
-      
-      // Filter to only include losers (negative profit)
-      const losers = normalizedRankings.filter(ranking => 
-        (ranking.score < 0 || ranking.valor < 0)
-      );
-      
-      // Sort by most negative first (biggest losers)
-      losers.sort((a, b) => (a.score || a.valor) - (b.score || b.valor));
-      
-      // Recalculate positions
-      losers.forEach((ranking, index) => {
-        ranking.position = index + 1;
-      });
-      
-      return losers;
+      console.log(`Testing endpoint: ${endpoint}`);
+      const response = await api.get(endpoint);
+      console.log(`Endpoint ${endpoint} response:`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
-      console.error(`Failed to fetch biggest losers rankings for game ${gameId}:`, error);
-      return [];
+      console.error(`Endpoint ${endpoint} failed:`, error);
+      return { 
+        success: false, 
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message 
+      };
     }
   }
 };

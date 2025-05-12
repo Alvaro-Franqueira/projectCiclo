@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {  Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination, Image } from 'react-bootstrap';
 import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown, FaMedal, FaMoneyBillWave, FaStar, FaAward } from 'react-icons/fa';
 import userService from '../services/userService';
-
+import { mdiEmoticonPoop } from '@mdi/js';
+import { Icon } from '@mdi/react';
 import betService from '../services/betService';
 import rankingService from '../services/rankingService';
 import { useAuth } from '../context/AuthContext';
@@ -298,6 +299,16 @@ const UserProfile = () => {
                     bgColorEnd: '#143325',
                     borderColor: '#40c057',
                     textColor: '#c0eb75'
+                };
+            case 'TOP_LOSERS':
+            case 'BY_GAME_LOSSES':
+                return {
+                    title: 'Biggest Loser',
+                    icon: <Icon path={mdiEmoticonPoop} size={1.8} color="#9c27b0" />,
+                    bgColorStart: '#3b0a40',
+                    bgColorEnd: '#4a0d50',
+                    borderColor: '#9c27b0',
+                    textColor: '#e9baff'
                 };
             default:
                 return {

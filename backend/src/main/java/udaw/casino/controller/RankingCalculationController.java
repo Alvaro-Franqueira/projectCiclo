@@ -40,7 +40,8 @@ public class RankingCalculationController {
         
         // Get global rankings for each type
         for (RankingType type : RankingType.values()) {
-            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE && type != RankingType.BY_GAME_PROFIT) { // Skip game-specific rankings
+            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE 
+                && type != RankingType.BY_GAME_PROFIT && type != RankingType.BY_GAME_LOSSES) { // Skip game-specific rankings
                 List<RankingEntry> rankings = rankingCalculationService.getRankingByType(type);
                 allRankings.put(type.name(), rankings);
             }
@@ -58,11 +59,20 @@ public class RankingCalculationController {
     @GetMapping("/type/{type}")
     public ResponseEntity<List<RankingEntry>> getGlobalRankingByType(@PathVariable("type") RankingType type) {
         // Basic validation: Ensure the type is not game-specific if called without a game context
-        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT) {
+        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE 
+            || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
             return ResponseEntity.badRequest().build(); // Indicate this endpoint isn't for game-specific types alone
         }
-        List<RankingEntry> rankings = rankingCalculationService.getRankingByType(type);
-        return ResponseEntity.ok(rankings);
+        
+        // Process the ranking based on type
+        try {
+            List<RankingEntry> rankings = rankingCalculationService.getRankingByType(type);
+            return ResponseEntity.ok(rankings);
+        } catch (Exception e) {
+            e.printStackTrace(); // or use a logger
+            // Return 200 OK with empty list instead of error status to prevent frontend crashes
+            return ResponseEntity.ok(List.of());
+        }
     }
 
     /**
@@ -79,14 +89,27 @@ public class RankingCalculationController {
         try {
             // Fetch the game entity first
             Game game = gameService.getGameById(gameId);
+            
+            // Explicitly log the request for debugging
+            System.out.println("Processing ranking request for game ID: " + gameId + ", type: " + type);
+            
+            // Get the rankings
             List<RankingEntry> rankings = rankingCalculationService.getRankingByGameAndType(type, game);
             return ResponseEntity.ok(rankings);
         } catch (ResourceNotFoundException e) {
             // Handle case where game is not found
+            System.out.println("Game not found for ID: " + gameId);
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             // Handle other errors like invalid type for game ranking
+            System.out.println("Invalid argument for game ID: " + gameId + ", type: " + type + " - " + e.getMessage());
             return ResponseEntity.badRequest().body(null); // Or return error message
+        } catch (Exception e) {
+            // Catch all other exceptions to prevent 500 errors
+            System.out.println("Error processing ranking for game ID: " + gameId + ", type: " + type);
+            e.printStackTrace();
+            // Return empty list with 200 OK instead of error
+            return ResponseEntity.ok(List.of());
         }
     }
 

@@ -1,12 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Container, Table, Tabs, Tab, Alert, Spinner, Badge, Card, Row, Col, Image } from 'react-bootstrap';
-import { FaTrophy, FaCoins, FaGamepad, FaPercentage, FaChartLine, FaMedal, FaCrown, FaDice, FaCircle, FaDollarSign, FaArrowDown } from 'react-icons/fa';
+import { FaTrophy, FaCircle, FaCoins, FaGamepad, FaPercentage, FaChartLine, FaMedal, FaCrown, FaDice, FaDollarSign, FaArrowDown, FaSkull, FaThumbsDown } from 'react-icons/fa';
+import { Icon } from '@mdi/react';
+import { mdiEmoticonPoop } from '@mdi/js';
 import rankingService from '../../services/rankingService';
 import gameService from '../../services/gameService';
 import logoCasino from '../images/logo-casino.png';
 import silverLogo from '../images/silver-logo.png';
 import bronzeLogo from '../images/bronze-logo.png';
 import './RankingList.css';
+
+// Create a memoized ranking table component to prevent unnecessary re-renders
+const RankingTable = React.memo(({ 
+  rankingsData, 
+  rankingType,
+  isLoading, 
+  error, 
+  getRankIcon, 
+  getValueColor, 
+  formatValue, 
+  getColumnTitle 
+}) => {
+  if (isLoading) {
+    return (
+      <div className="text-center my-5">
+        <Spinner animation="border" className="spinner-accent" />
+        <p className="mt-2">Loading rankings...</p>
+      </div>
+    );
+  }
+
+  if (error && rankingType) {
+    return <Alert variant="danger">{error}</Alert>;
+  }
+
+  // Check if rankings is an array before attempting to map
+  if (!Array.isArray(rankingsData) || rankingsData.length === 0) {
+    // Show a special message for BY_GAME_PROFIT if it's not working
+    if (rankingType === 'BY_GAME_PROFIT') {
+      return (
+        <Alert variant="warning">
+          Game profit rankings are currently unavailable. The feature may still be in development.
+          <div className="mt-2">
+            <small>Please try using the Wins or Win Rate rankings instead.</small>
+          </div>
+        </Alert>
+      );
+    }
+    return <Alert variant="info">No rankings available yet.</Alert>;
+  }
+
+  return (
+    <div className="ranking-table-container">
+      <Table striped hover responsive className="ranking-table">
+        <thead>
+          <tr>
+            <th width="10%" className="text-center">Rank</th>
+            <th>Player</th>
+            <th width="20%" className="text-center">
+              {getColumnTitle(rankingType)}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rankingsData.map((ranking, index) => (
+            <tr key={index} className={index < 3 ? `top-ranking rank-${index + 1}` : ''}>
+              <td className="text-center rank-column">
+                {getRankIcon(index)}
+              </td>
+              <td className="player-name">
+                {ranking.user?.username || 'Unknown'}
+              </td>
+              <td className="text-center">
+                <Badge 
+                  pill 
+                  bg={getValueColor(ranking.score, rankingType)}
+                  className="ranking-badge"
+                >
+                  {formatValue(ranking.score, rankingType)}
+                </Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
+  );
+});
+
+// Prevent re-rendering when props haven't changed
+RankingTable.displayName = 'RankingTable';
 
 const RankingList = () => {
   const [activeTab, setActiveTab] = useState('overall');
@@ -34,190 +117,8 @@ const RankingList = () => {
   const [blackjackGameId, setBlackjackGameId] = useState(null);
   const [slotGameId, setSlotGameId] = useState(null);
 
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const gamesData = await gameService.getAllGames();
-        setGames(gamesData || []);
-        
-        // Find game IDs for popular games
-        const diceGame = gamesData?.find(game => (game.name || game.nombre || '').toLowerCase().includes('dice'));
-        const rouletteGame = gamesData?.find(game => (game.name || game.nombre || '').toLowerCase().includes('roulette'));
-        const blackjackGame = gamesData?.find(game => (game.name || game.nombre || '').toLowerCase().includes('blackjack'));
-        
-        // Enhanced slot machine detection to handle both IDs
-        const slotGame = gamesData?.find(game => 
-          (game.name || game.nombre || '').toLowerCase().includes('slot') || 
-          (game.name || game.nombre || '').toLowerCase().includes('machine') ||
-          game.id === 7 
-        );
-        
-        if (diceGame) {
-          setDiceGameId(diceGame.id);
-          fetchGameRankings(diceGame.id, gameRankingType, setDiceRankings, setDiceLoading);
-        }
-        
-        if (rouletteGame) {
-          setRouletteGameId(rouletteGame.id);
-          fetchGameRankings(rouletteGame.id, gameRankingType, setRouletteRankings, setRouletteLoading);
-        }
-
-        if (blackjackGame) {
-          setBlackjackGameId(blackjackGame.id);
-          fetchGameRankings(blackjackGame.id, gameRankingType, setBlackjackRankings, setBlackjackLoading);
-        }
-
-        if (slotGame) {
-          setSlotGameId(slotGame.id);
-          fetchGameRankings(slotGame.id, gameRankingType, setSlotRankings, setSlotLoading);
-        }
-        
-        if (gamesData && gamesData.length > 0) {
-          setSelectedGameId(gamesData[0].id);
-        }
-      } catch (err) {
-        console.error('Failed to fetch games:', err);
-        setGames([]);
-      }
-    };
-
-    fetchGames();
-  }, []);
-
-  const fetchGameRankings = async (gameId, rankingType, setRankingsState, setLoadingState) => {
-    if (!gameId) {
-      console.error('Cannot fetch game rankings without a valid game ID');
-      setRankingsState([]);
-      setLoadingState(false);
-      return;
-    }
-    
-    setLoadingState(true);
-    try {
-      let gameRankings;
-      
-      // Default to BY_GAME_WINS if BY_GAME_PROFIT causes errors
-      if (rankingType === 'BY_GAME_PROFIT') {
-        try {
-          gameRankings = await rankingService.getGameProfitRankings(gameId);
-        } catch (err) {
-          console.error('Error fetching BY_GAME_PROFIT, falling back to BY_GAME_WINS:', err);
-          // If BY_GAME_PROFIT fails, fall back to BY_GAME_WINS
-          gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
-        }
-      } else if (rankingType === 'BY_GAME_WIN_RATE') {
-        gameRankings = await rankingService.getGameWinRateRankings(gameId);
-      } else {
-        // Default to BY_GAME_WINS
-        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
-      }
-      
-      setRankingsState(gameRankings || []);
-    } catch (err) {
-      console.error(`Failed to fetch game rankings for ID ${gameId} and type ${rankingType}:`, err);
-      setRankingsState([]);
-    } finally {
-      setLoadingState(false);
-    }
-  };
-
-  // Effect to update dice and roulette rankings when game ranking type changes
-  useEffect(() => {
-    if (diceGameId) {
-      fetchGameRankings(diceGameId, gameRankingType, setDiceRankings, setDiceLoading);
-    }
-    
-    if (rouletteGameId) {
-      fetchGameRankings(rouletteGameId, gameRankingType, setRouletteRankings, setRouletteLoading);
-    }
-
-    if (blackjackGameId) {
-      fetchGameRankings(blackjackGameId, gameRankingType, setBlackjackRankings, setBlackjackLoading);
-    }
-
-    if (slotGameId) {
-      fetchGameRankings(slotGameId, gameRankingType, setSlotRankings, setSlotLoading);
-    }
-  }, [gameRankingType, diceGameId, rouletteGameId, blackjackGameId, slotGameId]);
-
-  useEffect(() => {
-    const fetchRankings = async () => {
-      setLoading(true);
-      setError('');
-      
-      try {
-        let rankingsData;
-        
-        if (activeTab === 'by-game' && selectedGameId) {
-          // Use a try/catch block specifically for potentially problematic rankings
-          if (gameRankingType === 'BY_GAME_PROFIT') {
-            try {
-              rankingsData = await rankingService.getGameProfitRankings(selectedGameId);
-              console.log('BY_GAME_PROFIT rankings:', rankingsData);
-            } catch (err) {
-              console.error('Error with BY_GAME_PROFIT, falling back to BY_GAME_WINS:', err);
-              // If BY_GAME_PROFIT fails, fall back to BY_GAME_WINS
-              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_WINS');
-              console.log('Fallback BY_GAME_WINS rankings:', rankingsData);
-              // If we fell back to WIN_RATE, update UI state
-              setGameRankingType('BY_GAME_WINS');
-            }
-          } else if (gameRankingType === 'BY_GAME_WIN_RATE') {
-            rankingsData = await rankingService.getGameWinRateRankings(selectedGameId);
-            console.log('BY_GAME_WIN_RATE rankings:', rankingsData);
-          } else if (gameRankingType === 'BIGGEST_LOSERS') {
-            rankingsData = await rankingService.getGameBiggestLosersRankings(selectedGameId);
-            console.log('Game biggest losers rankings:', rankingsData);
-          } else {
-            rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, gameRankingType);
-            console.log('Game rankings for type', gameRankingType, ':', rankingsData);
-          }
-        } else {
-          // Overall rankings
-          if (rankingType === 'BIGGEST_LOSERS') {
-            rankingsData = await rankingService.getBiggestLosersRankings();
-            console.log('Overall biggest losers rankings:', rankingsData);
-          } else {
-            rankingsData = await rankingService.getRankingsByType(rankingType);
-            console.log('Overall rankings for type', rankingType, ':', rankingsData);
-          }
-        }
-        
-        setRankings(rankingsData || []);
-      } catch (err) {
-        setError('Failed to load rankings. Please try again later.');
-        console.error('Error fetching rankings:', err);
-        setRankings([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRankings();
-  }, [rankingType, gameRankingType, selectedGameId, activeTab]);
-
-  const handleTabSelect = (key) => {
-    setActiveTab(key);
-    if (key === 'overall') {
-      setRankingType('OVERALL_PROFIT');
-    } else if (key === 'by-game') {
-      // Don't change the gameRankingType here, just keep what user selected before
-    }
-  };
-
-  const handleOverallRankingTypeSelect = (type) => {
-    setRankingType(type);
-  };
-  
-  const handleGameRankingTypeSelect = (type) => {
-    setGameRankingType(type);
-  };
-
-  const handleGameSelect = (gameId) => {
-    setSelectedGameId(gameId);
-  };
-
-  const formatValue = (value, type) => {
+  // Memoize utility functions to prevent recreating them on each render
+  const formatValue = useCallback((value, type) => {
     if (value === undefined || value === null) return '0';
     
     // Convert to number if it's a string
@@ -226,16 +127,21 @@ const RankingList = () => {
     // Check if we have a valid number
     if (isNaN(numValue)) return '0';
     
-    if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT' || type === 'TOTAL_BETS_AMOUNT') {
+    if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT') {
+      return `$${numValue.toFixed(2)}`;
+    } else if (type === 'TOTAL_BETS_AMOUNT') {
       return `$${numValue.toFixed(2)}`;
     } else if (type === 'WIN_RATE' || type === 'BY_GAME_WIN_RATE') {
       return `${numValue.toFixed(1)}%`;
+    } else if (type === 'TOP_LOSERS' || type === 'BY_GAME_LOSSES') {
+      // For losses, show as currency amount
+      return `$${numValue.toFixed(2)}`;
     } else {
       return numValue.toString();
     }
-  };
+  }, []);
 
-  const getValueColor = (value, type) => {
+  const getValueColor = useCallback((value, type) => {
     if (value === undefined || value === null) return 'secondary';
     
     // Convert to number if it's a string
@@ -246,17 +152,18 @@ const RankingList = () => {
     
     if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT') {
       return numValue > 0 ? 'success' : numValue < 0 ? 'danger' : 'secondary';
+    } else if (type === 'TOP_LOSERS' || type === 'BY_GAME_LOSSES') {
+      // For losses, higher values are worse, so use 'danger' for higher values
+      return numValue > 0 ? 'danger' : 'secondary';
     }
     return 'primary';
-  };
+  }, []);
 
-  const getRankIcon = (index) => {
+  const getRankIcon = useCallback((index) => {
     if (index === 0) {
       return (
         <div className="top-player-badge">
-          
-          <div className="rank-icon rank-first" 
-          >
+          <div className="rank-icon rank-first">
             <Image 
               src={logoCasino} 
               alt="Casino Logo Gold" 
@@ -268,8 +175,7 @@ const RankingList = () => {
         </div>
       );
     }
-    if (index === 1) return <div className="rank-icon rank-first" 
-    >
+    if (index === 1) return <div className="rank-icon rank-first">
       <Image 
         src={silverLogo} 
         alt="Casino Logo Silver" 
@@ -278,8 +184,7 @@ const RankingList = () => {
         style={{ filter: 'drop-shadow(0 0 3px rgba(35, 36, 37, 0.5))', borderRadius: '4px'  }} 
       />
     </div>;
-    if (index === 2) return <div className="rank-icon rank-first" 
-    >
+    if (index === 2) return <div className="rank-icon rank-first">
       <Image 
         src={bronzeLogo} 
         alt="Casino Logo Bronze" 
@@ -289,89 +194,265 @@ const RankingList = () => {
       />
     </div>;
     return <span className="rank-number">#{index + 1}</span>;
-  };
+  }, []);
 
-  const getColumnTitle = (rankingTypeToUse) => {
+  const getColumnTitle = useCallback((rankingTypeToUse) => {
     if (rankingTypeToUse === 'OVERALL_PROFIT' || rankingTypeToUse === 'BY_GAME_PROFIT') {
       return 'Total Profit';
     } else if (rankingTypeToUse === 'TOTAL_BETS_AMOUNT') {
       return 'Total Bet Amount';
     } else if (rankingTypeToUse === 'WIN_RATE' || rankingTypeToUse === 'BY_GAME_WIN_RATE') {
       return 'Win Rate';
+    } else if (rankingTypeToUse === 'TOP_LOSERS') {
+      return 'Total Losses';
+    } else if (rankingTypeToUse === 'BY_GAME_LOSSES') {
+      return 'Total Losses';
     } else {
       return 'Wins';
     }
-  };
+  }, []);
 
-  const renderRankingTable = (rankingsData, rankingTypeToUse, isLoading = false) => {
-    // Add debug logging
-    console.log('Rendering ranking table with data:', rankingsData);
-    console.log('Using ranking type:', rankingTypeToUse);
+  // Memoize the fetchGameRankings function to prevent recreating it on each render
+  const fetchGameRankings = useCallback(async (gameId, rankingType, setRankingsState, setLoadingState) => {
+    if (!gameId) {
+      setRankingsState([]);
+      setLoadingState(false);
+      return;
+    }
     
-    if (isLoading) {
-      return (
-        <div className="text-center my-5">
-          <Spinner animation="border" className="spinner-accent" />
-          <p className="mt-2">Loading rankings...</p>
-        </div>
-      );
-    }
-
-    if (error && rankingTypeToUse === gameRankingType) {
-      return <Alert variant="danger">{error}</Alert>;
-    }
-
-    // Check if rankings is an array before attempting to map
-    if (!Array.isArray(rankingsData) || rankingsData.length === 0) {
-      // Show a special message for BY_GAME_PROFIT if it's not working
-      if (rankingTypeToUse === 'BY_GAME_PROFIT') {
-        return (
-          <Alert variant="warning">
-            Game profit rankings are currently unavailable. The feature may still be in development.
-            <div className="mt-2">
-              <small>Please try using the Wins or Win Rate rankings instead.</small>
-            </div>
-          </Alert>
-        );
+    setLoadingState(true);
+    try {
+      let gameRankings;
+      
+      if (rankingType === 'BY_GAME_PROFIT') {
+        try {
+          gameRankings = await rankingService.getGameProfitRankings(gameId);
+        } catch (err) {
+          gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
+        }
+      } else if (rankingType === 'BY_GAME_WIN_RATE') {
+        gameRankings = await rankingService.getGameWinRateRankings(gameId);
+      } else if (rankingType === 'BY_GAME_LOSSES') {
+        gameRankings = await rankingService.getGameMostLossesRankings(gameId);
+      } else {
+        // Default to BY_GAME_WINS
+        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
       }
-      return <Alert variant="info">No rankings available yet.</Alert>;
+      
+      setRankingsState(gameRankings || []);
+    } catch (err) {
+      setRankingsState([]);
+    } finally {
+      setLoadingState(false);
     }
+  }, []);
 
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const gamesData = await gameService.getAllGames();
+        setGames(gamesData || []);
+        
+        // Find game IDs for popular games
+        const diceGame = gamesData?.find(game => game.name?.toLowerCase().includes('dice'));
+        const rouletteGame = gamesData?.find(game => game.name?.toLowerCase().includes('roulette'));
+        const blackjackGame = gamesData?.find(game => game.name?.toLowerCase().includes('blackjack'));
+        
+        // Enhanced slot machine detection to handle both IDs
+        const slotGame = gamesData?.find(game => 
+          game.name?.toLowerCase().includes('slot') || 
+          game.name?.toLowerCase().includes('machine') ||
+          game.id === 7 
+        );
+        
+        // Update state with game IDs, selected game ID, and trigger initial data load
+        const gameIdsUpdate = {};
+        if (diceGame) gameIdsUpdate.diceGameId = diceGame.id;
+        if (rouletteGame) gameIdsUpdate.rouletteGameId = rouletteGame.id;
+        if (blackjackGame) gameIdsUpdate.blackjackGameId = blackjackGame.id;
+        if (slotGame) gameIdsUpdate.slotGameId = slotGame.id;
+        
+        // Set default selected game ID to the first available specific game or the first game
+        const defaultGameId = diceGame?.id || rouletteGame?.id || blackjackGame?.id || 
+                             slotGame?.id || (gamesData.length > 0 ? gamesData[0].id : null);
+        
+        // Batch state updates to avoid multiple re-renders
+        if (diceGame) setDiceGameId(diceGame.id);
+        if (rouletteGame) setRouletteGameId(rouletteGame.id);
+        if (blackjackGame) setBlackjackGameId(blackjackGame.id);
+        if (slotGame) setSlotGameId(slotGame.id);
+        if (defaultGameId) setSelectedGameId(defaultGameId);
+      } catch (err) {
+        console.error('Failed to fetch games:', err);
+        setGames([]);
+      }
+    };
+
+    fetchGames();
+  }, []); // Only run once on component mount
+
+  // Combined useEffect to handle all ranking data fetching
+  useEffect(() => {
+    // Use a ref to track if the component is still mounted
+    let isMounted = true;
+    
+    const fetchAllRankingData = async () => {
+      // Prevent unnecessary loading if games aren't loaded yet
+      if (games.length === 0) return;
+      
+      // Use a flag to track if we need to load overall rankings
+      const loadOverallRankings = activeTab === 'overall';
+      
+      // Use a flag to track if we need to load game-specific rankings for the main table
+      const loadSelectedGameRankings = activeTab === 'by-game' && selectedGameId;
+      
+      // Create an array to collect all fetch promises
+      const fetchPromises = [];
+      
+      // Add specific game tab fetches that need to be loaded
+      if (activeTab === 'by-game') {
+        // Only fetch game data for the active submenus to reduce API calls
+        if (diceGameId) {
+          setDiceLoading(true);
+          fetchPromises.push(
+            fetchGameRankings(diceGameId, gameRankingType, setDiceRankings, setDiceLoading)
+          );
+        }
+        
+        if (rouletteGameId) {
+          setRouletteLoading(true);
+          fetchPromises.push(
+            fetchGameRankings(rouletteGameId, gameRankingType, setRouletteRankings, setRouletteLoading)
+          );
+        }
+
+        if (blackjackGameId) {
+          setBlackjackLoading(true);
+          fetchPromises.push(
+            fetchGameRankings(blackjackGameId, gameRankingType, setBlackjackRankings, setBlackjackLoading)
+          );
+        }
+
+        if (slotGameId) {
+          setSlotLoading(true);
+          fetchPromises.push(
+            fetchGameRankings(slotGameId, gameRankingType, setSlotRankings, setSlotLoading)
+          );
+        }
+      }
+      
+      // Add overall rankings loading if needed (only when on overall tab)
+      if (loadOverallRankings) {
+        setLoading(true);
+        try {
+          let rankingsData;
+          if (rankingType === 'TOP_LOSERS') {
+            rankingsData = await rankingService.getBiggestLosersRankings();
+          } else {
+            rankingsData = await rankingService.getRankingsByType(rankingType);
+          }
+          
+          // Check if component is still mounted before updating state
+          if (isMounted) {
+            setRankings(rankingsData || []);
+            setLoading(false);
+          }
+        } catch (err) {
+          if (isMounted) {
+            setError('Failed to load rankings. Please try again later.');
+            setRankings([]);
+            setLoading(false);
+          }
+        }
+      }
+      
+      // Add selected game rankings loading if needed (only when on by-game tab)
+      if (loadSelectedGameRankings) {
+        setLoading(true);
+        try {
+          let rankingsData;
+          
+          if (gameRankingType === 'BY_GAME_PROFIT') {
+            try {
+              rankingsData = await rankingService.getGameProfitRankings(selectedGameId);
+            } catch (err) {
+              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_WINS');
+              if (isMounted) {
+                setGameRankingType('BY_GAME_WINS'); // Update UI state if we fell back
+              }
+            }
+          } else if (gameRankingType === 'BY_GAME_WIN_RATE') {
+            rankingsData = await rankingService.getGameWinRateRankings(selectedGameId);
+          } else if (gameRankingType === 'BY_GAME_LOSSES') {
+            rankingsData = await rankingService.getGameMostLossesRankings(selectedGameId);
+          } else {
+            rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, gameRankingType);
+          }
+          
+          // Check if component is still mounted before updating state
+          if (isMounted) {
+            setRankings(rankingsData || []);
+            setLoading(false);
+          }
+        } catch (err) {
+          if (isMounted) {
+            setError('Failed to load rankings. Please try again later.');
+            setRankings([]);
+            setLoading(false);
+          }
+        }
+      }
+      
+      // Wait for all game tab requests to complete
+      await Promise.all(fetchPromises);
+    };
+
+    fetchAllRankingData();
+    
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    games, // Depends on games being loaded
+    activeTab, rankingType, // Needed to decide what to fetch for overall tab
+    gameRankingType, selectedGameId, // Needed to decide what to fetch for game tab
+    diceGameId, rouletteGameId, blackjackGameId, slotGameId, // Needed for game tabs
+    fetchGameRankings // Include the memoized function in dependencies
+  ]);
+
+  const handleTabSelect = useCallback((key) => {
+    setActiveTab(key);
+    if (key === 'overall') {
+      setRankingType('OVERALL_PROFIT');
+    }
+  }, []);
+
+  const handleOverallRankingTypeSelect = useCallback((type) => {
+    setRankingType(type);
+  }, []);
+  
+  const handleGameRankingTypeSelect = useCallback((type) => {
+    setGameRankingType(type);
+  }, []);
+
+  const handleGameSelect = useCallback((gameId) => {
+    setSelectedGameId(gameId);
+  }, []);
+
+  // Replace the renderRankingTable function with our memoized component
+  const renderRankingTable = (rankingsData, rankingTypeToUse, isLoading = false) => {
     return (
-      <div className="ranking-table-container">
-        <Table striped hover responsive className="ranking-table">
-          <thead>
-            <tr>
-              <th width="10%" className="text-center">Rank</th>
-              <th>Player</th>
-              <th width="20%" className="text-center">
-                {getColumnTitle(rankingTypeToUse)}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rankingsData.map((ranking, index) => (
-              <tr key={index} className={index < 3 ? `top-ranking rank-${index + 1}` : ''}>
-                <td className="text-center rank-column">
-                  {getRankIcon(index)}
-                </td>
-                <td className="player-name">
-                  {ranking.usuario?.username || ranking.user?.username || 'Unknown'}
-                </td>
-                <td className="text-center">
-                  <Badge 
-                    pill 
-                    bg={getValueColor(ranking.score || ranking.valor, rankingTypeToUse)}
-                    className="ranking-badge"
-                  >
-                    {formatValue(ranking.score || ranking.valor, rankingTypeToUse)}
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+      <RankingTable
+        rankingsData={rankingsData}
+        rankingType={rankingTypeToUse}
+        isLoading={isLoading}
+        error={error}
+        getRankIcon={getRankIcon}
+        getValueColor={getValueColor}
+        formatValue={formatValue}
+        getColumnTitle={getColumnTitle}
+      />
     );
   };
 
@@ -393,8 +474,8 @@ const RankingList = () => {
             </div>
           </Tab>
           <Tab 
-            eventKey="BIGGEST_LOSERS" 
-            title={<><FaArrowDown className="me-1" /> Biggest Losers</>}
+            eventKey="TOP_LOSERS" 
+            title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Biggest Losers</>}
           >
             <div className="ranking-subtab-content">
               <p className="tab-description">Players who have lost the most money across all games.</p>
@@ -434,19 +515,19 @@ const RankingList = () => {
         <Tab 
           eventKey="BY_GAME_WINS"
           title={<><FaTrophy className="me-1" /> Wins</>}
-        >
-        </Tab>
+        />
+        <Tab 
+          eventKey="BY_GAME_LOSSES" 
+          title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Losses</>}
+        />
         <Tab 
           eventKey="BY_GAME_WIN_RATE" 
           title={<><FaPercentage className="me-1" /> Win Rate</>}
-        >
-        </Tab>
+        />
         <Tab 
           eventKey="BY_GAME_PROFIT" 
           title={<><FaDollarSign className="me-1" /> Profit</>}
-        >
-        </Tab>
-
+        />
       </Tabs>
     );
   };
@@ -455,6 +536,22 @@ const RankingList = () => {
     return (
       <div className="game-specific-rankings">
         {renderGameRankingsTabs()}
+        
+        {/* Game Ranking Type Description */}
+        <div className="ranking-subtab-content mt-3 mb-4">
+          {gameRankingType === 'BY_GAME_WINS' && (
+            <p className="tab-description">Players ranked by their number of wins in this game.</p>
+          )}
+          {gameRankingType === 'BY_GAME_LOSSES' && (
+            <p className="tab-description">Players ranked by the amount of money they have lost in this game.</p>
+          )}
+          {gameRankingType === 'BY_GAME_WIN_RATE' && (
+            <p className="tab-description">Players ranked by their win percentage in this game.</p>
+          )}
+          {gameRankingType === 'BY_GAME_PROFIT' && (
+            <p className="tab-description">Players ranked by their total profit in this game.</p>
+          )}
+        </div>
         
         <div className="mt-4">
           <Tabs
@@ -531,10 +628,10 @@ const RankingList = () => {
                       className={`game-badge ${selectedGameId === game.id ? 'active' : ''}`}
                       onClick={() => handleGameSelect(game.id)}
                     >
-                      {(game.name || game.nombre || '').toLowerCase().includes('dice') ? <FaDice className="me-1" /> : 
-                      (game.name || game.nombre || '').toLowerCase().includes('roulette') ? <FaCircle className="me-1" /> : 
+                      {(game.name || '').toLowerCase().includes('dice') ? <FaDice className="me-1" /> : 
+                      (game.name || '').toLowerCase().includes('roulette') ? <FaCircle className="me-1" /> : 
                       <FaGamepad className="me-1" />}
-                      {game.name || game.nombre || 'Unknown Game'}
+                      {game.name || 'Unknown Game'}
                     </Badge>
                   ))}
                 </div>

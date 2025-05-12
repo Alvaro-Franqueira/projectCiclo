@@ -10,6 +10,8 @@ public enum RankingType {
     OVERALL_PROFIT,    // Ranking based on the highest net profit across all games
     WIN_RATE,          // Ranking based on win percentage (wins/total bets)
     BY_GAME_WIN_RATE,   // Ranking based on win percentage for a specific game
-    BY_GAME_PROFIT     // Ranking based on profit for a specific game
+    BY_GAME_PROFIT,    // Ranking based on profit for a specific game
+    TOP_LOSERS,        // Ranking based on the lowest net profit (biggest losers)
+    BY_GAME_LOSSES     // Ranking based on most losses for a specific game
     // Add more specific types as needed, e.g., BY_GAME_PROFIT
 }

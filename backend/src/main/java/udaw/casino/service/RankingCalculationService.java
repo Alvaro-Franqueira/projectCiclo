@@ -140,7 +140,8 @@ public class RankingCalculationService {
         
         // Add global rankings
         for (RankingType type : RankingType.values()) {
-            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE && type != RankingType.BY_GAME_PROFIT) {
+            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE 
+                && type != RankingType.BY_GAME_PROFIT && type != RankingType.BY_GAME_LOSSES) {
                 try {
                     Double score = calculateScore(user, type, null);
                     RankingEntry entry = new RankingEntry(user, null, type, score);
@@ -196,6 +197,27 @@ public class RankingCalculationService {
                           userId, game.getName(), winsScore, winsEntry.getPosition());
             } catch (Exception e) {
                 log.error("Error calculating BY_GAME_WINS ranking for user {} and game {}: {}", 
+                          userId, game.getName(), e.getMessage());
+            }
+            
+            // BY_GAME_LOSSES ranking
+            try {
+                Double lossesScore = calculateScore(user, RankingType.BY_GAME_LOSSES, game);
+                RankingEntry lossesEntry = new RankingEntry(user, game, RankingType.BY_GAME_LOSSES, lossesScore);
+                
+                // Calculate position for BY_GAME_LOSSES
+                List<RankingEntry> allLossesRankings = getRankingByGameAndType(RankingType.BY_GAME_LOSSES, game);
+                for (int i = 0; i < allLossesRankings.size(); i++) {
+                    if (allLossesRankings.get(i).getUser().getId().equals(user.getId())) {
+                        lossesEntry.setPosition(i + 1);
+                        break;
+                    }
+                }
+                rankings.add(lossesEntry);
+                log.debug("Added BY_GAME_LOSSES ranking for user {} and game {}: score={}, position={}", 
+                          userId, game.getName(), lossesScore, lossesEntry.getPosition());
+            } catch (Exception e) {
+                log.error("Error calculating BY_GAME_LOSSES ranking for user {} and game {}: {}", 
                           userId, game.getName(), e.getMessage());
             }
             
@@ -260,6 +282,11 @@ public class RankingCalculationService {
                 // Returns Double or 0.0 - SAFE
                 return betRepository.calculateTotalProfitForUser(user.getId());
 
+            case TOP_LOSERS:
+                // Negate the profit to rank users with most negative profit first
+                Double negativeProfit = betRepository.calculateTotalProfitForUser(user.getId());
+                return negativeProfit != null ? -negativeProfit : 0.0;
+
             case TOTAL_BETS_AMOUNT:
                 // Returns Double or 0.0 - SAFE
                 return betRepository.calculateTotalBetAmountForUser(user.getId());
@@ -273,6 +300,16 @@ public class RankingCalculationService {
                 // Implicit conversion from Long to Double might happen here,
                 // but explicitly converting is safer:
                 return wins != null ? wins.doubleValue() : 0.0; // <--- SUGGESTED CHANGE
+
+            case BY_GAME_LOSSES:
+                if (game == null || game.getId() == null) {
+                    throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_LOSSES ranking type");
+                }
+                // Calculate the total money lost (negative profit becomes positive loss)
+                Double lossProfit = betRepository.calculateTotalProfitForUserAndGame(user.getId(), game.getId());
+                // If profit is negative, it's a loss, so return the absolute value
+                // If profit is positive or zero, return 0 (no losses)
+                return (lossProfit != null && lossProfit < 0) ? Math.abs(lossProfit) : 0.0;
 
             case WIN_RATE:
                 // Returns Double (0.0 to 1.0) or 0.0 - SAFE

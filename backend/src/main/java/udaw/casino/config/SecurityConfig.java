@@ -64,7 +64,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/users/id/**").authenticated()
                 
                 // Allow access to rankings endpoints for authenticated users
-                .requestMatchers(HttpMethod.GET, "/api/rankings/v2/**").authenticated()
+                // Explicitly list all ranking endpoints to ensure all ranking types are accessible
+                .requestMatchers(HttpMethod.GET, 
+                    "/api/rankings/v2",
+                    "/api/rankings/v2/type/*", 
+                    "/api/rankings/v2/game/*/type/*",
+                    "/api/rankings/v2/user/*").authenticated()
                 
                 // Allow access to betting endpoints for authenticated users
                 .requestMatchers(HttpMethod.GET, "/api/bets/**").authenticated()

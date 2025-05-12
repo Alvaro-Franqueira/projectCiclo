@@ -1,0 +1,57 @@
+# Node
+node_modules/
+.npm
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build directories
+dist/
+build/
+target/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Maven specific
+.mvn/
+mvnw
+mvnw.cmd
+
+# Logs
+logs/
+*.log
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+
+# Backend build artifacts
+backend/target/
+
+# Testing
+coverage/
+.nyc_output/ 
