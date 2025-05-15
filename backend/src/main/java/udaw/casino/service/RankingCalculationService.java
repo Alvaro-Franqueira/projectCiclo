@@ -295,11 +295,8 @@ public class RankingCalculationService {
                 if (game == null || game.getId() == null) { // Added null check for game.getId() just in case
                     throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_AMOUNT ranking type");
                 }
-                // Returns Long or 0L - repo method returns Long
-                Long wins = betRepository.countWinsByUserAndGame(user.getId(), game.getId());
-                // Implicit conversion from Long to Double might happen here,
-                // but explicitly converting is safer:
-                return wins != null ? wins.doubleValue() : 0.0; // <--- SUGGESTED CHANGE
+                // Calculate total amount bet for specific game - returns Double or 0.0
+                return betRepository.calculateTotalBetAmountForUserAndGame(user.getId(), game.getId());
 
             case BY_GAME_LOSSES:
                 if (game == null || game.getId() == null) {

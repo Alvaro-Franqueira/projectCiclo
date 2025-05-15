@@ -51,6 +51,16 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
     Double calculateTotalBetAmountForUser(@Param("userId") Long userId);
 
     /**
+     * Calculates the total amount bet by a user on a specific game.
+     *
+     * @param userId The ID of the user.
+     * @param gameId The ID of the game.
+     * @return The total amount bet on the specific game.
+     */
+    @Query("SELECT COALESCE(SUM(b.amount), 0.0) FROM Bet b WHERE b.user.id = :userId AND b.game.id = :gameId")
+    Double calculateTotalBetAmountForUserAndGame(@Param("userId") Long userId, @Param("gameId") Long gameId);
+
+    /**
      * Calculates the total profit for a user (sum of winloss values).
      *
      * @param userId The ID of the user.

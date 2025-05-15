@@ -10,6 +10,8 @@ import silverLogo from '../images/silver-logo.png';
 import bronzeLogo from '../images/bronze-logo.png';
 import './RankingList.css';
 
+// Import the ranking types enum for consistent usage
+const { RANKING_TYPES } = rankingService;
 
 const iconLosers = <Icon path={mdiEmoticonPoop} size={0.8} />;
 // Create a memoized ranking table component to prevent unnecessary re-renders
@@ -44,7 +46,7 @@ const RankingTable = React.memo(({
         <Alert variant="warning">
           Game profit rankings are currently unavailable. The feature may still be in development.
           <div className="mt-2">
-            <small>Please try using the Wins or Win Rate rankings instead.</small>
+            <small>Please try using the Bet Amount or Win Rate rankings instead.</small>
           </div>
         </Alert>
       );
@@ -95,8 +97,8 @@ RankingTable.displayName = 'RankingTable';
 
 const RankingList = () => {
   const [activeTab, setActiveTab] = useState('overall');
-  const [rankingType, setRankingType] = useState('OVERALL_PROFIT');
-  const [gameRankingType, setGameRankingType] = useState('BY_GAME_AMOUNT');
+  const [rankingType, setRankingType] = useState(RANKING_TYPES.OVERALL_PROFIT);
+  const [gameRankingType, setGameRankingType] = useState(RANKING_TYPES.BY_GAME_AMOUNT);
   const [rankings, setRankings] = useState([]);
   const [games, setGames] = useState([]);
   const [selectedGameId, setSelectedGameId] = useState(null);
@@ -132,7 +134,7 @@ const RankingList = () => {
     
     if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT') {
       return `$${numValue.toFixed(2)}`;
-    } else if (type === 'TOTAL_BETS_AMOUNT') {
+    } else if (type === 'TOTAL_BETS_AMOUNT' || type === 'BY_GAME_AMOUNT') {
       return `$${numValue.toFixed(2)}`;
     } else if (type === 'WIN_RATE' || type === 'BY_GAME_WIN_RATE') {
       return `${numValue.toFixed(1)}%`;
@@ -210,6 +212,8 @@ const RankingList = () => {
       return 'Total Losses';
     } else if (rankingTypeToUse === 'BY_GAME_LOSSES') {
       return 'Total Losses';
+    } else if (rankingTypeToUse === RANKING_TYPES.BY_GAME_AMOUNT) {
+      return 'Total Bet Amount';
     } else {
       return 'Wins';
     }
@@ -227,19 +231,19 @@ const RankingList = () => {
     try {
       let gameRankings;
       
-      if (rankingType === 'BY_GAME_PROFIT') {
+      if (rankingType === RANKING_TYPES.BY_GAME_PROFIT) {
         try {
           gameRankings = await rankingService.getGameProfitRankings(gameId);
         } catch (err) {
-          gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_AMOUNT');
+          gameRankings = await rankingService.getRankingsByGameAndType(gameId, RANKING_TYPES.BY_GAME_AMOUNT);
         }
-      } else if (rankingType === 'BY_GAME_WIN_RATE') {
+      } else if (rankingType === RANKING_TYPES.BY_GAME_WIN_RATE) {
         gameRankings = await rankingService.getGameWinRateRankings(gameId);
-      } else if (rankingType === 'BY_GAME_LOSSES') {
+      } else if (rankingType === RANKING_TYPES.BY_GAME_LOSSES) {
         gameRankings = await rankingService.getGameMostLossesRankings(gameId);
       } else {
         // Default to BY_GAME_AMOUNT
-        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_AMOUNT');
+        gameRankings = await rankingService.getRankingsByGameAndType(gameId, RANKING_TYPES.BY_GAME_AMOUNT);
       }
       
       setRankingsState(gameRankings || []);
@@ -375,18 +379,15 @@ const RankingList = () => {
         try {
           let rankingsData;
           
-          if (gameRankingType === 'BY_GAME_PROFIT') {
+          if (gameRankingType === RANKING_TYPES.BY_GAME_PROFIT) {
             try {
               rankingsData = await rankingService.getGameProfitRankings(selectedGameId);
             } catch (err) {
-              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_AMOUNT');
-              if (isMounted) {
-                setGameRankingType('BY_GAME_AMOUNT'); // Update UI state if we fell back
-              }
+              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, RANKING_TYPES.BY_GAME_AMOUNT);
             }
-          } else if (gameRankingType === 'BY_GAME_WIN_RATE') {
+          } else if (gameRankingType === RANKING_TYPES.BY_GAME_WIN_RATE) {
             rankingsData = await rankingService.getGameWinRateRankings(selectedGameId);
-          } else if (gameRankingType === 'BY_GAME_LOSSES') {
+          } else if (gameRankingType === RANKING_TYPES.BY_GAME_LOSSES) {
             rankingsData = await rankingService.getGameMostLossesRankings(selectedGameId);
           } else {
             rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, gameRankingType);
@@ -538,20 +539,20 @@ const RankingList = () => {
         className="ranking-subtabs-sub"
       >
         <Tab 
-          eventKey="BY_GAME_AMOUNT"
-          title={<><FaTrophy className="me-1" /> Wins</>}
+          eventKey={RANKING_TYPES.BY_GAME_AMOUNT}
+          title={<><FaCoins className="me-1" /> Bet Amount</>}
         />
 
         <Tab 
-          eventKey="BY_GAME_PROFIT" 
+          eventKey={RANKING_TYPES.BY_GAME_PROFIT}
           title={<><FaDollarSign className="me-1" /> Profit</>}
         />
         <Tab 
-          eventKey="BY_GAME_WIN_RATE" 
+          eventKey={RANKING_TYPES.BY_GAME_WIN_RATE}
           title={<><FaPercentage className="me-1" /> Win Rate</>}
         />
         <Tab 
-          eventKey="BY_GAME_LOSSES" 
+          eventKey={RANKING_TYPES.BY_GAME_LOSSES}
           title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Losses</>}
         />
 
@@ -566,16 +567,16 @@ const RankingList = () => {
         
         {/* Game Ranking Type Description */}
         <div className="ranking-subtab-content mt-3 mb-4">
-          {gameRankingType === 'BY_GAME_AMOUNT' && (
-            <p className="tab-description">Players ranked by their number of wins in this game.</p>
+          {gameRankingType === RANKING_TYPES.BY_GAME_AMOUNT && (
+            <p className="tab-description">Players ranked by the total amount of money they have bet in this game.</p>
           )}
-          {gameRankingType === 'BY_GAME_LOSSES' && (
+          {gameRankingType === RANKING_TYPES.BY_GAME_LOSSES && (
             <p className="tab-description">Players ranked by the amount of money they have lost in this game.</p>
           )}
-          {gameRankingType === 'BY_GAME_WIN_RATE' && (
+          {gameRankingType === RANKING_TYPES.BY_GAME_WIN_RATE && (
             <p className="tab-description">Players ranked by their win percentage in this game.</p>
           )}
-          {gameRankingType === 'BY_GAME_PROFIT' && (
+          {gameRankingType === RANKING_TYPES.BY_GAME_PROFIT && (
             <p className="tab-description">Players ranked by their total profit in this game.</p>
           )}
         </div>
@@ -592,7 +593,7 @@ const RankingList = () => {
                 title={<><FaDice className="me-2" />Dice</>}
               >
                 <div className="ranking-subtab-content">
-                  <p className="tab-description">Players ranked by their performance in Dice games.</p>
+                 
                   {renderRankingTable(diceRankings, gameRankingType, diceLoading)}
                 </div>
               </Tab>
@@ -605,7 +606,7 @@ const RankingList = () => {
                 title={<><FaCircle className="me-2" />Roulette</>}
               >
                 <div className="ranking-subtab-content">
-                  <p className="tab-description">Players ranked by their performance in Roulette games.</p>
+                 
                   {renderRankingTable(rouletteRankings, gameRankingType, rouletteLoading)}
                 </div>
               </Tab>
@@ -618,7 +619,7 @@ const RankingList = () => {
                 title={<><FaGamepad className="me-2" />Blackjack</>}
               >
                 <div className="ranking-subtab-content">
-                  <p className="tab-description">Players ranked by their performance in Blackjack games.</p>
+                 
                   {renderRankingTable(blackjackRankings, gameRankingType, blackjackLoading)}
                 </div>
               </Tab>
@@ -631,41 +632,13 @@ const RankingList = () => {
                 title={<><FaGamepad className="me-2" />Slot Machine</>}
               >
                 <div className="ranking-subtab-content">
-                  <p className="tab-description">Players ranked by their performance in Slot Machine games.</p>
+                 
                   {renderRankingTable(slotRankings, gameRankingType, slotLoading)}
                 </div>
               </Tab>
             )}
 
-            {/* Other Games Tab - only show if we need the fallback */}
-            {(!diceGameId && !rouletteGameId && !blackjackGameId && !slotGameId) && (
-              <Tab 
-                eventKey="other" 
-                title={<><FaGamepad className="me-2" />Other Games</>}
-              >
-                <Alert variant="info" className="mb-3">
-                  Select a game from the list below to view its rankings.
-                </Alert>
-                
-                <div className="game-badges mb-4">
-                  {games.map(game => (
-                    <Badge 
-                      key={game.id}
-                      bg={selectedGameId === game.id ? 'primary' : 'secondary'}
-                      className={`game-badge ${selectedGameId === game.id ? 'active' : ''}`}
-                      onClick={() => handleGameSelect(game.id)}
-                    >
-                      {(game.name || '').toLowerCase().includes('dice') ? <FaDice className="me-1" /> : 
-                      (game.name || '').toLowerCase().includes('roulette') ? <FaCircle className="me-1" /> : 
-                      <FaGamepad className="me-1" />}
-                      {game.name || 'Unknown Game'}
-                    </Badge>
-                  ))}
-                </div>
-                
-                {renderRankingTable(rankings, gameRankingType, loading)}
-              </Tab>
-            )}
+
           </Tabs>
         </div>
       </div>
@@ -681,20 +654,22 @@ const RankingList = () => {
             <h2 className="mb-0">Player Rankings</h2>
             <FaTrophy className="ms-2 trophy-icon" />
           </div>
-          <button 
-            className="btn btn-outline-danger btn-sm" 
-            onClick={clearRankingCache}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" />
-                Refreshing...
-              </>
-            ) : (
-              'Clear Rankings Cache'
-            )}
-          </button>
+          <div>
+            <button 
+              className="btn btn-outline-danger btn-sm" 
+              onClick={clearRankingCache}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" />
+                  Refreshing...
+                </>
+              ) : (
+                'Clear Rankings Cache'
+              )}
+            </button>
+          </div>
         </Card.Header>
         <Card.Body>
           <Tabs
