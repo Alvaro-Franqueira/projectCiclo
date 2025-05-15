@@ -132,15 +132,12 @@ const RankingList = () => {
     // Check if we have a valid number
     if (isNaN(numValue)) return '0';
     
-    if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT') {
+    if (type === 'OVERALL_PROFIT' || type === 'BY_GAME_PROFIT' || type === 'TOP_LOSERS' || type === 'BY_GAME_LOSSES') {
       return `$${numValue.toFixed(2)}`;
     } else if (type === 'TOTAL_BETS_AMOUNT' || type === 'BY_GAME_AMOUNT') {
       return `$${numValue.toFixed(2)}`;
     } else if (type === 'WIN_RATE' || type === 'BY_GAME_WIN_RATE') {
       return `${numValue.toFixed(1)}%`;
-    } else if (type === 'TOP_LOSERS' || type === 'BY_GAME_LOSSES') {
-      // For losses, show as currency amount
-      return `$${numValue.toFixed(2)}`;
     } else {
       return numValue.toString();
     }
@@ -489,7 +486,7 @@ const RankingList = () => {
         >          
           <Tab 
             eventKey="TOTAL_BETS_AMOUNT" 
-            title={<><FaCoins className="me-1" /> Bets</>}
+            title={<><FaCoins className="me-1" /> Bet Amount</>}
           >
             <div className="ranking-subtab-content">
               <p className="tab-description">Players ranked by their total amount bet across all games.</p>
@@ -567,18 +564,10 @@ const RankingList = () => {
         
         {/* Game Ranking Type Description */}
         <div className="ranking-subtab-content mt-3 mb-4">
-          {gameRankingType === RANKING_TYPES.BY_GAME_AMOUNT && (
-            <p className="tab-description">Players ranked by the total amount of money they have bet in this game.</p>
-          )}
-          {gameRankingType === RANKING_TYPES.BY_GAME_LOSSES && (
-            <p className="tab-description">Players ranked by the amount of money they have lost in this game.</p>
-          )}
-          {gameRankingType === RANKING_TYPES.BY_GAME_WIN_RATE && (
-            <p className="tab-description">Players ranked by their win percentage in this game.</p>
-          )}
-          {gameRankingType === RANKING_TYPES.BY_GAME_PROFIT && (
-            <p className="tab-description">Players ranked by their total profit in this game.</p>
-          )}
+          {gameRankingType === RANKING_TYPES.BY_GAME_AMOUNT}
+          {gameRankingType === RANKING_TYPES.BY_GAME_LOSSES}
+          {gameRankingType === RANKING_TYPES.BY_GAME_WIN_RATE}
+          {gameRankingType === RANKING_TYPES.BY_GAME_PROFIT}
         </div>
         
         <div className="mt-4">
