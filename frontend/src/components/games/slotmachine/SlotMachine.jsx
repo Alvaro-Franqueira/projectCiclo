@@ -94,7 +94,7 @@ const SlotMachine = () => {
         status: isWin ? 'WON' : 'LOST',
         type: 'SLOT_MACHINE',
         betDate: new Date().toISOString(),
-        winloss: isWin ? amount : -bet,
+        winloss: isWin ? (amount-bet) : -bet,
         betValue: 'spin',
         winningValue: isWin ? 'combination' : 'none'
       };

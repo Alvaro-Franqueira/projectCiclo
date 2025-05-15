@@ -67,7 +67,7 @@ public class RankingCalculationService {
         log.info("Calculating on-demand ranking for type: {}", type);
         
         // Check if the ranking type requires a game
-        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT) {
+        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
             log.warn("Requested game-specific ranking type {} without specifying a game - returning empty list", type);
             return new ArrayList<>(); // Return empty list for game-specific ranking types
         }
@@ -147,9 +147,9 @@ public class RankingCalculationService {
                     RankingEntry entry = new RankingEntry(user, null, type, score);
                     
                     // Calculate position
-                    List<RankingEntry> allRankings = getRankingByType(type);
-                    for (int i = 0; i < allRankings.size(); i++) {
-                        if (allRankings.get(i).getUser().getId().equals(user.getId())) {
+                    List<RankingEntry> fullRanking = getRankingByType(type);
+                    for (int i = 0; i < fullRanking.size(); i++) {
+                        if (fullRanking.get(i).getUser().getId().equals(user.getId())) {
                             entry.setPosition(i + 1);
                             break;
                         }
@@ -308,8 +308,7 @@ public class RankingCalculationService {
                 // Calculate the total money lost (negative profit becomes positive loss)
                 Double lossProfit = betRepository.calculateTotalProfitForUserAndGame(user.getId(), game.getId());
                 // If profit is negative, it's a loss, so return the absolute value
-                // If profit is positive or zero, return 0 (no losses)
-                return (lossProfit != null && lossProfit < 0) ? Math.abs(lossProfit) : 0.0;
+                return lossProfit != null ? -lossProfit : 0.0;
 
             case WIN_RATE:
                 // Returns Double (0.0 to 1.0) or 0.0 - SAFE

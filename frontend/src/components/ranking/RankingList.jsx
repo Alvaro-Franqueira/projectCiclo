@@ -100,6 +100,7 @@ const RankingList = () => {
   const [selectedGameId, setSelectedGameId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Game-specific rankings
   const [diceRankings, setDiceRankings] = useState([]);
@@ -423,10 +424,29 @@ const RankingList = () => {
 
   const handleTabSelect = useCallback((key) => {
     setActiveTab(key);
-    if (key === 'overall') {
-      setRankingType('OVERALL_PROFIT');
-    }
   }, []);
+  
+  // Clear ranking cache and reload the page
+  const clearRankingCache = () => {
+    try {
+      setIsRefreshing(true);
+      setError('');
+      
+      // Clear all ranking cache
+      rankingService.clearCache();
+      console.log('Ranking cache cleared successfully');
+      
+      // Show a brief message before reloading
+      setTimeout(() => {
+        // Reload the entire page to get fresh data
+        window.location.reload();
+      }, 500); // Short delay to show the loading state
+    } catch (error) {
+      console.error('Error clearing ranking cache:', error);
+      setError('Failed to clear ranking cache. Please try again.');
+      setIsRefreshing(false);
+    }
+  };
 
   const handleOverallRankingTypeSelect = useCallback((type) => {
     setRankingType(type);
@@ -648,11 +668,26 @@ const RankingList = () => {
   return (
     <Container>
       <Card className="ranking-card">
-        <Card.Header className="text-center ranking-header d-flex align-items-center justify-content-center">
-          
-          <FaTrophy className="me-2 trophy-icon" />
-          <h2 className="mb-0">Player Rankings</h2>
-          <FaTrophy className="me-2 trophy-icon" />
+        <Card.Header className="ranking-header d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <FaTrophy className="me-2 trophy-icon" />
+            <h2 className="mb-0">Player Rankings</h2>
+            <FaTrophy className="ms-2 trophy-icon" />
+          </div>
+          <button 
+            className="btn btn-outline-danger btn-sm" 
+            onClick={clearRankingCache}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" />
+                Refreshing...
+              </>
+            ) : (
+              'Clear Rankings Cache'
+            )}
+          </button>
         </Card.Header>
         <Card.Body>
           <Tabs

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {  Container, Row, Col, Card, Table, Badge, Alert, Tabs, Tab, Button, Spinner, Pagination, Image } from 'react-bootstrap';
 import { FaUser, FaCalendarAlt, FaCoins, FaGamepad, FaTrophy, FaPercentage, FaChartLine, FaSync, FaDice, FaCrown, FaMedal, FaMoneyBillWave, FaStar, FaAward } from 'react-icons/fa';
 import userService from '../services/userService';
@@ -10,8 +10,56 @@ import { useAuth } from '../context/AuthContext';
 import { GiRollingDices, GiCoins } from "react-icons/gi";
 import rouletteImg from '../components/images/rouletteimg.png';
 import kingLogo from '../components/images/king-logo.png';
+import shitLogo from '../components/images/shitty-logo.png';
 import blackjackImg from '../components/images/blackjack-white.png';
 import slotMachineImg from '../components/images/seven-icon.png';
+import { Line } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+} from 'chart.js';
+
+// Add CSS for the shake animation
+const shakeAnimation = `
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+`;
+
+// Create a style element for the animation
+const styleElement = document.createElement('style');
+styleElement.type = 'text/css';
+styleElement.appendChild(document.createTextNode(shakeAnimation));
+document.head.appendChild(styleElement);
+
+// Register Chart.js components
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+);
 
 const UserProfile = () => {
     const { user } = useAuth();
@@ -26,10 +74,69 @@ const UserProfile = () => {
         dice: { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 },
         roulette: { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 }
     });
+    
+    // Balance evolution chart data
+    const [balanceHistory, setBalanceHistory] = useState([]);
+    const [chartTimeframe, setChartTimeframe] = useState('all'); // 'all', 'month', 'week'
 
     // States for bet history pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [betsPerPage] = useState(10); // You can adjust this number
+    
+    // Calculate balance history from bets
+    const calculateBalanceHistory = useCallback(() => {
+        if (!Array.isArray(bets) || bets.length === 0 || !profileData.balance) {
+            return [];
+        }
+        
+        // Sort bets by date (oldest first)
+        const sortedBets = [...bets].sort((a, b) => new Date(a.betDate) - new Date(b.betDate));
+        
+        // Calculate current balance
+        const currentBalance = profileData.balance;
+        
+        // Calculate total profit/loss from all bets
+        const totalProfitLoss = sortedBets.reduce((sum, bet) => sum + (bet.winloss || 0), 0);
+        
+        // Estimate initial balance (current balance minus total profit/loss)
+        const estimatedInitialBalance = Math.max(currentBalance - totalProfitLoss, 0);
+        
+        // Generate balance history
+        let runningBalance = estimatedInitialBalance;
+        const history = [{
+            date: new Date(sortedBets[0].betDate).toISOString().split('T')[0],
+            balance: runningBalance
+        }];
+        
+        // Add each bet's impact on balance
+        sortedBets.forEach(bet => {
+            runningBalance += (bet.winloss || 0);
+            // Only add a data point if the balance changed
+            if (bet.winloss !== 0) {
+                history.push({
+                    date: new Date(bet.betDate).toISOString().split('T')[0],
+                    balance: Math.max(runningBalance, 0) // Ensure balance doesn't go negative
+                });
+            }
+        });
+        
+        // Filter history based on selected timeframe
+        const now = new Date();
+        let filteredHistory = history;
+        
+        if (chartTimeframe === 'month') {
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            filteredHistory = history.filter(item => new Date(item.date) >= monthAgo);
+        } else if (chartTimeframe === 'week') {
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            filteredHistory = history.filter(item => new Date(item.date) >= weekAgo);
+        }
+        
+        // If filtered history is empty, return the original history
+        return filteredHistory.length > 0 ? filteredHistory : history;
+    }, [bets, profileData.balance, chartTimeframe]);
 
     const fetchProfileData = useCallback(async (userId) => {
         if (!userId) return;
@@ -185,9 +292,18 @@ const UserProfile = () => {
                 roulette: { totalBets: 0, winRate: 0, totalWins: 0, totalProfit: 0 }
             });
             setProfileData({});
+            setBalanceHistory([]);
             setError('');
         }
     }, [user?.id, fetchProfileData]);
+    
+    // Calculate balance history when bets or timeframe changes
+    useEffect(() => {
+        if (bets.length > 0 && profileData.balance) {
+            const history = calculateBalanceHistory();
+            setBalanceHistory(history);
+        }
+    }, [bets, profileData.balance, chartTimeframe, calculateBalanceHistory]);
 
     const handleRefresh = () => {
         if (user?.id && !isRefreshing) {
@@ -196,7 +312,27 @@ const UserProfile = () => {
             fetchProfileData(user.id);
         }
     };
-
+    
+    // Clear ranking cache and refresh data
+    const clearRankingCache = () => {
+        try {
+            // Clear all ranking cache
+            rankingService.clearCache();
+            console.log('Ranking cache cleared successfully');
+            
+            // Refresh data to get fresh rankings
+            if (user?.id) {
+                setIsRefreshing(true);
+                fetchProfileData(user.id);
+            }
+        } catch (error) {
+            console.error('Error clearing ranking cache:', error);
+            setError('Failed to clear ranking cache. Please try again.');
+        }
+    };
+    
+    // Calculate balance history from bets
+   
     const calculateStats = () => {
         if (!Array.isArray(bets) || bets.length === 0) {
             return { totalBets: 0, totalWagered: 0, totalWon: 0, totalLost: 0, netProfit: 0, winRate: 0, maxBet: 0, maxLoss: 0, maxWin: 0 };
@@ -222,15 +358,90 @@ const UserProfile = () => {
     const indexOfFirstBet = indexOfLastBet - betsPerPage;
     const currentBets = bets.slice(indexOfFirstBet, indexOfLastBet);
     const totalPages = Math.ceil(bets.length / betsPerPage);
+    
+    // Chart configuration
+    const chartData = useMemo(() => {
+        if (balanceHistory.length === 0) {
+            return {
+                labels: [],
+                datasets: [{
+                    label: 'Balance',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+        }
+        
+        return {
+            labels: balanceHistory.map(item => item.date),
+            datasets: [{
+                label: 'Balance',
+                data: balanceHistory.map(item => item.balance),
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        };
+    }, [balanceHistory]);
+    
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: '#e2e8f0'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#e2e8f0',
+                    maxRotation: 45,
+                    minRotation: 45
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e2e8f0'
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `Balance: $${context.parsed.y.toFixed(2)}`;
+                    }
+                }
+            }
+        }
+    };
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Check if user has #1 rankings
     const numberOneRankings = Array.isArray(rankings) ? rankings.filter(r => r.position === 1) : [];
     const isNumberOne = numberOneRankings.length > 0;
+    
+    // Check if user is #1 in any loser rankings
+    const loserRankingTypes = ['TOP_LOSERS', 'BY_GAME_LOSSES'];
+    const isTopLoser = numberOneRankings.some(r => loserRankingTypes.includes(r.type));
+    
     const numberOneRankingDetails = numberOneRankings.map(r => ({
         type: r.type,
-        game: r.game?.name || 'Overall'
+        game: r.game?.name || 'Overall',
+        isLoserRanking: loserRankingTypes.includes(r.type)
     }));
 
     // Debugging ranking data
@@ -343,13 +554,27 @@ const UserProfile = () => {
                     <Card className="text-white" style={{ boxShadow: 'none' }}>
                         <Card.Body className="text-center">
                             <div className="avatar-placeholder mb-3">
-                                {isNumberOne ? (<Image 
-                                                    src={kingLogo} 
-                                                    alt="Casino Logo King" 
-                                                    width={130} 
-                                                    height={130} 
-                                                    style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))', borderRadius: '24px'  }} 
-                                                />) : (<FaUser size={60} />)}
+                                {isNumberOne ? (
+                                    isTopLoser ? (
+                                        <Image 
+                                            src={shitLogo} 
+                                            alt="Loser Logo" 
+                                            width={130} 
+                                            height={130} 
+                                            style={{ filter: 'drop-shadow(0 0 3px rgba(156, 39, 176, 0.5))', borderRadius: '24px' }} 
+                                        />
+                                    ) : (
+                                        <Image 
+                                            src={kingLogo} 
+                                            alt="Casino Logo King" 
+                                            width={130} 
+                                            height={130} 
+                                            style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))', borderRadius: '24px' }} 
+                                        />
+                                    )
+                                ) : (
+                                    <FaUser size={60} />
+                                )}
                             </div>
                             <Card.Title style={{ paddingBottom: '10px' }}>{profileData.username || 'User'}</Card.Title>
                             <Card.Subtitle className="mb-3 text-white">{profileData.email || 'No email'}</Card.Subtitle>
@@ -368,6 +593,12 @@ const UserProfile = () => {
                                             
                                             // Customize badge based on ranking type
                                             const badgeInfo = getBadgeForRanking(detail.type, detail.game);
+                                            
+                                            // Add special animation for loser rankings
+                                            const isLoserRanking = detail.isLoserRanking;
+                                            const badgeAnimation = isLoserRanking ? 
+                                                'shake 2s infinite' : '';
+                                            
                                             return (
                                                 <div 
                                                     key={index} 
@@ -377,7 +608,8 @@ const UserProfile = () => {
                                                         borderRadius: '8px',
                                                         border: `2px solid ${badgeInfo.borderColor}`,
                                                         boxShadow: `0 3px 6px rgba(0,0,0,0.2)`,
-                                                        width: '48%'
+                                                        width: '48%',
+                                                        animation: badgeAnimation
                                                     }}
                                                 >
                                                     <div className="badge-icon mb-1">
@@ -389,6 +621,11 @@ const UserProfile = () => {
                                                     <div className="badge-game" style={{ fontSize: '0.65rem', color: badgeInfo.textColor }}>
                                                         {detail.game}
                                                     </div>
+                                                    {isLoserRanking && (
+                                                        <div className="badge-loser" style={{ fontSize: '0.6rem', color: '#ff6b6b', marginTop: '2px' }}>
+                                                            Biggest Loser
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -424,6 +661,51 @@ const UserProfile = () => {
                                 {/* Statistics Tab */}
                                 <Tab eventKey="stats" title={<><FaCoins className="me-1" /> Statistics</>}>
                                     <div className="p-3 card-tab-body">
+                                        {/* Balance Evolution Chart */}
+                                        <Card className="mb-4" style={{ backgroundColor: '#1e293b', borderColor: '#334155' }}>
+                                            <Card.Header className="d-flex justify-content-between align-items-center" style={{ backgroundColor: '#0f172a', borderColor: '#334155' }}>
+                                                <h5 className="mb-0"><FaChartLine className="me-2" /> Balance Evolution</h5>
+                                                <div>
+                                                    <Button 
+                                                        variant={chartTimeframe === 'week' ? 'warning' : 'outline-secondary'} 
+                                                        size="sm" 
+                                                        className="me-2" 
+                                                        onClick={() => setChartTimeframe('week')}
+                                                    >
+                                                        Week
+                                                    </Button>
+                                                    <Button 
+                                                        variant={chartTimeframe === 'month' ? 'warning' : 'outline-secondary'} 
+                                                        size="sm" 
+                                                        className="me-2" 
+                                                        onClick={() => setChartTimeframe('month')}
+                                                    >
+                                                        Month
+                                                    </Button>
+                                                    <Button 
+                                                        variant={chartTimeframe === 'all' ? 'warning' : 'outline-secondary'} 
+                                                        size="sm" 
+                                                        onClick={() => setChartTimeframe('all')}
+                                                    >
+                                                        All Time
+                                                    </Button>
+                                                </div>
+                                            </Card.Header>
+                                            <Card.Body>
+                                                {balanceHistory.length > 0 ? (
+                                                    <div style={{ height: '300px', position: 'relative' }}>
+                                                        <Line data={chartData} options={chartOptions} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-5">
+                                                        <FaChartLine size={40} className="mb-3 text-secondary" />
+                                                        <p>Not enough bet history to display balance evolution.</p>
+                                                        <p className="text-muted small">Place more bets to see your balance change over time.</p>
+                                                    </div>
+                                                )}
+                                            </Card.Body>
+                                        </Card>
+                                        
                                         <Row>
                                             <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
                                             <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4></div></Col>
@@ -535,12 +817,12 @@ const UserProfile = () => {
                                                         </div>
                                                         <div className="d-flex justify-content-between mb-2">
                                                             <span>Total Wins:</span>
-                                                            <span className="text-warning"><FaTrophy className="me-1" />{gameStats.blackjack.totalWins}</span>
+                                                            <span className="text-warning"><FaTrophy className="me-1" />{gameStats.slotMachine.totalWins}</span>
                                                         </div>
                                                         <div className="d-flex justify-content-between">
                                                             <span>Net Profit:</span>
-                                                            <span className={gameStats.blackjack.totalProfit >= 0 ? 'text-success' : 'text-danger'}>
-                                                                <FaCoins className="me-1" />${(gameStats.blackjack.totalProfit ?? 0).toFixed(2)}
+                                                            <span className={gameStats.slotMachine.totalProfit >= 0 ? 'text-success' : 'text-danger'}>
+                                                                <FaCoins className="me-1" />${(gameStats.slotMachine.totalProfit ?? 0).toFixed(2)}
                                                             </span>
                                                         </div>
                                                     </Card.Body>
@@ -652,6 +934,21 @@ const UserProfile = () => {
                                 {/* My Rankings Tab */}
                                 <Tab eventKey="myRankings" title={<><FaTrophy className="me-1" /> My Rankings</>}>
                                     <div className="p-3 card-tab-body">
+                                        <div className="d-flex justify-content-between mb-3">
+                                            <h5 className="mb-0">My Rankings</h5>
+                                            <Button 
+                                                variant="outline-danger" 
+                                                size="sm" 
+                                                onClick={clearRankingCache} 
+                                                disabled={isRefreshing}
+                                            >
+                                                {isRefreshing ? (
+                                                    <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Refreshing...</>
+                                                ) : (
+                                                    <>Clear Rankings Cache</>
+                                                )}
+                                            </Button>
+                                        </div>
                                         {rankings.length > 0 ? (
                                             <>
                                                 {/* Group rankings by game */}
