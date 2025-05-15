@@ -67,7 +67,7 @@ public class RankingCalculationService {
         log.info("Calculating on-demand ranking for type: {}", type);
         
         // Check if the ranking type requires a game
-        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
+        if (type == RankingType.BY_GAME_AMOUNT || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
             log.warn("Requested game-specific ranking type {} without specifying a game - returning empty list", type);
             return new ArrayList<>(); // Return empty list for game-specific ranking types
         }
@@ -140,7 +140,7 @@ public class RankingCalculationService {
         
         // Add global rankings
         for (RankingType type : RankingType.values()) {
-            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE 
+            if (type != RankingType.BY_GAME_AMOUNT && type != RankingType.BY_GAME_WIN_RATE 
                 && type != RankingType.BY_GAME_PROFIT && type != RankingType.BY_GAME_LOSSES) {
                 try {
                     Double score = calculateScore(user, type, null);
@@ -179,13 +179,13 @@ public class RankingCalculationService {
             log.debug("Processing game rankings for user {} and game {} (ID: {})", 
                       userId, game.getName(), game.getId());
             
-            // BY_GAME_WINS ranking
+            // BY_GAME_AMOUNT ranking
             try {
-                Double winsScore = calculateScore(user, RankingType.BY_GAME_WINS, game);
-                RankingEntry winsEntry = new RankingEntry(user, game, RankingType.BY_GAME_WINS, winsScore);
+                Double winsScore = calculateScore(user, RankingType.BY_GAME_AMOUNT, game);
+                RankingEntry winsEntry = new RankingEntry(user, game, RankingType.BY_GAME_AMOUNT, winsScore);
                 
-                // Calculate position for BY_GAME_WINS
-                List<RankingEntry> allWinsRankings = getRankingByGameAndType(RankingType.BY_GAME_WINS, game);
+                // Calculate position for BY_GAME_AMOUNT
+                List<RankingEntry> allWinsRankings = getRankingByGameAndType(RankingType.BY_GAME_AMOUNT, game);
                 for (int i = 0; i < allWinsRankings.size(); i++) {
                     if (allWinsRankings.get(i).getUser().getId().equals(user.getId())) {
                         winsEntry.setPosition(i + 1);
@@ -193,10 +193,10 @@ public class RankingCalculationService {
                     }
                 }
                 rankings.add(winsEntry);
-                log.debug("Added BY_GAME_WINS ranking for user {} and game {}: score={}, position={}", 
+                log.debug("Added BY_GAME_AMOUNT ranking for user {} and game {}: score={}, position={}", 
                           userId, game.getName(), winsScore, winsEntry.getPosition());
             } catch (Exception e) {
-                log.error("Error calculating BY_GAME_WINS ranking for user {} and game {}: {}", 
+                log.error("Error calculating BY_GAME_AMOUNT ranking for user {} and game {}: {}", 
                           userId, game.getName(), e.getMessage());
             }
             
@@ -291,9 +291,9 @@ public class RankingCalculationService {
                 // Returns Double or 0.0 - SAFE
                 return betRepository.calculateTotalBetAmountForUser(user.getId());
 
-            case BY_GAME_WINS:
+            case BY_GAME_AMOUNT:
                 if (game == null || game.getId() == null) { // Added null check for game.getId() just in case
-                    throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_WINS ranking type");
+                    throw new IllegalArgumentException("Game and Game ID cannot be null for BY_GAME_AMOUNT ranking type");
                 }
                 // Returns Long or 0L - repo method returns Long
                 Long wins = betRepository.countWinsByUserAndGame(user.getId(), game.getId());

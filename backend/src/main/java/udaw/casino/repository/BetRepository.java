@@ -32,7 +32,7 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
 
     /**
      * Counts the number of bets for a given user, game, and status.
-     * Used to calculate rankings like BY_GAME_WINS.
+     * Used to calculate rankings like BY_GAME_AMOUNT.
      *
      * @param user The user entity.
      * @param game The game entity.

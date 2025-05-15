@@ -67,17 +67,12 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const userData = await authService.login(credentials);
-       // Ensure balance is a number if present in userData
-       if (userData && userData.balance !== undefined) {
-           userData.balance = Number(userData.balance);
-       }
+
       setUser(userData);
       setIsAuthenticated(true);
       return userData; // Return data for potential chaining
     } catch (error) {
-       // Clear state on login failure? Optional, depends on desired UX
-       // setIsAuthenticated(false);
-       // setUser(null);
+      // Do not clear authentication state or redirect on login failure
       console.error("Login failed:", error);
       throw error; // Re-throw error for the calling component to handle
     } finally {

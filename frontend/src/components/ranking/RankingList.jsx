@@ -10,6 +10,8 @@ import silverLogo from '../images/silver-logo.png';
 import bronzeLogo from '../images/bronze-logo.png';
 import './RankingList.css';
 
+
+const iconLosers = <Icon path={mdiEmoticonPoop} size={0.8} />;
 // Create a memoized ranking table component to prevent unnecessary re-renders
 const RankingTable = React.memo(({ 
   rankingsData, 
@@ -94,7 +96,7 @@ RankingTable.displayName = 'RankingTable';
 const RankingList = () => {
   const [activeTab, setActiveTab] = useState('overall');
   const [rankingType, setRankingType] = useState('OVERALL_PROFIT');
-  const [gameRankingType, setGameRankingType] = useState('BY_GAME_WINS');
+  const [gameRankingType, setGameRankingType] = useState('BY_GAME_AMOUNT');
   const [rankings, setRankings] = useState([]);
   const [games, setGames] = useState([]);
   const [selectedGameId, setSelectedGameId] = useState(null);
@@ -229,15 +231,15 @@ const RankingList = () => {
         try {
           gameRankings = await rankingService.getGameProfitRankings(gameId);
         } catch (err) {
-          gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
+          gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_AMOUNT');
         }
       } else if (rankingType === 'BY_GAME_WIN_RATE') {
         gameRankings = await rankingService.getGameWinRateRankings(gameId);
       } else if (rankingType === 'BY_GAME_LOSSES') {
         gameRankings = await rankingService.getGameMostLossesRankings(gameId);
       } else {
-        // Default to BY_GAME_WINS
-        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_WINS');
+        // Default to BY_GAME_AMOUNT
+        gameRankings = await rankingService.getRankingsByGameAndType(gameId, 'BY_GAME_AMOUNT');
       }
       
       setRankingsState(gameRankings || []);
@@ -377,9 +379,9 @@ const RankingList = () => {
             try {
               rankingsData = await rankingService.getGameProfitRankings(selectedGameId);
             } catch (err) {
-              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_WINS');
+              rankingsData = await rankingService.getRankingsByGameAndType(selectedGameId, 'BY_GAME_AMOUNT');
               if (isMounted) {
-                setGameRankingType('BY_GAME_WINS'); // Update UI state if we fell back
+                setGameRankingType('BY_GAME_AMOUNT'); // Update UI state if we fell back
               }
             }
           } else if (gameRankingType === 'BY_GAME_WIN_RATE') {
@@ -483,31 +485,22 @@ const RankingList = () => {
           activeKey={rankingType}
           onSelect={handleOverallRankingTypeSelect}
           className="ranking-subtabs mb-4"
-        >
-          <Tab 
-            eventKey="OVERALL_PROFIT" 
-            title={<><FaCoins className="me-1" /> Profit</>}
-          >
-            <div className="ranking-subtab-content">
-              <p className="tab-description">Players ranked by their total profit across all games.</p>
-              {renderRankingTable(rankings, rankingType, loading)}
-            </div>
-          </Tab>
-          <Tab 
-            eventKey="TOP_LOSERS" 
-            title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Biggest Losers</>}
-          >
-            <div className="ranking-subtab-content">
-              <p className="tab-description">Players who have lost the most money across all games.</p>
-              {renderRankingTable(rankings, rankingType, loading)}
-            </div>
-          </Tab>
+        >          
           <Tab 
             eventKey="TOTAL_BETS_AMOUNT" 
             title={<><FaCoins className="me-1" /> Bets</>}
           >
             <div className="ranking-subtab-content">
               <p className="tab-description">Players ranked by their total amount bet across all games.</p>
+              {renderRankingTable(rankings, rankingType, loading)}
+            </div>
+          </Tab>
+          <Tab 
+            eventKey="OVERALL_PROFIT" 
+            title={<><FaCoins className="me-1" /> Profit</>}
+          >
+            <div className="ranking-subtab-content">
+              <p className="tab-description">Players ranked by their total profit across all games.</p>
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
@@ -520,6 +513,18 @@ const RankingList = () => {
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
+
+          <Tab 
+            eventKey="TOP_LOSERS" 
+            title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" />Losers</>}
+          >
+            <div className="ranking-subtab-content losers-tab">
+              <p className="tab-description">Players who have lost the most money across all games.</p>
+              {renderRankingTable(rankings, rankingType, loading)}
+            </div>
+          </Tab>
+
+          
         </Tabs>
       </div>
     );
@@ -533,21 +538,23 @@ const RankingList = () => {
         className="ranking-subtabs-sub"
       >
         <Tab 
-          eventKey="BY_GAME_WINS"
+          eventKey="BY_GAME_AMOUNT"
           title={<><FaTrophy className="me-1" /> Wins</>}
         />
+
         <Tab 
-          eventKey="BY_GAME_LOSSES" 
-          title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Losses</>}
+          eventKey="BY_GAME_PROFIT" 
+          title={<><FaDollarSign className="me-1" /> Profit</>}
         />
         <Tab 
           eventKey="BY_GAME_WIN_RATE" 
           title={<><FaPercentage className="me-1" /> Win Rate</>}
         />
         <Tab 
-          eventKey="BY_GAME_PROFIT" 
-          title={<><FaDollarSign className="me-1" /> Profit</>}
+          eventKey="BY_GAME_LOSSES" 
+          title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" /> Losses</>}
         />
+
       </Tabs>
     );
   };
@@ -559,7 +566,7 @@ const RankingList = () => {
         
         {/* Game Ranking Type Description */}
         <div className="ranking-subtab-content mt-3 mb-4">
-          {gameRankingType === 'BY_GAME_WINS' && (
+          {gameRankingType === 'BY_GAME_AMOUNT' && (
             <p className="tab-description">Players ranked by their number of wins in this game.</p>
           )}
           {gameRankingType === 'BY_GAME_LOSSES' && (

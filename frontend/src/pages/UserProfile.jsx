@@ -484,7 +484,7 @@ const UserProfile = () => {
                     borderColor: '#4dabf7',
                     textColor: '#a5d8ff'
                 };
-            case 'BY_GAME_WINS':
+            case 'BY_GAME_AMOUNT':
                 return {
                     title: 'Most Wins',
                     icon: <FaTrophy size={55} color="#f06595" />,

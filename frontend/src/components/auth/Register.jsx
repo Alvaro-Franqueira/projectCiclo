@@ -41,7 +41,34 @@ const Register = () => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      // Check for different error response formats
+      console.log('Registration error:', err);
+      
+      // Case 1: String error in response.data
+      if (err.response && typeof err.response.data === 'string') {
+        const errorMessage = err.response.data;
+        if (errorMessage.toLowerCase().includes('username')) {
+          setError('This username is already taken. Please choose another one.');
+        } else if (errorMessage.toLowerCase().includes('email')) {
+          setError('This email is already registered. Please use another email or try logging in.');
+        } else {
+          setError(errorMessage);
+        }
+      }
+      // Case 2: Object with message/error property
+      else if (err.response && err.response.data) {
+        const errorMessage = err.response.data.message || err.response.data.error;
+        
+        if (errorMessage && errorMessage.toLowerCase().includes('username')) {
+          setError('This username is already taken. Please choose another one.');
+        } else if (errorMessage && errorMessage.toLowerCase().includes('email')) {
+          setError('This email is already registered. Please use another email or try logging in.');
+        } else {
+          setError(errorMessage || 'Registration failed. Please try again.');
+        }
+      } else {
+        setError(err.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -78,7 +105,10 @@ const Register = () => {
               handleSubmit,
               isSubmitting,
             }) => (
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={(e) => {
+                e.preventDefault(); // Prevent form from causing page reload
+                handleSubmit(e);
+              }}>
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control

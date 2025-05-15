@@ -9,7 +9,7 @@ const RANKING_ENDPOINTS = {
 
 // Ranking types enum to match backend RankingType.java
 const RANKING_TYPES = {
-  BY_GAME_WINS: 'BY_GAME_WINS',
+  BY_GAME_AMOUNT: 'BY_GAME_AMOUNT',
   TOTAL_BETS_AMOUNT: 'TOTAL_BETS_AMOUNT',
   OVERALL_PROFIT: 'OVERALL_PROFIT',
   WIN_RATE: 'WIN_RATE',

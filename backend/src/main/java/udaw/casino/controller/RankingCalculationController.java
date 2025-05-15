@@ -40,7 +40,7 @@ public class RankingCalculationController {
         
         // Get global rankings for each type
         for (RankingType type : RankingType.values()) {
-            if (type != RankingType.BY_GAME_WINS && type != RankingType.BY_GAME_WIN_RATE 
+            if (type != RankingType.BY_GAME_AMOUNT && type != RankingType.BY_GAME_WIN_RATE 
                 && type != RankingType.BY_GAME_PROFIT && type != RankingType.BY_GAME_LOSSES) { // Skip game-specific rankings
                 List<RankingEntry> rankings = rankingCalculationService.getRankingByType(type);
                 allRankings.put(type.name(), rankings);
@@ -59,7 +59,7 @@ public class RankingCalculationController {
     @GetMapping("/type/{type}")
     public ResponseEntity<List<RankingEntry>> getGlobalRankingByType(@PathVariable("type") RankingType type) {
         // Basic validation: Ensure the type is not game-specific if called without a game context
-        if (type == RankingType.BY_GAME_WINS || type == RankingType.BY_GAME_WIN_RATE 
+        if (type == RankingType.BY_GAME_AMOUNT || type == RankingType.BY_GAME_WIN_RATE 
             || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
             return ResponseEntity.badRequest().build(); // Indicate this endpoint isn't for game-specific types alone
         }
@@ -79,7 +79,7 @@ public class RankingCalculationController {
      * Gets the ranking list for a specific game and ranking type.
      *
      * @param gameId The ID of the game.
-     * @param type    The type of ranking (e.g., BY_GAME_WINS).
+     * @param type    The type of ranking (e.g., BY_GAME_AMOUNT).
      * @return ResponseEntity containing the list of RankingEntry objects or an error.
      */
     @GetMapping("/game/{gameId}/type/{type}")

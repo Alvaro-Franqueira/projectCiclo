@@ -28,7 +28,8 @@ const authService = {
       setUserData(token, user);
       return user;
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      console.error('Login error:', error.response || error);
+      throw error; // Pass the full error object to allow components to inspect response status
     }
   },
 
@@ -38,7 +39,8 @@ const authService = {
       const response = await api.post(AUTH_ENDPOINTS.REGISTER, userData);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Registration failed' };
+      console.error('Registration error:', error.response || error);
+      throw error; // Pass the full error object to allow components to inspect response details
     }
   },
 
@@ -126,7 +128,6 @@ const authService = {
   // Logout user
   logout: () => {
     clearUserData();
-    window.location.href = '/login';
   },
 
   // Check if user is authenticated

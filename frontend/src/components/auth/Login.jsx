@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert, Container, Card, Image } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
-import { Formik } from 'formik';
+import { Formik, Form as FormikForm } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
 import logoCasino from '../images/logo-casino.png';
@@ -14,13 +14,41 @@ const loginSchema = Yup.object().shape({
 const Login = () => {
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (values, { setSubmitting }) => {
     setError('');
     try {
       await login(values);
+      // On successful login, the AuthContext will handle redirection
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Login failed. Please check your credentials.');
+      console.log('Login error:', err);
+      
+      // Handle specific error cases
+      if (err.response) {
+        const status = err.response.status;
+        
+        // Case 1: String error in response.data
+        if (typeof err.response.data === 'string') {
+          setError(err.response.data);
+        }
+        // Case 2: Object with error data
+        else {
+          const errorData = err.response.data;
+          
+          if (status === 401) {
+            setError('Invalid username or password. Please try again.');
+          } else if (status === 404) {
+            setError('User not found. Please check your username or register a new account.');
+          } else if (errorData && errorData.message) {
+            setError(errorData.message);
+          } else {
+            setError('Login failed. Please check your credentials.');
+          }
+        }
+      } else {
+        setError(err.message || 'Login failed. Please try again later.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -56,7 +84,10 @@ const Login = () => {
               handleSubmit,
               isSubmitting,
             }) => (
-              <Form onSubmit={handleSubmit} >
+              <Form onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit(e);
+              }}>
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control

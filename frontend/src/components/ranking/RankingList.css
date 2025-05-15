@@ -50,14 +50,13 @@
   margin-right: 5px;
   border-radius: 8px 8px 0 0;
   border: 1px solid #475569;
-  border-bottom: none;
   transition: all 0.2s ease;
   font-size: 1.1rem;
+  
 }
 
 .ranking-tabs .nav-link:hover {
   background-color: #3b536d;
-  color: var(--accent-color);
 }
 
 .ranking-tabs .nav-link.active {
@@ -76,9 +75,10 @@
   font-size: 0.95rem;
   padding: 0.6rem 0.8rem;
   background-color: #293548;
-  border-bottom: none;
   color: white;
 }
+
+
 
 .ranking-subtabs .nav-link.active {
   background-color: #1e293b;

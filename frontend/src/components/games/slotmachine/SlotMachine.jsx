@@ -96,8 +96,12 @@ const SlotMachine = () => {
         betDate: new Date().toISOString(),
         winloss: isWin ? (amount-bet) : -bet,
         betValue: 'spin',
-        winningValue: isWin ? 'combination' : 'none'
+        winningValue: isWin ? reelState.map(reel => reel.symbol).join('-') : 'none'
       };
+      
+      if (isWin) {
+        setBalance(balance => balance + betData.amount + betData.winloss);
+      }
       
       await betService.createBet(betData);
     } catch (err) {
@@ -133,21 +137,6 @@ const SlotMachine = () => {
     
     // Fallback (should never reach here)
     return 'cherry';
-  };
-
-  // For testing/rigging the game (comment out in production)
-  const getTestSymbol = (reelIndex) => {
-    // This can be used to test specific combinations
-    // For example, to test a jackpot:
-    // return 'seven';
-    
-    // To test different symbols on different reels:
-    // if (reelIndex === 0) return 'cherry';
-    // if (reelIndex === 1) return 'cherry';
-    // if (reelIndex === 2) return 'bell';
-    
-    // Return random symbol by default
-    return getRandomSymbol();
   };
   
   // Spin animation for a single reel
@@ -305,7 +294,6 @@ const SlotMachine = () => {
     
     if (result.win) {
       setMessage(`You won $${result.amount}!`);
-      updateBalance(currentBalance => currentBalance + result.amount);
       // Record a winning bet
       recordBet(true, result.amount);
     } else {
