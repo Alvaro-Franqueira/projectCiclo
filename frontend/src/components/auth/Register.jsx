@@ -13,9 +13,27 @@ const registerSchema = Yup.object().shape({
     .required('Username is required'),
   email: Yup.string()
     .email('Invalid email format')
+    .max(100, 'Email cannot be longer than 100 characters')
+    .test('no-disposable-email', 'Disposable email addresses are not allowed', (value) => {
+      if (!value) return true; // Skip validation if empty (handled by required)
+      
+      // Check against common disposable email domains
+      const disposableDomains = [
+        'mailinator.com', 'yopmail.com', 'tempmail.com', 'guerrillamail.com',
+        'throwawaymail.com', '10minutemail.com', 'trashmail.com', 'sharklasers.com',
+        'temp-mail.org', 'fakeinbox.com'
+      ];
+      
+      const domain = value.substring(value.indexOf('@') + 1).toLowerCase();
+      return !disposableDomains.includes(domain);
+    })
     .required('Email is required'),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
+    .min(8, 'Password must be at least 8 characters')
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{8,}$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (including periods)'
+    )
     .required('Password is required'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwords must match')
@@ -25,10 +43,15 @@ const registerSchema = Yup.object().shape({
 const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [serverErrors, setServerErrors] = useState({});
   const navigate = useNavigate();
 
-  const handleRegister = async (values, { setSubmitting, resetForm }) => {
+  const handleRegister = async (values, { setSubmitting, resetForm, setErrors }) => {
     try {
+      // Clear previous errors
+      setError('');
+      setServerErrors({});
+      
       // Remove confirmPassword as it's not needed in the API
       const { confirmPassword, ...userData } = values;
       
@@ -41,30 +64,32 @@ const Register = () => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      // Check for different error response formats
       console.log('Registration error:', err);
       
-      // Case 1: String error in response.data
-      if (err.response && typeof err.response.data === 'string') {
-        const errorMessage = err.response.data;
+      // Handle validation errors from the server
+      if (err.response && err.response.data && err.response.data.errors) {
+        // Field-specific validation errors
+        const fieldErrors = err.response.data.errors;
+        setServerErrors(fieldErrors);
+        
+        // Set Formik errors to display them in the form
+        const formikErrors = {};
+        Object.keys(fieldErrors).forEach(field => {
+          formikErrors[field] = fieldErrors[field];
+        });
+        setErrors(formikErrors);
+      }
+      // Handle general error message
+      else if (err.response && err.response.data) {
+        const errorMessage = err.response.data.message || err.response.data.error || 
+                            (typeof err.response.data === 'string' ? err.response.data : 'Registration failed');
+        
         if (errorMessage.toLowerCase().includes('username')) {
           setError('This username is already taken. Please choose another one.');
         } else if (errorMessage.toLowerCase().includes('email')) {
           setError('This email is already registered. Please use another email or try logging in.');
         } else {
           setError(errorMessage);
-        }
-      }
-      // Case 2: Object with message/error property
-      else if (err.response && err.response.data) {
-        const errorMessage = err.response.data.message || err.response.data.error;
-        
-        if (errorMessage && errorMessage.toLowerCase().includes('username')) {
-          setError('This username is already taken. Please choose another one.');
-        } else if (errorMessage && errorMessage.toLowerCase().includes('email')) {
-          setError('This email is already registered. Please use another email or try logging in.');
-        } else {
-          setError(errorMessage || 'Registration failed. Please try again.');
         }
       } else {
         setError(err.message || 'Registration failed. Please try again.');
@@ -112,7 +137,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='username'>Username</Form.Label>
                   <Form.Control
-                  className="input-form"
+                    className="input-form"
                     id='username'
                     type="text"
                     name="username"
@@ -122,17 +147,17 @@ const Register = () => {
                     value={values.username}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    isInvalid={touched.username && errors.username}
+                    isInvalid={(touched.username && errors.username) || serverErrors.username}
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.username}
+                    {errors.username || serverErrors.username}
                   </Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='email'>Email</Form.Label>
                   <Form.Control
-                  className="input-form"
+                    className="input-form"
                     id='email'
                     type="email"
                     name="email"
@@ -141,17 +166,17 @@ const Register = () => {
                     autoComplete="email"
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    isInvalid={touched.email && errors.email}
+                    isInvalid={(touched.email && errors.email) || serverErrors.email}
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.email}
+                    {errors.email || serverErrors.email}
                   </Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
                   <Form.Label htmlFor='password'>Password</Form.Label>
                   <Form.Control
-                  className="input-form"
+                    className="input-form"
                     id='password'
                     type="password"
                     name="password"
@@ -160,11 +185,16 @@ const Register = () => {
                     value={values.password}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    isInvalid={touched.password && errors.password}
+                    isInvalid={(touched.password && errors.password) || serverErrors.password}
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.password}
+                    {errors.password || serverErrors.password}
                   </Form.Control.Feedback>
+                  {!errors.password && !serverErrors.password && (
+                    <Form.Text className="text-muted">
+                      Password must be 8-30 characters and include uppercase, lowercase, digit, and special character (including periods).
+                    </Form.Text>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3">

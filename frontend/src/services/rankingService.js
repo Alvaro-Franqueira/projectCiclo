@@ -230,22 +230,7 @@ const rankingService = {
     return true;
   },
   
-  // Test endpoint (useful for debugging)
-  testEndpoint: async (endpoint) => {
-    try {
-      console.log(`Testing endpoint: ${endpoint}`);
-      const response = await api.get(endpoint);
-      console.log(`Endpoint ${endpoint} response:`, response.data);
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error(`Endpoint ${endpoint} failed:`, error);
-      return { 
-        success: false, 
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message 
-      };
-    }
-  }
+   
 };
 
 export default rankingService;

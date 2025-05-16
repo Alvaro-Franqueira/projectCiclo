@@ -40,6 +40,13 @@ const authService = {
       return response.data;
     } catch (error) {
       console.error('Registration error:', error.response || error);
+      
+      // Format validation errors for easier handling in components
+      if (error.response && error.response.data && error.response.data.errors) {
+        // Preserve the original error structure but add a formatted property
+        error.validationErrors = error.response.data.errors;
+      }
+      
       throw error; // Pass the full error object to allow components to inspect response details
     }
   },

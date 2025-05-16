@@ -5,7 +5,8 @@ const USER_ENDPOINTS = {
   USER_BY_ID: (id) => `/users/id/${id}`,
   UPDATE_USER: (id) => `/users/${id}`,
   GET_BALANCE: (id) => `/users/balance/${id}`,
-  UPDATE_BALANCE: (id) => `/users/balance/${id}`
+  UPDATE_BALANCE: (id) => `/users/balance/${id}`,
+  DELETE_USER: (id) => `/users/admin/${id}`
 };
 
 const userService = {
@@ -65,6 +66,17 @@ updateUserBalance: async (userId, amount) => {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch user balance' };
+    }
+  },
+
+  // Delete a user
+  deleteUser: async (userId) => {
+    try {
+      const response = await api.delete(USER_ENDPOINTS.DELETE_USER(userId));
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting user ${userId}:`, error);
+      throw error.response?.data || { message: 'Failed to delete user' };
     }
   },
 };

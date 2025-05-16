@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bets") // Use plural for table names
+@Table(name = "bets") 
 public class Bet {
 
     @Id
@@ -32,7 +32,7 @@ public class Bet {
     private String betValue;
     
     @Column(name = "winning_value")
-    private String winningValue; // result of the bet, can be a number or a color 
+    private String winningValue; // result of the bet, can be a number, a color... 
 
     @Column(name = "bet_date")
     private LocalDateTime betDate;

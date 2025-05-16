@@ -15,7 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "games") // Use plural for table names
+@Table(name = "games")
 public class Game {
 
     @Id
@@ -24,12 +24,11 @@ public class Game {
 
     @NotBlank(message = "Game name cannot be blank")
     @Column(name = "name", nullable = false, unique = true)
-    private String name; // e.g., "Roulette", "Dice"
+    private String name; 
 
-    @Column(length = 500) // Allow for a longer description
+    @Column(length = 500)
     private String description;
 
-    // A game can have many bets placed on it
     @OneToMany(mappedBy = "game", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY) // Bets are linked to a game
     private List<Bet> bets;
 

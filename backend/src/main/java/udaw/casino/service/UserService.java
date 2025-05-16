@@ -33,9 +33,14 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new UserNotFoundException("Email '" + user.getEmail() + "' already exists.");
         }
+        
+        // Log the password before encoding
+        System.out.println("Password before encoding: '" + user.getPassword() + "', length: " + user.getPassword().length());
 
-        // Encode password before saving
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // Encode password before saving (only if not already encoded)
+        if (!user.getPassword().startsWith("$2a$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
 
         // Set default role if not specified (though default is set in model too)
         if (user.getRole() == null) {
@@ -44,7 +49,7 @@ public class UserService {
 
         
         if (user.getBalance() == null) {
-            user.setBalance(0.0); // Default balance
+            user.setBalance(1000.0); // Default balance
         }
         if (user.getRegistrationDate() == null) {
             user.setRegistrationDate(java.time.LocalDateTime.now()); // Default registration date

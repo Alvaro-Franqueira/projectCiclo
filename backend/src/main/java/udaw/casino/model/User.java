@@ -1,7 +1,6 @@
 package udaw.casino.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -14,13 +13,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import udaw.casino.validation.ValidEmail;
+import udaw.casino.validation.ValidPassword;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "users") // Use plural for table names generally
+@Table(name = "users") 
 public class User {
 
     @Id
@@ -33,13 +34,13 @@ public class User {
     private String username;
 
     @NotBlank(message = "Password cannot be blank")
-    // Size validation might be applied after encoding, consider constraints carefully
+    @ValidPassword(message = "Password must be 8-30 characters and include uppercase, lowercase, digit, and special character", groups = ValidPassword.ManualValidationOnly.class)
     @Column(nullable = false)
     private String password;
 
-    @Email(message = "Email should be valid")
+    @ValidEmail(message = "Please provide a valid email address")
     @NotBlank(message = "Email cannot be blank")
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
 
     @Column(nullable = false)
@@ -56,8 +57,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Bet> bets;
-
-    // Rankings are now calculated on-demand and not stored in the database
 
     // --- Constructors ---
 

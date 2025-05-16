@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/users/login",          // User login
                     "/api/users/register",       // User registration
+                    "/api/users/me",             // Get current user
                     "/api/payments/webhook"      // Payment webhook
                 ).permitAll()
 

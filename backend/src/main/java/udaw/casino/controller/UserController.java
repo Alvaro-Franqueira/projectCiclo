@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/users") 
@@ -92,9 +93,26 @@ public class UserController {
      * @return ResponseEntity with the created user (excluding sensitive data ideally) or an error.
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody User user) {
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         // Consider using a DTO here to avoid exposing/requiring fields like balance, role, id
         try {
+            // Debug logging for password
+            System.out.println("Received password in controller: '" + user.getPassword() + "', length: " + user.getPassword().length());
+            
+            // Manually validate the user before passing to service layer
+            jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+            Set<jakarta.validation.ConstraintViolation<User>> violations = validator.validate(user, udaw.casino.validation.ValidPassword.ManualValidationOnly.class);
+            
+            if (!violations.isEmpty()) {
+                Map<String, String> errors = new HashMap<>();
+                for (jakarta.validation.ConstraintViolation<User> violation : violations) {
+                    String propertyPath = violation.getPropertyPath().toString();
+                    String message = violation.getMessage();
+                    errors.put(propertyPath, message);
+                }
+                return ResponseEntity.badRequest().body(Map.of("message", "Validation failed", "errors", errors));
+            }
+            
             User newUser = userService.registerUser(user);
             // Avoid returning the password hash in the response
             newUser.setPassword(null); // Or use a DTO
@@ -102,8 +120,16 @@ public class UserController {
         } catch (UserNotFoundException e) { // Catch specific exception for existing user/email
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) { // Catch other potential errors
+            // Log the full exception details to help diagnose the issue
+            e.printStackTrace();
+            System.err.println("Registration error: " + e.getMessage());
+            
+            // Return a more detailed error message
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "An error occurred during registration"));
+                .body(Map.of(
+                    "message", "An error occurred during registration", 
+                    "error", e.getMessage() != null ? e.getMessage() : "Unknown error"
+                ));
         }
     }
 
@@ -151,6 +177,9 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    // This method was removed to avoid duplication with the other /me endpoint
+    // that uses SecurityContextHolder to get the current user
 
     /**
      * Gets all users.

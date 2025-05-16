@@ -134,6 +134,23 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     }
   };
 
+  // Add handler for deleting a user
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      setUserLoading(true);
+      setUserError('');
+      try {
+        await userService.deleteUser(userId);
+        // Remove the deleted user from the list
+        setUsers(users.filter(user => user.id !== userId));
+      } catch (err) {
+        setUserError(err.message || 'Failed to delete user. Please try again.');
+        console.error("User delete error:", err);
+      } finally {
+        setUserLoading(false);
+      }
+    }
+  };
 
   // --- Game Management Section ---
   // --- Game Management State ---
@@ -340,10 +357,19 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
                   <Button
                     variant="outline-success"
                     size="sm"
-                    className="mb-1" // Added mb-1
+                    className="me-2 mb-1" // Added me-2 for horizontal spacing
                     onClick={() => handleUserBalanceClick(user)} // Use handleUserBalanceClick
                   >
                     <FaCoins /> Balance
+                  </Button>
+                  {/* Add Delete Button */}
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    className="mb-1"
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    <FaTrashAlt /> Delete
                   </Button>
                 </td>
               </tr>
