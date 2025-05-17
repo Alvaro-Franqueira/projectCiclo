@@ -1,0 +1,176 @@
+/* Blackjack Game Specific Styles */
+
+/* Game container */
+.game-container {
+  width: 100%;
+  min-height: 70vh;
+  background: radial-gradient(circle, #004d00, #003300);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7), 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Pattern overlay */
+.pattern-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0, 0, 0, 0.1) 20px, rgba(0, 0, 0, 0.1) 40px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Game info */
+.game-info {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  z-index: 5;
+}
+
+.bet-display, .cards-display {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 10px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.cards-display {
+  margin-left: 10px;
+}
+
+/* Game content */
+.game-content {
+  position: relative;
+  z-index: 5;
+}
+
+/* Table divider */
+.table-divider {
+  height: 2px;
+  background: linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), transparent);
+  margin: 10px 0 20px 0;
+  width: 100%;
+}
+
+/* Hand containers */
+.hand-container {
+  margin-bottom: 20px;
+}
+
+.hand-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 15px 0 10px;
+  position: relative;
+}
+
+.hand-title {
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Score badges */
+.score-badge-container {
+  position: absolute;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-badge {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: inline-block;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+/* Card styles */
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Button overrides for Blackjack specific styling */
+.blackjack-btn {
+  background: linear-gradient(145deg, #006400, #004d00);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  color: white;
+  font-weight: bold;
+  padding: 10px 25px;
+  margin: 0 5px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.blackjack-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.blackjack-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.blackjack-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-info {
+    position: static;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  
+  .score-badge-container {
+    position: static;
+    margin-left: 15px;
+  }
+  
+  .hand-title-wrapper {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .game-container {
+    padding: 15px 10px;
+  }
+  
+  .bet-display, .cards-display {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+  }
+  
+  .score-badge {
+    font-size: 0.9rem;
+    padding: 3px 8px;
+  }
+} 

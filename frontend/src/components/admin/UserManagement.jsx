@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import userService from '../../services/userService'; // Adjust path as needed
 import gameService from '../../services/gameService'; // Import gameService
+import '../../assets/styles/UserManagement.css'; // Import our new styles
 
 // --- User Management Section ---
 const UserManagement = () => { // NOTE: This component now handles BOTH users and games

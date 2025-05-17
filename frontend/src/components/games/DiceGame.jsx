@@ -10,6 +10,7 @@ import flyingChips from '../images/flying-chips.png'; // Adjust the path as need
 import confetti from 'canvas-confetti';
 import bigWin from '../images/bigwin.png'; 
 import logoCasino from '../images/logo-casino.png';
+import '../../assets/styles/DiceGame.css'; // Import our new styles
 
 const DiceGame = () => {
   const { user, updateUserBalance } = useAuth(); // Get user and updater function
@@ -65,7 +66,7 @@ const DiceGame = () => {
         const randomDice1 = Math.floor(Math.random() * 6) + 1;
         const randomDice2 = Math.floor(Math.random() * 6) + 1;
         setDiceValues([randomDice1, randomDice2]);
-      }, 150); // Change dice values every 150ms
+      }, 300); // Change dice values less frequently (300ms instead of 150ms)
     }
 
     return () => {
@@ -167,8 +168,12 @@ const DiceGame = () => {
     };
     console.log('Placing bet with data:', betData, `Current local balance: ${currentBalanceBeforeBet}`);
 
+    // Get the current timestamp for minimum animation duration
+    const rollStartTime = Date.now();
+    const minRollDuration = 2000; // Minimum 2 seconds of animation
+
     // Use Promise chain instead of async/await
-  diceService.play(betData)
+    diceService.play(betData)
       .then(response => {
         const { diceResults, resolvedBet } = response;
         // Log the RAW response from the backend
@@ -200,71 +205,79 @@ const DiceGame = () => {
         console.log(`Balance Check: Before Bet (local) = ${currentBalanceBeforeBet}, After Bet (backend DTO) = ${backendNewBalance}`);
         console.log(`Win/Loss calculation: ${winlossAmount > 0 ? 'Won' : 'Lost'} ${Math.abs(winlossAmount)}`);
 
-        // Update dice display
-        setDiceValues(diceResults);
+        // Calculate how much time has elapsed since the roll started
+        const elapsedTime = Date.now() - rollStartTime;
+        const remainingTime = Math.max(0, minRollDuration - elapsedTime);
 
-        // Update balance: Local state AND Context using backend's authoritative value
-        setUserBalance(backendNewBalance);
-        /*if (updateUserBalance) {
-            console.log(`Calling context updateUserBalance with: ${backendNewBalance}`);
-            updateUserBalance(backendNewBalance);
-        } else {
-            console.warn("AuthContext does not provide updateUserBalance function!");
-        }*/
+        // If we haven't animated for at least minRollDuration, wait before showing the result
+        setTimeout(() => {
+          // Update dice display
+          setDiceValues(diceResults);
 
-// Update result message (use resolvedBet which is ApuestaDTO)
-const totalResult = diceResults[0] + diceResults[1];
-const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${totalResult}). `;
+          // Update balance: Local state AND Context using backend's authoritative value
+          setUserBalance(backendNewBalance);
+          /*if (updateUserBalance) {
+              console.log(`Calling context updateUserBalance with: ${backendNewBalance}`);
+              updateUserBalance(backendNewBalance);
+          } else {
+              console.warn("AuthContext does not provide updateUserBalance function!");
+          }*/
 
+          // Update result message (use resolvedBet which is ApuestaDTO)
+          const totalResult = diceResults[0] + diceResults[1];
+          const baseMessage = `Rolled: ${diceResults[0]} and ${diceResults[1]} (total: ${totalResult}). `;
 
-const betAmount = resolvedBet.amount;
+          const betAmount = resolvedBet.amount;
+          let payoutExplanation = '';
 
-let payoutExplanation = '';
+          if (resolvedBet.status === 'WON') {
+            // Trigger confetti animation
+            confetti({
+              particleCount: 200,
+              spread: 100,
+              origin: {
+                x: clickPosition.x,
+                y: clickPosition.y
+              },
+            });
+            // Add explanation of the payout calculation based on bet type
 
-if (resolvedBet.status === 'WON') {
-  // Trigger confetti animation
-  confetti({
-    particleCount: 200,
-    spread: 100,
-    origin: {
-      x: clickPosition.x,
-      y: clickPosition.y
-    },
-  });
-  // Add explanation of the payout calculation based on bet type
+            if (resolvedBet.type === 'evenodd') {
+                // For even/odd bets, payout is 95% of bet amount
+                payoutExplanation = ` (95% of your $${betAmount} bet)`;
+            } else if (resolvedBet.type === 'number') {
+                // For number bets, payout depends on the number (using odds table from backend)
+                const odds = totalResult === 7 ? 5.0 : 
+                            (totalResult === 6 || totalResult === 8) ? 6.0 :
+                            (totalResult === 5 || totalResult === 9) ? 8.0 :
+                            (totalResult === 4 || totalResult === 10) ? 10.0 :
+                            (totalResult === 3 || totalResult === 11) ? 15.0 :
+                            (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
+                payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
+            } else if (resolvedBet.type === 'half') {
+                // For half bets, payout is 95% of bet amount
+                payoutExplanation = ` (95% of your $${betAmount} bet)`;
+            }
 
-  if (resolvedBet.type === 'evenodd') {
-      // For even/odd bets, payout is 95% of bet amount
-      payoutExplanation = ` (95% of your $${betAmount} bet)`;
-  } else if (resolvedBet.type === 'number') {
-      // For number bets, payout depends on the number (using odds table from backend)
-      const odds = totalResult === 7 ? 5.0 : 
-                  (totalResult === 6 || totalResult === 8) ? 6.0 :
-                  (totalResult === 5 || totalResult === 9) ? 8.0 :
-                  (totalResult === 4 || totalResult === 10) ? 10.0 :
-                  (totalResult === 3 || totalResult === 11) ? 15.0 :
-                  (totalResult === 2 || totalResult === 12) ? 30.0 : 0;
-      payoutExplanation = ` (${odds}x your $${betAmount} bet)`;
-  } else if (resolvedBet.type === 'half') {
-      // For half bets, payout is 95% of bet amount
-      payoutExplanation = ` (95% of your $${betAmount} bet)`;
-  }
+          
+            setResultMessage({
+                text: baseMessage + `You won $${winlossAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
+                type: 'success'
+            });
+          } else {
+            setResultMessage({
+                text: baseMessage + `You lost $${betAmount.toFixed(2)}.`, // Display the actual amount lost (betAmount)
+                type: 'danger'
+            });
+          }
 
- 
-    setResultMessage({
-        text: baseMessage + `You won $${winlossAmount.toFixed(2)}!${payoutExplanation}`, // Display the actual profit with explanation
-        type: 'success'
-    });
-} else {
-    setResultMessage({
-        text: baseMessage + `You lost $${betAmount.toFixed(2)}.`, // Display the actual amount lost (betAmount)
-        type: 'danger'
-    });
-}
-
-// Refresh history
-setTimeout(loadUserBetHistory, 1500);
-  })
+          // Refresh history
+          setTimeout(loadUserBetHistory, 1500);
+          
+          // End rolling state
+          setIsRolling(false);
+        }, remainingTime);
+      })
       .catch(error => {
         console.error('CRITICAL ERROR during dice bet:', error);
         // Provide more specific feedback if possible
@@ -273,8 +286,6 @@ setTimeout(loadUserBetHistory, 1500);
           userMessage = `Error: ${error.response.data.message}`;
         }
         setResultMessage({ text: userMessage, type: 'danger' });
-      })
-      .finally(() => {
         setIsRolling(false);
       });
   };
@@ -357,18 +368,7 @@ setTimeout(loadUserBetHistory, 1500);
                          resultMessage.type === 'warning' ? '#f59e0b' : '#0d6efd'
           }}
         >
-          <div className="d-flex align-items-center">
-            <div className="me-3">
-              <Image 
-                src={logoCasino} 
-                alt="Casino Logo" 
-                width={40} 
-                height={40} 
-                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))' }} 
-              />
-            </div>
-            <div className="text-start">{resultMessage.text}</div>
-          </div>
+          {resultMessage.text}
         </div>
       )}
 
@@ -413,8 +413,7 @@ setTimeout(loadUserBetHistory, 1500);
                                 {/* Roll Button */}
                 <Button
                   variant="primary"
-                  className="w-100 mt-3"
-                  style={{ marginBottom: '20px' }}
+                  className="dice-roll-btn"
                   type="submit"
                   disabled={isRolling || !betAmount || betAmount <= 0 || betAmount > userBalance}
                   onClick={(e) => {
@@ -426,18 +425,7 @@ setTimeout(loadUserBetHistory, 1500);
                   {isRolling ? (
                     <div className="d-flex align-items-center justify-content-center">
                       <div className="position-relative me-3">
-                        <Spinner animation="border" size="sm" role="status" aria-hidden="true" className="position-absolute" style={{ top: '-3px', left: '-3px' }} />
-                        <Image 
-                          src={logoCasino} 
-                          alt="Casino Logo" 
-                          width={24} 
-                          height={24} 
-                          className="spinning-logo" 
-                          style={{ 
-                            animation: 'pulse-glow 0.8s infinite alternate',
-                            filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.6))'
-                          }} 
-                        />
+                        <Spinner animation="border" size="sm" role="status" aria-hidden="true" className="justify-content-center align-items-center" style={{ top: '-3px', left: '-3px' }} />
                       </div>
                       <span>Rolling...</span>
                     </div>
@@ -500,7 +488,7 @@ setTimeout(loadUserBetHistory, 1500);
               {history.length > 0 ? (
                 <div>
                   {history.map((bet) => (
-                    <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
+                    <div key={bet.id || `bet-${Math.random()}`} className="history-item">
                       <div className="d-flex justify-content-between">
                         <span>
                         
@@ -519,11 +507,7 @@ setTimeout(loadUserBetHistory, 1500);
                         </Badge>
                       </div>
                       <div
-                          className="text-white"
-                          style={{
-                            fontSize: '0.8em',
-                            marginTop: '0.5rem' // or '8px' or whatever spacing you prefer
-                          }}
+                          className="history-date"
 >
                         {bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'Unknown date'}
                       </div>

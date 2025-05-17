@@ -489,7 +489,6 @@ const RankingList = () => {
             title={<><FaCoins className="me-1" /> Bet Amount</>}
           >
             <div className="ranking-subtab-content">
-              <p className="tab-description">Players ranked by their total amount bet across all games.</p>
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
@@ -498,7 +497,6 @@ const RankingList = () => {
             title={<><FaCoins className="me-1" /> Profit</>}
           >
             <div className="ranking-subtab-content">
-              <p className="tab-description">Players ranked by their total profit across all games.</p>
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
@@ -507,7 +505,6 @@ const RankingList = () => {
             title={<><FaPercentage className="me-1" /> Win Rate</>}
           >
             <div className="ranking-subtab-content">
-              <p className="tab-description">Players ranked by their win percentage across all games.</p>
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
@@ -517,7 +514,6 @@ const RankingList = () => {
             title={<><Icon path={mdiEmoticonPoop} size={0.8} className="me-1" />Losers</>}
           >
             <div className="ranking-subtab-content losers-tab">
-              <p className="tab-description">Players who have lost the most money across all games.</p>
               {renderRankingTable(rankings, rankingType, loading)}
             </div>
           </Tab>
