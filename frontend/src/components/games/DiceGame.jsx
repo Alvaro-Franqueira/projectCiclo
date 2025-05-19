@@ -18,6 +18,7 @@ import diceService from '../../services/diceService';
 import betService from '../../services/betService';
 import confetti from 'canvas-confetti';
 import '../../assets/styles/DiceGame.css';
+import gameService from '../../services/gameService';
 
 // ===== Constants =====
 
@@ -69,7 +70,7 @@ const DiceGame = () => {
   useEffect(() => {
     const fetchGameInfo = async () => {
       try {
-        const gameData = await gameService.getGameById(1);
+        const gameData = await gameService.getGameById(2);
         setGameInfo(gameData);
       } catch (err) {
         console.error('Error loading game info:', err);
