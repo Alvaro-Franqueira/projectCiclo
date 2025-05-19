@@ -346,7 +346,7 @@ const UserProfile = () => {
         const netProfit = totalWon - totalLost;
         const winRate = totalBets > 0 ? (wonBets.length / totalBets) * 100 : 0;
         const maxBet = bets.reduce((max, bet) => Math.max(max, bet.amount || 0), 0);
-        const maxLoss = lostBets.reduce((min, bet) => Math.min(min, bet.winloss || 0), 0); // Esto dará un número negativo o cero
+        const maxLoss = lostBets.reduce((min, bet) => Math.min(min, bet.winloss || 0), 0); // Esto dará un Number negativo o cero
         const maxWin = wonBets.reduce((max, bet) => Math.max(max, bet.winloss || 0), 0);
         return { totalBets, totalWagered, totalWon, totalLost, netProfit, winRate, maxBet, maxLoss: Math.abs(maxLoss), maxWin };
     };
@@ -907,7 +907,7 @@ const UserProfile = () => {
                                                         <Pagination.First onClick={() => paginate(1)} disabled={currentPage === 1} />
                                                         <Pagination.Prev onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
                                                         {[...Array(totalPages).keys()].map(number => {
-                                                            // Mostrar un número limitado de páginas para evitar saturación
+                                                            // Mostrar un Number limitado de páginas para evitar saturación
                                                             const pageNumber = number + 1;
                                                             if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 2 && pageNumber <= currentPage + 2)) {
                                                                 return (

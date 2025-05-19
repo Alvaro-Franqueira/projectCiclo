@@ -1,6 +1,6 @@
-# Casino Project
+# Virtual Casino
 
-A full-stack casino application with React frontend and Spring Boot backend.
+A full-featured virtual casino application with multiple games, user authentication, and administration.
 
 ## Project Structure
 
@@ -82,3 +82,45 @@ npm run build
 - Use context for global state management in `frontend/src/context`
 - Services for API calls in `frontend/src/services`
 - Backend follows standard Spring Boot architecture with controllers, services, repositories 
+
+## Styling System
+
+The application now uses a consistent styling approach based on the SlotMachine component's aesthetic. The implementation includes:
+
+### Global Theme
+
+- `CasinoTheme.css`: Contains global variables and baseline styles for the entire application
+- Color palette based on casino themes with gold accents
+- Standardized shadows, gradients, and font settings
+- Reusable component styles for cards, buttons, and forms
+
+### Game-Specific Styles
+
+Each game has its own CSS file that extends the global theme:
+
+- `Blackjack.css`: Specific styling for the Blackjack game
+- `Roulette.css`: Custom styles for the Roulette game
+- `DiceGame.css`: Unique styling for the Dice game
+- `SlotMachine.css`: The base styling that informed the entire theme
+
+### Authentication and Admin
+
+- `Auth.css`: Consistent styling for login and registration components
+- `UserManagement.css`: Admin panel styling for user and game management
+
+## Components
+
+- **Authentication**: Login and Registration
+- **Games**: 
+  - Slot Machine
+  - Blackjack
+  - Roulette
+  - Dice Game
+- **Admin Panel**: User and Game management
+- **Payment Processing**: Credit purchasing
+
+## Technology Stack
+
+- React for the frontend
+- Bootstrap framework with custom styling
+- RESTful API integration 

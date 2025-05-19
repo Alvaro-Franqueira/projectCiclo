@@ -5,6 +5,7 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import authService from '../../services/authService';
 import logoCasino from '../images/logo-casino.png';
+import '../../assets/styles/Auth.css';
 
 const registerSchema = Yup.object().shape({
   username: Yup.string()
@@ -100,17 +101,20 @@ const Register = () => {
   };
 
   return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-      <Card className="shadow text-white" style={{ width: '400px' }}>
-        <Card.Body>
-          <div className="text-center mb-4">
+    <div className="auth-container">
+      {/* Decorative elements */}
+      <div className="auth-decoration auth-decoration-1"></div>
+      <div className="auth-decoration auth-decoration-2"></div>
+      
+      <Card className="auth-card">
+        <Card.Body className="auth-card-body">
+          <div className="auth-logo-container">
             <Image 
               src={logoCasino} 
               alt="Casino Logo" 
-              className="register-logo mb-3" 
-              style={{ width: '150px', filter: 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.4))' }} 
+              className="auth-logo"
             />
-            <Card.Title>Register for Casino</Card.Title>
+            <h2 className="auth-title">Register for Casino</h2>
           </div>
           
           {error && <Alert variant="danger">{error}</Alert>}
@@ -134,8 +138,8 @@ const Register = () => {
                 e.preventDefault(); // Prevent form from causing page reload
                 handleSubmit(e);
               }}>
-                <Form.Group className="mb-3">
-                  <Form.Label htmlFor='username'>Username</Form.Label>
+                <Form.Group className="auth-form-group">
+                  <Form.Label className="auth-label" htmlFor='username'>Username</Form.Label>
                   <Form.Control
                     className="input-form"
                     id='username'
@@ -154,8 +158,8 @@ const Register = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label htmlFor='email'>Email</Form.Label>
+                <Form.Group className="auth-form-group">
+                  <Form.Label className="auth-label" htmlFor='email'>Email</Form.Label>
                   <Form.Control
                     className="input-form"
                     id='email'
@@ -173,8 +177,8 @@ const Register = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label htmlFor='password'>Password</Form.Label>
+                <Form.Group className="auth-form-group">
+                  <Form.Label className="auth-label" htmlFor='password'>Password</Form.Label>
                   <Form.Control
                     className="input-form"
                     id='password'
@@ -197,10 +201,10 @@ const Register = () => {
                   )}
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label htmlFor='confirmPassword'>Confirm Password</Form.Label>
+                <Form.Group className="auth-form-group">
+                  <Form.Label className="auth-label" htmlFor='confirmPassword'>Confirm Password</Form.Label>
                   <Form.Control
-                  className="input-form"
+                    className="auth-input"
                     id='confirmPassword'
                     type="password"
                     name="confirmPassword"
@@ -217,7 +221,7 @@ const Register = () => {
                 </Form.Group>
 
                 <Button 
-                  className="w-100 mt-3 btn-primary2" 
+                  className="auth-btn" 
                   type="submit" 
                   disabled={isSubmitting}
                 >
@@ -227,12 +231,12 @@ const Register = () => {
             )}
           </Formik>
           
-          <div className="text-center mt-3">
-            <p>Already have an account? <Link to="/login">Login</Link></p>
+          <div className="auth-footer">
+            <p>Already have an account? <Link to="/login" className="auth-link">Login</Link></p>
           </div>
         </Card.Body>
       </Card>
-    </Container>
+    </div>
   );
 };
 

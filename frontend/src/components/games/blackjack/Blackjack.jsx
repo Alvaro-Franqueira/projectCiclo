@@ -10,6 +10,7 @@ import userService from '../../../services/userService';
 import betService from '../../../services/betService';
 import { FaChevronDown, FaCoins } from 'react-icons/fa';
 import { GiPokerHand } from 'react-icons/gi';
+import '../../../assets/styles/Blackjack.css';
 
 const Blackjack = () => {
   const { user, isAuthenticated } = useAuth();
@@ -423,129 +424,53 @@ const Blackjack = () => {
   if (loading) {
     return (
       <Container className="text-center mt-5">
-        <Spinner animation="border" variant="light" role="status">
+        <div className="game-spinner" role="status">
           <span className="visually-hidden">Loading...</span>
-        </Spinner>
+        </div>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4 game-wrapper">
-      {error && <Alert variant="danger">{error}</Alert>}
+    <Container className="mt-4">
+      {error && <div className="game-alert game-alert-danger">{error}</div>}
       
-      <div className="game-container" style={{ 
-        width: '100%', 
-        minHeight: '70vh', 
-        background: 'radial-gradient(circle, #004d00, #003300)',
-        borderRadius: '20px', 
-        padding: '20px',
-        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.7), 0 10px 30px rgba(0, 0, 0, 0.5)',
-        border: '2px solid rgba(255, 215, 0, 0.2)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
+      <div className="game-container">
         {/* Background pattern */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0, 0, 0, 0.1) 20px, rgba(0, 0, 0, 0.1) 40px)',
-          pointerEvents: 'none',
-          zIndex: 1
-        }}></div>
+        <div className="pattern-overlay"></div>
 
-        {/* Balance Display - Replacing Status Component */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginBottom: '20px', 
-          position: 'relative', 
-          zIndex: 5 
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            padding: '1em',
-            width: '300px',
-            background: 'black',
-            border: '5px solid white',
-            borderRadius: '15px',
-            boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.5)'
-          }}>
-            <h1 style={{ 
-              color: 'white', 
-              margin: 0, 
-              display: 'flex', 
-              alignItems: 'center' 
-            }}>
-              <FaCoins style={{ color: 'gold', marginRight: '10px', fontSize: '0.8em' }} />
+        {/* Balance Display */}
+        <div className="text-center mb-4">
+          <div className="balance-display">
+            <h1 className="mb-0 d-flex align-items-center">
+              <FaCoins className="text-accent me-2" style={{ fontSize: '0.8em' }} />
               ${balance.toFixed(2)}
             </h1>
           </div>
         </div>
 
         {/* Game info */}
-        <div style={{ position: 'absolute', top: '10px', right: '20px', display: 'flex', alignItems: 'center', zIndex: 5 }}>
-          <div style={{ 
-            background: 'rgba(0, 0, 0, 0.6)', 
-            padding: '5px 10px', 
-            borderRadius: '15px', 
-            display: 'flex', 
-            alignItems: 'center',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
-          }}>
-            <FaCoins style={{ color: 'gold', marginRight: '5px' }} />
-            <span style={{ color: 'white' }}>Current Bet: ${bet}</span>
+        <div className="game-info">
+          <div className="bet-display">
+            <FaCoins className="text-accent me-2" />
+            <span>Current Bet: ${bet}</span>
           </div>
-          <div style={{ 
-            background: 'rgba(0, 0, 0, 0.6)', 
-            padding: '5px 10px', 
-            borderRadius: '15px', 
-            marginLeft: '10px',
-            display: 'flex', 
-            alignItems: 'center',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
-          }}>
-            <GiPokerHand style={{ color: 'white', marginRight: '5px' }} />
-            <span style={{ color: 'white' }}>Cards: {deck.length}</span>
+          <div className="cards-display">
+            <GiPokerHand className="me-2" />
+            <span>Cards: {deck.length}</span>
           </div>
         </div>
 
         {/* Main game content */}
-        <div style={{ position: 'relative', zIndex: 5 }}>
+        <div className="game-content">
           <div className="hand-container">
-            <div className="hand-title-wrapper" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              margin: '15px 0 10px',
-              position: 'relative'
-            }}>
-              <h2 style={{ 
-                color: 'white', 
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-                margin: '0',
-                display: 'flex',
-                alignItems: 'center', 
-                gap: '10px'
-              }}>
-                Dealer's Hand
-              </h2>
+            <div className="hand-title-wrapper">
+              <h2 className="hand-title">Dealer's Hand</h2>
               
-              {/* Always show dealer score badge */}
+              {/* Dealer score badge */}
               {dealerCards.length > 0 && dealerCards.some(card => !card.hidden) && (
-                <div style={{ 
-                  position: 'absolute',
-                  right: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px' 
-                }}>
-                  <div style={getScoreBadgeStyle(dealerScore)}>
+                <div className="score-badge-container">
+                  <div className="score-badge" style={getScoreBadgeStyle(dealerScore)}>
                     {dealerScore}
                   </div>
                 </div>
@@ -554,42 +479,16 @@ const Blackjack = () => {
             <Hand title="" cards={dealerCards} />
           </div>
 
-          <div className="table-divider" style={{
-            height: '2px',
-            background: 'linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), transparent)',
-            margin: '10px 0 20px 0',
-            width: '100%'
-          }}></div>
+          <div className="table-divider"></div>
 
           <div className="hand-container">
-            <div className="hand-title-wrapper" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              margin: '15px 0 10px',
-              position: 'relative'
-            }}>
-              <h2 style={{ 
-                color: 'white', 
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-                margin: '0',
-                display: 'flex',
-                alignItems: 'center', 
-                gap: '10px'
-              }}>
-                Your Hand
-              </h2>
+            <div className="hand-title-wrapper">
+              <h2 className="hand-title">Your Hand</h2>
               
-              {/* Always show player score badge */}
+              {/* Player score badge */}
               {userCards.length > 0 && (
-                <div style={{ 
-                  position: 'absolute',
-                  right: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px' 
-                }}>
-                  <div style={getScoreBadgeStyle(userScore)}>
+                <div className="score-badge-container">
+                  <div className="score-badge" style={getScoreBadgeStyle(userScore)}>
                     {userScore}
                   </div>
                 </div>
@@ -598,13 +497,13 @@ const Blackjack = () => {
             <Hand title="" cards={userCards} />
           </div>
 
-      <Controls
-        balance={balance}
-        gameState={gameState}
-        buttonState={buttonState}
-        betEvent={placeBet}
-        hitEvent={hit}
-        standEvent={stand}
+          <Controls
+            balance={balance}
+            gameState={gameState}
+            buttonState={buttonState}
+            betEvent={placeBet}
+            hitEvent={hit}
+            standEvent={stand}
             resetEvent={resetGame} />
         </div>
       </div>

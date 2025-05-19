@@ -61,19 +61,7 @@ const PaymentPage = () => {
                          message.type === 'warning' ? '#f59e0b' : '#0d6efd'
           }}
         >
-          <div className="d-flex align-items-center">
-            <div className="me-3">
-              <Image 
-                src={logoCasino} 
-                alt="Casino Logo" 
-                width={40} 
-                height={40} 
-                className="notification-logo"
-                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))' }}
-              />
-            </div>
-            <div className="text-start">{message.text}</div>
-          </div>
+          {message.text}
         </div>
       )}
       

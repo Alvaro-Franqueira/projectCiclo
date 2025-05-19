@@ -4,7 +4,7 @@ import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner, Badge } f
 import { RouletteTable } from '../../../react-casino-roulette/src/components/RouletteTable'; // Adjust path if needed
 import {RouletteWheel} from '../../../react-casino-roulette/src/components/RouletteWheel'; // Adjust path if needed
 import '../../../react-casino-roulette/dist/index.css'; // Adjust path if needed
-import './Roulette.css'; // Your custom styles
+import '../../assets/styles/Roulette.css'; // Import our new Roulette styles
 import betService from '../../services/betService';
 import rouletteService from '../../services/rouletteService';
 import { useAuth } from '../../context/AuthContext';
@@ -215,7 +215,7 @@ const handleSpinClick = async () => {
     setIsSpinning(true);
     
     // Display spinning message - this will stay visible during the spin
-    setMessage({ text: 'Wheel is spinning! Good luck!', type: 'info' });
+    setMessage({ text: 'Wheel is spinning! Good luck!', type: 'spinning' });
     setStartSpin(false);
 
     try {
@@ -304,30 +304,24 @@ const handleSpinEnd = () => {
             confetti({ particleCount: 250, spread: 70, origin: { y: 0.6 } });
         }
         
-        // Hide the spinning message first
-        setMessageVisible(false);
-        
-        // Short delay before showing the result message
-        setTimeout(() => {
-            const winLossText = profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`;
-            setMessage({
-                text: `Landed on: ${winningNumber}. ${winLossText}`,
-                type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
-            });
-        }, 300);
+        // Maintain the same message position by keeping messageVisible true
+        // Don't reset messageVisible during this transition
+        const winLossText = profit === 0 ? 'No change.' : `You ${profit > 0 ? 'won' : 'lost'} $${Math.abs(profit).toFixed(2)}.`;
+        setMessage({
+            text: `Landed on: ${winningNumber}. ${winLossText}`,
+            type: profit > 0 ? 'success' : profit < 0 ? 'danger' : 'info',
+        });
+        // Make sure message is visible - don't let it disappear between transitions
+        setMessageVisible(true);
         
         setBetHistory(prev => [winningNumber, ...prev.slice(0, 14)]);
         fetchUserGameHistory();
         setSpinResults(null);
     } else {
         if (message.type !== 'danger') {
-            // Hide the spinning message first
-            setMessageVisible(false);
-            
-            // Short delay before showing completion message
-            setTimeout(() => {
-                setMessage({ text: 'Spin complete.', type: 'info' });
-            }, 300);
+            // Keep the message visible when updating to "Spin complete"
+            setMessage({ text: 'Spin complete.', type: 'info' });
+            setMessageVisible(true);
         }
     }
     setIsSpinning(false);
@@ -348,34 +342,25 @@ const handleSpinEnd = () => {
   const maxHeightForFiveItems = '340px';
   return (
     <Container fluid className="roulette-container py-4">
+        {/* Decorative corner elements */}
+        <div className="corner-top-right"></div>
+        <div className="corner-bottom-left"></div>
+        
         {/* Floating message */}
         {message.text && (
           <div 
-            className={`floating-message alert alert-${message.type} ${isSpinning && message.type === 'info' ? 'spinning-message' : ''}`}
+            className={`floating-message alert alert-${message.type} ${!messageVisible ? 'hidden' : ''} ${isSpinning && message.type === 'spinning' ? 'spinning-message' : ''}`}
             style={{
-              position: 'fixed',
-              bottom: messageVisible ? '30px' : '-100px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 1050,
-              minWidth: '300px',
-              maxWidth: '80%',
-              boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
-              textAlign: 'center',
-              padding: '15px',
-              borderRadius: '10px',
               opacity: messageVisible ? 0.95 : 0,
-              fontWeight: 'bold',
-              border: '2px solid',
-              transition: 'all 0.8s ease-in-out',
               borderColor: message.type === 'success' ? 'var(--success-color)' : 
                            message.type === 'danger' ? 'var(--danger-color)' : 
-                           message.type === 'warning' ? '#f59e0b' : '#0d6efd'
+                           message.type === 'warning' ? '#f59e0b' : 
+                           message.type === 'spinning' ? 'gold' : '#0d6efd'
             }}
           >
             {message.text}
-            {isSpinning && message.type === 'info' && (
-              <div className="spinner-dots mt-2">
+            {isSpinning && message.type === 'spinning' && (
+              <div className="spinner-dots mt-2 d-flex justify-content-center">
                 <Spinner as="span" animation="grow" size="sm" role="status" aria-hidden="true" className="mx-1" />
                 <Spinner as="span" animation="grow" size="sm" role="status" aria-hidden="true" className="mx-1" />
                 <Spinner as="span" animation="grow" size="sm" role="status" aria-hidden="true" className="mx-1" />
@@ -448,12 +433,15 @@ const handleSpinEnd = () => {
                         winningBet={spinResultNumber}
                         onSpinningEnd={handleSpinEnd}
                     />
+                    <div className="roulette-wheel-shadow"></div>
                 </div>
                 <div className="d-flex justify-content-center w-100 mb-3">
                     <Button variant="outline-danger" size="lg" onClick={clearAllBets} disabled={isSpinning || Object.keys(bets).length === 0} className="me-3" style={{ minWidth: '130px'}}>
                         Clear Bets
                     </Button>
-                    <Button variant="success" size="lg" onClick={handleSpinClick} disabled={isSpinning || Object.keys(bets).length === 0 || totalBetDisplay > userBalance} style={{ minWidth: '130px'}}>
+                    <Button variant="success" size="lg" onClick={handleSpinClick} disabled={isSpinning || Object.keys(bets).length === 0 || totalBetDisplay > userBalance} 
+                      className={Object.keys(bets).length > 0 && !isSpinning ? 'spin-button-pulse' : ''}
+                      style={{ minWidth: '130px'}}>
                         {isSpinning ? <><Spinner as="span" animation="border" size="sm" /> Spinning...</> : 'SPIN'}
                     </Button>
                 </div>
@@ -470,7 +458,7 @@ const handleSpinEnd = () => {
                         {betHistory.length > 0 ? (
                             <div className="history-numbers-container d-flex flex-wrap justify-content-center">
                                 {betHistory.map((num, index) => (
-                                    <span key={index} className="history-number m-1" style={{ backgroundColor: getNumberColor(num), color: 'white' }} title={`Spin #${betHistory.length - index}`}>
+                                    <span key={index} className={`history-number m-1 ${index === 0 ? 'win-flash' : ''}`} style={{ backgroundColor: getNumberColor(num), color: 'white' }} title={`Spin #${betHistory.length - index}`}>
                                         {num}
                                     </span>
                                 ))}
@@ -501,7 +489,7 @@ const handleSpinEnd = () => {
             {/* Small Screen: order: 4 (from existing CSS) */}
             {/* This section is now always after the table. */}
             <Col xs={12} md={12} lg={9} className="bet-history-section order-md-5 mx-auto mb-3">
-            <Card className="text-white" style={{ backgroundColor: '#333' /* Example dark background */ }}>
+            <Card className="text-white">
             <Card.Header>
                 <FaHistory className="me-2" />
                 Recent Bets
@@ -510,15 +498,19 @@ const handleSpinEnd = () => {
                 {gameHistory.length > 0 ? (
                     <div style={{ maxHeight: maxHeightForFiveItems, overflowY: 'auto' }}> {/* SCROLL APPLIED HERE */}
                         {gameHistory.map((bet) => (
-                            <div key={bet.id || `bet-${Math.random()}`} className="mb-2 p-2 border-bottom small">
+                            <div key={bet.id || `bet-${Math.random()}`} className={`recent-bet-item ${bet.status === 'won' ? 'win-highlight' : 'loss-highlight'}`}>
                                 <div className="d-flex justify-content-around align-items-center">
                                 <span className="text-white">
                                         {bet.amount ? `Bet: $${bet.amount}` : '0.00'}
                                     </span>
                                     <span>
                                         {bet.betType.toLowerCase() === 'color'
-                                            ? bet.betValue=== '1' ? `color: red` : `color: black`
-                                            : `${bet.betType}: ${bet.betValue}`
+                                            ? bet.betValue=== '1' ? 
+                                              <span className="roulette-bet-display roulette-bet-color-red">color: red</span> : 
+                                              <span className="roulette-bet-display roulette-bet-color-black">color: black</span>
+                                            : <span className={`roulette-bet-display roulette-bet-${bet.betType === 'number' ? 'number' : 'even-odd'}`}>
+                                                {bet.betType}: {bet.betValue}
+                                              </span>
                                         }
                                     </span>
 
