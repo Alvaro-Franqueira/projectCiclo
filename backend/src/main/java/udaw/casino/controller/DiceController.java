@@ -20,6 +20,10 @@ import java.util.Random;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Controller for managing dice game operations in the casino system.
+ * Provides endpoints for placing bets and playing rounds of dice.
+ */
 @RestController
 @RequestMapping("/api/dice") // Base path for dice game endpoints
 @RequiredArgsConstructor
@@ -29,6 +33,12 @@ public class DiceController {
     private final UserService userService;
     private final GameService gameService;
     
+    /**
+     * Endpoint to play a round of dice and place a bet.
+     * 
+     * @param betRequest The bet request containing user ID, amount, bet type, and bet value.
+     * @return ResponseEntity containing the dice results and the resolved bet.
+     */
     @PostMapping("/play")
     public ResponseEntity<DiceGameResponseDTO> playDice(@RequestBody PlaceBetRequestDTO betRequest) {
         // Validate the request body

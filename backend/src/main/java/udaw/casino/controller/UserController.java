@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Controller for managing user operations in the casino system.
+ * Provides endpoints for user registration, login, retrieval, updates, and deletion.
+ */
 @RestController
 @RequestMapping("/api/users") 
 public class UserController {
@@ -167,7 +171,12 @@ public class UserController {
         }
     }
 
-    // gets the user balance
+    /**
+     * Gets the balance of a user by their ID.
+     *
+     * @param id The ID of the user.
+     * @return ResponseEntity with the user's balance or 404 Not Found.
+     */
     @GetMapping("/balance/{id}")
     public ResponseEntity<Double> getBalanceById(@PathVariable Long id) {
         try {
@@ -228,7 +237,13 @@ public class UserController {
         }
     }
 
-    // update a balance
+    /**
+     * Updates the balance of a user by their ID.
+     *
+     * @param id The ID of the user.
+     * @param newBalance The new balance to set.
+     * @return ResponseEntity with the updated user or an error.
+     */
     @PutMapping("/balance/{id}")
     public ResponseEntity<?> updateBalance(@PathVariable Long id, @RequestParam double newBalance) {
         try {
@@ -240,6 +255,7 @@ public class UserController {
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during balance update.");
         }
     }
+
     /**
      * Deletes a user.
      * Requires ADMIN role (to be enforced by Spring Security).

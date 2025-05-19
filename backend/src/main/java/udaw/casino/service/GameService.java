@@ -9,7 +9,12 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 
-
+/**
+ * Service class for managing casino games.
+ * Handles CRUD operations for games, including creation, retrieval,
+ * updates, and deletion. Ensures game uniqueness and maintains
+ * game-related data integrity.
+ */
 @Service
 public class GameService {
 
@@ -20,26 +25,28 @@ public class GameService {
     }
 
     /**
-     * Creates a new game.
+     * Creates a new game in the casino system.
+     * Validates game name uniqueness before creation.
      *
-     * @param game The game details.
-     * @return The saved Game object.
+     * @param game The game details to create
+     * @return The newly created game
+     * @throws IllegalArgumentException if a game with the same name already exists
      */
     @Transactional
     public Game createGame(Game game) {
-        // Optional: Add check for existing game name if it should be unique
+        // Validate game name uniqueness
         if (gameRepository.findByName(game.getName()).isPresent()) {
-             throw new IllegalArgumentException("Game with name '" + game.getName() + "' already exists.");
+            throw new IllegalArgumentException("Game with name '" + game.getName() + "' already exists.");
         }
         return gameRepository.save(game);
     }
 
     /**
-     * Retrieves a game by its ID.
+     * Retrieves a game by its unique identifier.
      *
-     * @param id The ID of the game.    
-     * @return The found Game object.
-     * @throws ResourceNotFoundException if the game is not found.
+     * @param id The unique identifier of the game
+     * @return The found game
+     * @throws ResourceNotFoundException if no game exists with the given ID
      */
     public Game getGameById(Long id) {
         return gameRepository.findById(id)
@@ -49,54 +56,61 @@ public class GameService {
     /**
      * Retrieves a game by its name.
      *
-     * @param name The name of the game.
-     * @return The found Game object.
-     * @throws ResourceNotFoundException if the game is not found.
+     * @param name The name of the game to find
+     * @return The found game
+     * @throws ResourceNotFoundException if no game exists with the given name
      */
     public Game getGameByName(String name) {
         return gameRepository.findByName(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", "name", name));
     }
 
-
     /**
-     * Retrieves all available games.
+     * Retrieves all available games in the casino.
      *
-     * @return A list of all Game objects.
+     * @return A list of all games, ordered by their natural order
      */
     public List<Game> getAllGames() {
         return gameRepository.findAll();
     }
 
-    // Optional: Add update and delete methods if needed for game management
     /**
-     * Deletes a game by its ID.
-     * CAUTION: Consider consequences of deleting a game with existing bets/rankings.
-     * Might need cascading deletes or checks before allowing deletion.
-     * @param id The ID of the game to delete.
+     * Deletes a game from the casino system.
+     * WARNING: This operation is irreversible and may affect associated data.
+     * Consider implementing checks for:
+     * - Existing bets associated with the game
+     * - Active rankings or statistics
+     * - User preferences or favorites
+     *
+     * @param id The ID of the game to delete
+     * @throws ResourceNotFoundException if no game exists with the given ID
      */
     @Transactional
     public void deleteGame(Long id) {
-        Game game = getGameById(id); // Ensure game exists
-        // Add checks here if needed (e.g., check if bets exist for this game)
+        Game game = getGameById(id); // Validate game existence
         gameRepository.delete(game);
     }
 
     /**
-     * Updates an existing game.
+     * Updates an existing game's details.
+     * Preserves the game's ID while updating other fields.
+     * Note: Game name updates should be handled with care as it may affect
+     * existing references and user interfaces.
      *
-     * @param id The ID of the game to update.
-     * @param game The new game details.
-     * @return The updated Game object.
-     * @throws ResourceNotFoundException if the game is not found.
+     * @param id The ID of the game to update
+     * @param game The new game details
+     * @return The updated game
+     * @throws ResourceNotFoundException if no game exists with the given ID
      */
     @Transactional
     public Game updateGame(Long id, Game game) {
-        Game existingGame = getGameById(id); // Ensure game exists
-        // Optional: Add checks for unique fields if needed (e.g., name)
+        Game existingGame = getGameById(id); // Validate game existence
+        
+        // Update game properties
         existingGame.setName(game.getName());
         existingGame.setDescription(game.getDescription());
-        // Add other fields as necessary
+
+        
         return gameRepository.save(existingGame);
     }
 }

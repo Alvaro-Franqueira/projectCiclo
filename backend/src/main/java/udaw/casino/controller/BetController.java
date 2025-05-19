@@ -15,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller for managing betting operations in the casino system.
+ * Provides endpoints for creating, retrieving, and managing bets.
+ */
 @RestController
 @RequestMapping("/api/bets") // Base path for bets
 public class BetController {
@@ -29,7 +33,12 @@ public class BetController {
         this.gameService = gameService;
     }
 
-    // GET /api/bets/{id} - Get a specific bet by ID
+    /**
+     * Gets a specific bet by ID.
+     *
+     * @param id The ID of the bet.
+     * @return ResponseEntity containing the bet details or 404 Not Found.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<BetDTO> getBetById(@PathVariable Long id) {
         try {
@@ -40,7 +49,12 @@ public class BetController {
         }
     }
 
-    // GET /api/bets/user/{userId} - Get all bets for a user
+    /**
+     * Gets all bets for a specific user.
+     *
+     * @param userId The ID of the user.
+     * @return ResponseEntity containing the list of bets or 404 Not Found.
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BetDTO>> getBetsByUser(@PathVariable Long userId) {
         try {
@@ -57,7 +71,12 @@ public class BetController {
         }
     }
 
-    // GET /api/bets/game/{gameId} - Get all bets for a game
+    /**
+     * Gets all bets for a specific game.
+     *
+     * @param gameId The ID of the game.
+     * @return ResponseEntity containing the list of bets.
+     */
     @GetMapping("/game/{gameId}")
     public ResponseEntity<List<Bet>> getBetsByGame(@PathVariable Long gameId) {
         // Consider adding check if game exists via GameService first
@@ -65,7 +84,13 @@ public class BetController {
         return ResponseEntity.ok(bets);
     }
 
-    // GET /api/bets/user/{userId}/game/{gameId} - Get all bets for a user in a specific game
+    /**
+     * Gets all bets for a specific user in a specific game.
+     *
+     * @param userId The ID of the user.
+     * @param gameId The ID of the game.
+     * @return ResponseEntity containing the list of bets or 404 Not Found.
+     */
     @GetMapping("/user/{userId}/game/{gameId}")
     public ResponseEntity<List<Bet>> getBetsByUserAndGame(
             @PathVariable Long userId, 
@@ -78,14 +103,23 @@ public class BetController {
             return ResponseEntity.notFound().build();
         }
     }
-    // GET /api/bets - Get all bets (Admin only)
+
+    /**
+     * Gets all bets (Admin only).
+     *
+     * @return ResponseEntity containing the list of all bets.
+     */
     @GetMapping
     public ResponseEntity<List<Bet>> getAllBets() {
         List<Bet> bets = betService.getAllBets();
         return ResponseEntity.ok(bets);
     }
 
-    // GET /api/bets/blackjack - Get all blackjack bets (for debugging)
+    /**
+     * Gets all blackjack bets (for debugging).
+     *
+     * @return ResponseEntity containing the list of blackjack bets.
+     */
     @GetMapping("/blackjack")
     public ResponseEntity<List<Bet>> getAllBlackjackBets() {
         try {
@@ -108,7 +142,12 @@ public class BetController {
         }
     }
 
-    // POST /api/bets - Create a new bet with improved transaction handling
+    /**
+     * Creates a new bet with improved transaction handling.
+     *
+     * @param betDTO The bet details from the request body.
+     * @return ResponseEntity containing the created bet or an error.
+     */
     @PostMapping
     public ResponseEntity<BetDTO> createBet(@RequestBody BetDTO betDTO) {
         try {
@@ -165,7 +204,11 @@ public class BetController {
         }
     }
 
-    // POST /api/bets/test-blackjack - Create a test blackjack bet (for debugging)
+    /**
+     * Creates a test blackjack bet (for debugging).
+     *
+     * @return ResponseEntity containing the created test bet or an error.
+     */
     @PostMapping("/test-blackjack")
     public ResponseEntity<Bet> createTestBlackjackBet() {
         try {

@@ -14,6 +14,11 @@ import udaw.casino.service.PaymentService;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller for managing payment operations in the casino system.
+ * Provides endpoints for processing payments, handling Stripe integration,
+ * and managing payment-related webhooks.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -23,15 +28,20 @@ public class PaymentController {
     @Value("${stripe.publishable.key}")
     private String publishableKey;
 
-    
+    /**
+     * Constructs a new PaymentController with the required PaymentService.
+     *
+     * @param paymentService The service for handling payment operations.
+     */
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
     
     /**
-     * Returns the Stripe publishable key for use in the frontend
+     * Returns the Stripe publishable key for use in the frontend.
+     * This key is required for initializing Stripe.js in the client application.
      * 
-     * @return The Stripe publishable key
+     * @return ResponseEntity containing the Stripe publishable key configuration.
      */
     @GetMapping("/config")
     public ResponseEntity<Map<String, String>> getPublishableKey() {
@@ -41,10 +51,12 @@ public class PaymentController {
     }
 
     /**
-     * Creates a payment intent for processing a payment
+     * Creates a payment intent for processing a payment through Stripe.
+     * This endpoint is used to initiate a payment transaction and obtain
+     * the necessary client secret for completing the payment on the frontend.
      * 
-     * @param paymentIntentDTO Payment details including amount and currency
-     * @return Payment intent details including client secret for Stripe.js
+     * @param paymentIntentDTO Payment details including amount and currency.
+     * @return ResponseEntity containing the payment intent details or error information.
      */
     @PostMapping("/create-payment-intent")
     public ResponseEntity<?> createPaymentIntent(@RequestBody PaymentIntentDTO paymentIntentDTO) {
@@ -63,11 +75,14 @@ public class PaymentController {
     }
 
     /**
-     * Webhook endpoint for Stripe to notify about payment events
+     * Webhook endpoint for Stripe to notify about payment events.
+     * This endpoint receives notifications from Stripe about payment status changes
+     * and other relevant events. The signature header is used to verify the authenticity
+     * of the webhook payload.
      * 
-     * @param payload The webhook payload
-     * @param sigHeader The Stripe signature header
-     * @return Response indicating the result of processing the webhook
+     * @param payload The webhook payload containing event data from Stripe.
+     * @param sigHeader The Stripe signature header for verifying the webhook authenticity.
+     * @return ResponseEntity indicating the result of processing the webhook.
      */
     @PostMapping("/webhook")
     public ResponseEntity<String> handleStripeWebhook(
@@ -85,11 +100,13 @@ public class PaymentController {
     }
     
     /**
-     * Process a payment directly without using Stripe
-     * This is a simplified version for demo purposes
+     * Process a payment directly without using Stripe.
+     * This is a simplified version for demo purposes, allowing direct
+     * balance updates without going through the Stripe payment flow.
      * 
-     * @param paymentDTO Payment data including user ID and amount
-     * @return Response with updated balance and credits added
+     * @param paymentDTO Payment data including user ID and amount.
+     * @return ResponseEntity containing the updated balance and credits added,
+     *         or error information if the payment fails.
      */
     @PostMapping("/process")
     public ResponseEntity<?> processPayment(@RequestBody ProcessPaymentDTO paymentDTO) {

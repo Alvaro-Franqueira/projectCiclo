@@ -25,6 +25,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Service class for handling payment operations in the casino.
+ * Integrates with Stripe for payment processing and provides both
+ * Stripe-based and direct payment methods. Handles payment intents,
+ * webhook events, and balance updates for users.
+ */
 @Service
 public class PaymentService {
 
@@ -46,28 +52,36 @@ public class PaymentService {
     public PaymentService(UserService userService) {
         this.userService = userService;
     }
+
+    /**
+     * Initializes the Stripe API with the configured API key.
+     * Called automatically after dependency injection.
+     */
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeApiKey;
-        System.out.println("Stripe API Key Initialized."); // Add log to confirm
+        System.out.println("Stripe API Key Initialized.");
     }
+
     /**
-     * Creates a payment intent in Stripe
+     * Creates a new payment intent in Stripe for processing a payment.
+     * Supports both card and PayPal payment methods.
      * 
-     * @param paymentIntentDTO Payment intent data
-     * @return PaymentIntentResponseDTO with client secret and other details
-     * @throws StripeException If there's an error with Stripe
+     * @param paymentIntentDTO Payment details including user ID and amount
+     * @return PaymentIntentResponseDTO containing client secret and payment details
+     * @throws StripeException if there's an error with Stripe API
+     * @throws RuntimeException if user not found or other unexpected errors occur
      */
     public PaymentIntentResponseDTO createPaymentIntent(PaymentIntentDTO paymentIntentDTO) throws StripeException {
         try {
-            // Validate user exists
+            // Validate user existence
             User user = userService.getUserById(paymentIntentDTO.getUserId());
             
             System.out.println("Creating payment intent for user: " + user.getUsername() + 
                               ", amount: " + paymentIntentDTO.getAmount() + 
                               ", currency: " + paymentIntentDTO.getCurrency());
             
-            // Create payment intent with specific payment method types instead of automatic
+            // Configure payment intent parameters
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(paymentIntentDTO.getAmount())
                     .setCurrency(paymentIntentDTO.getCurrency())
@@ -75,6 +89,7 @@ public class PaymentService {
                     .putMetadata("userId", user.getId().toString())
                     .build();
             
+            // Create and return payment intent
             PaymentIntent paymentIntent = PaymentIntent.create(params);
             System.out.println("Payment intent created with ID: " + paymentIntent.getId());
             
@@ -97,12 +112,13 @@ public class PaymentService {
     }
 
     /**
-     * Handles Stripe webhook events
+     * Processes incoming Stripe webhook events.
+     * Currently handles payment_intent.succeeded events to update user balances.
      * 
-     * @param payload The webhook payload
-     * @param sigHeader The Stripe signature header
-     * @return A message indicating the result
-     * @throws StripeException If there's an error with Stripe
+     * @param payload The raw webhook payload from Stripe
+     * @param sigHeader The Stripe signature header for verification
+     * @return A message indicating the processing result
+     * @throws StripeException if webhook signature verification fails
      */
     @Transactional
     public String handleWebhookEvent(String payload, String sigHeader) throws StripeException {
@@ -114,7 +130,7 @@ public class PaymentService {
             throw new RuntimeException("Webhook signature verification failed", e);
         }
         
-        // Handle the event
+        // Process payment success events
         if ("payment_intent.succeeded".equals(event.getType())) {
             EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
             StripeObject stripeObject = dataObjectDeserializer.getObject().orElse(null);
@@ -129,29 +145,29 @@ public class PaymentService {
     }
     
     /**
-     * Process a successful payment by updating the user's balance
+     * Processes a successful payment by updating the user's balance.
+     * Converts the payment amount to casino credits using the configured multiplier.
      * 
-     * @param paymentIntent The successful payment intent
-     * @return A message indicating the result
+     * @param paymentIntent The successful payment intent from Stripe
+     * @return A message indicating the processing result
      */
     @Transactional
     public String processSuccessfulPayment(PaymentIntent paymentIntent) {
         try {
-            // Get user ID from metadata
+            // Extract user ID from payment metadata
             String userIdStr = paymentIntent.getMetadata().get("userId");
             if (userIdStr == null) {
                 return "User ID not found in payment metadata";
             }
             
+            // Update user balance with converted credits
             Long userId = Long.parseLong(userIdStr);
             User user = userService.getUserById(userId);
             
-            // Calculate credits to add (1000 credits per EUR/USD)
             long amountPaid = paymentIntent.getAmount();
             double realAmount = amountPaid / 100.0; // Convert from cents to dollars/euros
             double creditsToAdd = realAmount * creditMultiplier;
             
-            // Update user balance
             double newBalance = user.getBalance() + creditsToAdd;
             userService.updateBalance(userId, newBalance);
             
@@ -164,32 +180,31 @@ public class PaymentService {
     }
     
     /**
-     * Process a payment directly without using Stripe
-     * This is a simplified version for demo purposes
+     * Processes a payment directly without using Stripe.
+     * This is a simplified version for testing and development purposes.
+     * Converts payment amount to casino credits using the configured multiplier.
      * 
-     * @param paymentDTO Payment data including user ID and amount
-     * @return Map containing the updated balance and credits added
+     * @param paymentDTO Payment details including user ID, amount, and card number
+     * @return Map containing success status, credits added, new balance, and message
      */
     @Transactional
     public Map<String, Object> processDirectPayment(ProcessPaymentDTO paymentDTO) {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // Validate user exists
+            // Validate user and process payment
             User user = userService.getUserById(paymentDTO.getUserId());
             
             System.out.println("Processing direct payment for user: " + user.getUsername() + 
                               ", amount: " + paymentDTO.getAmount() + 
                               ", card: **** **** **** " + paymentDTO.getCardNumber());
             
-            // Calculate credits to add (1000 credits per EUR/USD)
+            // Calculate and add credits
             double creditsToAdd = paymentDTO.getAmount() * creditMultiplier;
-            
-            // Update user balance in the database
             double newBalance = user.getBalance() + creditsToAdd;
             userService.updateBalance(paymentDTO.getUserId(), newBalance);
             
-            // Return the result
+            // Prepare success response
             result.put("success", true);
             result.put("creditsAdded", creditsToAdd);
             result.put("newBalance", newBalance);

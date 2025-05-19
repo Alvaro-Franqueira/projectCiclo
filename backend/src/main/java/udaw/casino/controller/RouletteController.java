@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Controller for managing roulette game operations in the casino system.
+ * Provides endpoints for placing bets and playing rounds of roulette.
+ */
 @RestController
 @RequestMapping("/api/games/roulette") 
 @AllArgsConstructor 
@@ -29,7 +33,8 @@ public class RouletteController {
 
     private final RouletteService rouletteService;       
     private static final Logger log = LoggerFactory.getLogger(RouletteService.class);
-    /*
+
+    /**
      * Endpoint to place a bet and play a round of Roulette, generating a winning number on the server.
      * Requires authenticated user context (handled by Spring Security later).
      *
@@ -79,7 +84,6 @@ public class RouletteController {
                 winningNumber = String.valueOf(randomNumber);
             }
 
-
             // DEVELOPMENT ONLY: Log the generated winning number
             // This should be removed or replaced with a proper logging mechanism in production
             System.err.println("Betting number generated: " + betValue); // Log the betting value for debugging
@@ -113,6 +117,13 @@ public class RouletteController {
         }
     }
 
+    /**
+     * Endpoint to place multiple bets and play a round of Roulette, generating a winning number on the server.
+     * Requires authenticated user context (handled by Spring Security later).
+     *
+     * @param requests List of bet requests.
+     * @return ResponseEntity containing the winning number and the resolved BetDTOs, or an error message.
+     */
     @PostMapping("/play-multibet")
     public ResponseEntity<?> playMultibet(@RequestBody List<MultibetRequest> requests) {
         try {
@@ -182,7 +193,6 @@ public class RouletteController {
                     .body("An unexpected error occurred while processing the multibet.");
         }
     }
-
 
     @Data
     public static class MultibetRequest {

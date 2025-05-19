@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * Controller for managing ranking calculations in the casino system.
+ * Provides endpoints for retrieving various types of rankings, including global and game-specific rankings.
+ */
 @RestController
 @RequestMapping("/api/rankings/v2") // New API version for calculated rankings
 public class RankingCalculationController {

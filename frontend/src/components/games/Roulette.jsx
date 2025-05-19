@@ -1,50 +1,70 @@
+/**
+ * Roulette Game Component
+ * Implements a full-featured American Roulette game with betting functionality,
+ * wheel animation, and real-time balance updates.
+ */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner, Badge } from 'react-bootstrap';
-// Use the components from the library
-import { RouletteTable } from '../../../react-casino-roulette/src/components/RouletteTable'; // Adjust path if needed
-import {RouletteWheel} from '../../../react-casino-roulette/src/components/RouletteWheel'; // Adjust path if needed
-import '../../../react-casino-roulette/dist/index.css'; // Adjust path if needed
-import '../../assets/styles/Roulette.css'; // Import our new Roulette styles
+// External Components
+import { RouletteTable } from '../../../react-casino-roulette/src/components/RouletteTable';
+import {RouletteWheel} from '../../../react-casino-roulette/src/components/RouletteWheel';
+import '../../../react-casino-roulette/dist/index.css';
+
+import '../../assets/styles/Roulette.css';
+
+// Services
 import betService from '../../services/betService';
 import rouletteService from '../../services/rouletteService';
-import { useAuth } from '../../context/AuthContext';
 import gameService from '../../services/gameService';
 import userService from '../../services/userService';
-// Import chips images (ensure paths are correct relative to Roulette.jsx)
+import { useAuth } from '../../context/AuthContext';
+
+// Assets
 import whiteChip from '../images/white-chip.png';
 import blueChip from '../images/blue-chip.png';
 import blackChip from '../images/black-chip.png';
 import cyanChip from '../images/cyan-chip.png';
-import flyingChips from '../images/flying-chips.png'; // Adjust the path as needed
 import confetti from 'canvas-confetti';
-import { Link } from 'react-router-dom';
-import { FaChartBar } from 'react-icons/fa'; // Adjust the path as needed
-import { GiAbstract013 } from 'react-icons/gi'; // Adjust the path as needed
 import { FaHistory } from 'react-icons/fa';
-// --- Constants and Helpers ---
-// Chip values and icons
+
+// --- Game Configuration Constants ---
+/**
+ * Chip configuration mapping chip types to their values and icons
+ */
 const chipsMap = {
   chip1: { icon: whiteChip, value: 1 },
   chip10: { icon: blueChip, value: 10 },
   chip100: { icon: blackChip, value: 100 },
   chip500: { icon: cyanChip, value: 500 },
 };
-const defaultChip = 'chip10'; // Default chip to start with
+const defaultChip = 'chip10';
 
-// American Roulette has 0 and 00. Numbers 1-36 have the same colors.
+/**
+ * Red numbers in American Roulette (1-36)
+ * Used for determining winning colors
+ */
 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
-// Regex to identify betIds representing multi-number inside bets (split, street, corner, line, etc.)
+/**
+ * Regular expression to identify multi-number inside bets
+ * Matches patterns like "1-2" for splits, "1-2-3" for streets, etc.
+ */
 const multiNumberBetRegex = /^\d+(-\d+)+$/;
 
-// Helper function to determine if a bet is a special type that needs custom handling
+/**
+ * List of special bet types that require custom handling
+ * These are outside bets like red/black, even/odd, etc.
+ */
 const isSpecialBetType = (betId) => {
     return ['RED', 'BLACK', 'EVEN', 'ODD', '1_TO_18', '19_TO_36',
             '1ST_DOZEN', '2ND_DOZEN', '3RD_DOZEN',
             '1ST_COLUMN', '2ND_COLUMN', '3RD_COLUMN'].includes(betId);
 };
 
-// Function to get bet type and value for special bets
+/**
+ * Maps special bet IDs to their corresponding bet types and values
+ * Used for processing outside bets in the API
+ */
 const getSpecialBetTypeAndValue = (betId) => {
     if (betId === 'RED' || betId === 'BLACK') {
         return { betType: 'color', betValue: betId === 'RED' ? '1' : '2' };
@@ -60,11 +80,14 @@ const getSpecialBetTypeAndValue = (betId) => {
     return null;
 };
 
-// Function to calculate total bet amount from the bets object
+/**
+ * Calculates the total bet amount from the current bets object
+ * @param {Object} bets - Object containing all current bets
+ * @returns {number} Total bet amount
+ */
 const calculateTotalBet = (bets) => {
   return Object.values(bets).reduce((acc, bet) => acc + bet.number, 0);
 };
-
 
 // --- Component ---
 

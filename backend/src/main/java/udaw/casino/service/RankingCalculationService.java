@@ -19,11 +19,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service for calculating rankings on-demand without storing them in the database.
- * This replaces the previous approach of maintaining a separate Ranking entity.
+ * Service for calculating user rankings on-demand without persistent storage.
+ * Provides functionality to calculate various types of rankings:
+ * - Global rankings (across all games)
+ * - Game-specific rankings
+ * - Individual user rankings
+ * 
+ * Rankings are calculated based on different metrics:
+ * - Total amount bet
+ * - Win rate
+ * - Total profit/losses
+ * - Game-specific statistics
  */
 @Service
-
 public class RankingCalculationService {
 
     private static final Logger log = LoggerFactory.getLogger(RankingCalculationService.class);
@@ -37,7 +45,9 @@ public class RankingCalculationService {
     }
 
     /**
-     * Represents a ranking entry with user information and score.
+     * Represents a single entry in a ranking list.
+     * Contains user information, game context (if applicable),
+     * ranking type, calculated score, and position in the ranking.
      */
     @Getter
     @Setter
@@ -54,24 +64,26 @@ public class RankingCalculationService {
             this.type = type;
             this.score = score;
         }
-
     }
 
     /**
-     * Gets the global ranking list for a specific type.
-     *
-     * @param type The type of ranking.
-     * @return List of RankingEntry objects ordered by score.
+     * Calculates global rankings for a specific ranking type.
+     * Global rankings are calculated across all users and games.
+     * 
+     * @param type The type of ranking to calculate
+     * @return List of RankingEntry objects sorted by score in descending order
      */
     public List<RankingEntry> getRankingByType(RankingType type) {
         log.info("Calculating on-demand ranking for type: {}", type);
         
-        // Check if the ranking type requires a game
-        if (type == RankingType.BY_GAME_AMOUNT || type == RankingType.BY_GAME_WIN_RATE || type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
+        // Validate ranking type
+        if (type == RankingType.BY_GAME_AMOUNT || type == RankingType.BY_GAME_WIN_RATE || 
+            type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
             log.warn("Requested game-specific ranking type {} without specifying a game - returning empty list", type);
-            return new ArrayList<>(); // Return empty list for game-specific ranking types
+            return new ArrayList<>();
         }
         
+        // Calculate scores for all users
         List<User> users = userRepository.findAll();
         List<RankingEntry> rankings = new ArrayList<>();
         
@@ -80,9 +92,8 @@ public class RankingCalculationService {
             rankings.add(new RankingEntry(user, null, type, score));
         }
         
-        // Sort by score (descending) and assign positions
+        // Sort and assign positions
         rankings.sort(Comparator.comparing(RankingEntry::getScore).reversed());
-        
         for (int i = 0; i < rankings.size(); i++) {
             rankings.get(i).setPosition(i + 1);
         }
@@ -91,11 +102,11 @@ public class RankingCalculationService {
     }
 
     /**
-     * Gets the ranking list for a specific game and ranking type.
-     *
-     * @param type The type of ranking.
-     * @param game The game.
-     * @return List of RankingEntry objects ordered by score.
+     * Calculates game-specific rankings for a particular game and ranking type.
+     * 
+     * @param type The type of ranking to calculate
+     * @param game The game to calculate rankings for
+     * @return List of RankingEntry objects sorted by score in descending order
      */
     public List<RankingEntry> getRankingByGameAndType(RankingType type, Game game) {
         log.info("Calculating on-demand ranking for type: {} and game: {}", type, game.getName());
@@ -103,14 +114,14 @@ public class RankingCalculationService {
         List<User> users = userRepository.findAll();
         List<RankingEntry> rankings = new ArrayList<>();
         
+        // Calculate scores for all users in the specific game
         for (User user : users) {
             Double score = calculateScore(user, type, game);
             rankings.add(new RankingEntry(user, game, type, score));
         }
         
-        // Sort by score (descending) and assign positions
+        // Sort and assign positions
         rankings.sort(Comparator.comparing(RankingEntry::getScore).reversed());
-        
         for (int i = 0; i < rankings.size(); i++) {
             rankings.get(i).setPosition(i + 1);
         }
@@ -119,26 +130,28 @@ public class RankingCalculationService {
     }
 
     /**
-     * Gets the rankings for a specific user.
-     *
-     * @param userId The user ID.
-     * @return List of RankingEntry objects for the user.
+     * Calculates all rankings for a specific user.
+     * Includes both global and game-specific rankings.
+     * 
+     * @param userId The ID of the user to calculate rankings for
+     * @return List of RankingEntry objects containing all rankings for the user
      */
     public List<RankingEntry> getUserRankings(Long userId) {
         log.info("Calculating on-demand rankings for user ID: {}", userId);
         
+        // Find user
         User user;
         try {
             user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
         } catch (Exception e) {
             log.error("Error finding user with ID {}: {}", userId, e.getMessage());
-            return new ArrayList<>(); // Return empty list instead of throwing exception
+            return new ArrayList<>();
         }
         
         List<RankingEntry> rankings = new ArrayList<>();
         
-        // Add global rankings
+        // Calculate global rankings
         for (RankingType type : RankingType.values()) {
             if (type != RankingType.BY_GAME_AMOUNT && type != RankingType.BY_GAME_WIN_RATE 
                 && type != RankingType.BY_GAME_PROFIT && type != RankingType.BY_GAME_LOSSES) {
@@ -146,7 +159,7 @@ public class RankingCalculationService {
                     Double score = calculateScore(user, type, null);
                     RankingEntry entry = new RankingEntry(user, null, type, score);
                     
-                    // Calculate position
+                    // Calculate position in global ranking
                     List<RankingEntry> fullRanking = getRankingByType(type);
                     for (int i = 0; i < fullRanking.size(); i++) {
                         if (fullRanking.get(i).getUser().getId().equals(user.getId())) {
@@ -160,31 +173,31 @@ public class RankingCalculationService {
                               userId, type, score, entry.getPosition());
                 } catch (Exception e) {
                     log.error("Error calculating {} ranking for user {}: {}", type, userId, e.getMessage());
-                    // Continue to next ranking type
                 }
             }
         }
         
-        // Add game-specific rankings
+        // Calculate game-specific rankings
         List<Game> games;
         try {
             games = betRepository.findDistinctGamesByUserId(userId);
             log.info("Found {} distinct games for user {}", games.size(), userId);
         } catch (Exception e) {
             log.error("Error finding games for user {}: {}", userId, e.getMessage());
-            games = new ArrayList<>(); // Empty list to safely continue
+            games = new ArrayList<>();
         }
         
+        // Calculate rankings for each game
         for (Game game : games) {
             log.debug("Processing game rankings for user {} and game {} (ID: {})", 
                       userId, game.getName(), game.getId());
             
-            // BY_GAME_AMOUNT ranking
+            // Calculate BY_GAME_AMOUNT ranking
             try {
                 Double winsScore = calculateScore(user, RankingType.BY_GAME_AMOUNT, game);
                 RankingEntry winsEntry = new RankingEntry(user, game, RankingType.BY_GAME_AMOUNT, winsScore);
                 
-                // Calculate position for BY_GAME_AMOUNT
+                // Calculate position
                 List<RankingEntry> allWinsRankings = getRankingByGameAndType(RankingType.BY_GAME_AMOUNT, game);
                 for (int i = 0; i < allWinsRankings.size(); i++) {
                     if (allWinsRankings.get(i).getUser().getId().equals(user.getId())) {
@@ -200,12 +213,12 @@ public class RankingCalculationService {
                           userId, game.getName(), e.getMessage());
             }
             
-            // BY_GAME_LOSSES ranking
+            // Calculate BY_GAME_LOSSES ranking
             try {
                 Double lossesScore = calculateScore(user, RankingType.BY_GAME_LOSSES, game);
                 RankingEntry lossesEntry = new RankingEntry(user, game, RankingType.BY_GAME_LOSSES, lossesScore);
                 
-                // Calculate position for BY_GAME_LOSSES
+                // Calculate position
                 List<RankingEntry> allLossesRankings = getRankingByGameAndType(RankingType.BY_GAME_LOSSES, game);
                 for (int i = 0; i < allLossesRankings.size(); i++) {
                     if (allLossesRankings.get(i).getUser().getId().equals(user.getId())) {
@@ -221,12 +234,12 @@ public class RankingCalculationService {
                           userId, game.getName(), e.getMessage());
             }
             
-            // BY_GAME_WIN_RATE ranking
+            // Calculate BY_GAME_WIN_RATE ranking
             try {
                 Double winRateScore = calculateScore(user, RankingType.BY_GAME_WIN_RATE, game);
                 RankingEntry winRateEntry = new RankingEntry(user, game, RankingType.BY_GAME_WIN_RATE, winRateScore);
                 
-                // Calculate position for BY_GAME_WIN_RATE
+                // Calculate position
                 List<RankingEntry> allWinRateRankings = getRankingByGameAndType(RankingType.BY_GAME_WIN_RATE, game);
                 for (int i = 0; i < allWinRateRankings.size(); i++) {
                     if (allWinRateRankings.get(i).getUser().getId().equals(user.getId())) {
@@ -242,12 +255,12 @@ public class RankingCalculationService {
                           userId, game.getName(), e.getMessage());
             }
             
-            // BY_GAME_PROFIT ranking
+            // Calculate BY_GAME_PROFIT ranking
             try {
                 Double profitScore = calculateScore(user, RankingType.BY_GAME_PROFIT, game);
                 RankingEntry profitEntry = new RankingEntry(user, game, RankingType.BY_GAME_PROFIT, profitScore);
                 
-                // Calculate position for BY_GAME_PROFIT
+                // Calculate position
                 List<RankingEntry> allProfitRankings = getRankingByGameAndType(RankingType.BY_GAME_PROFIT, game);
                 for (int i = 0; i < allProfitRankings.size(); i++) {
                     if (allProfitRankings.get(i).getUser().getId().equals(user.getId())) {
@@ -264,17 +277,16 @@ public class RankingCalculationService {
             }
         }
         
-        log.info("Returning {} rankings for user {}", rankings.size(), userId);
         return rankings;
     }
 
     /**
-     * Calculates the score for a given user, ranking type, and optionally game.
-     *
-     * @param user The user.
-     * @param type The ranking type.
-     * @param game The game (optional).
-     * @return The calculated score.
+     * Calculates the score for a user based on the ranking type and game context.
+     * 
+     * @param user The user to calculate the score for
+     * @param type The type of ranking to calculate
+     * @param game The game context (null for global rankings)
+     * @return The calculated score
      */
     private Double calculateScore(User user, RankingType type, Game game) {
         switch (type) {
