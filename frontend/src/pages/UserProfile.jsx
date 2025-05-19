@@ -13,6 +13,7 @@ import kingLogo from '../components/images/king-logo.png';
 import shitLogo from '../components/images/shitty-logo.png';
 import blackjackImg from '../components/images/blackjack-white.png';
 import slotMachineImg from '../components/images/seven-icon.png';
+import './GameSelection.css'; 
 import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -512,15 +513,24 @@ const UserProfile = () => {
         }
     };
 
+
+
+
+
+
     if (loading) {
-        return (
-            <Container className="text-center my-5">
-                <Spinner animation="border" variant="primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </Spinner>
-                <p className="mt-3">Loading profile...</p>
-            </Container>
-        );
+         return (
+      <Container className="text-center mt-5 game-selection-loading">
+        <div className="spinner-container">
+          <Spinner animation="border" className="gold-spinner" />
+          <div className="spinner-light spinner-light-1"></div>
+          <div className="spinner-light spinner-light-2"></div>
+          <div className="spinner-light spinner-light-3"></div>
+          <div className="spinner-light spinner-light-4"></div>
+        </div>
+        <p className="mt-3 loading-text">Loading games...</p>
+      </Container>
+    );
     }
 
     return (

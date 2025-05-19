@@ -13,7 +13,7 @@ import { mdiSlotMachineOutline } from '@mdi/js';
 import pokerChip from '../components/images/poker-chip.png';
 import blackjackImg from '../components/images/blackjack-white.png';
 import sportBettingImg from '../components/images/betting.png';
-import './GameSelection.css'; // Import the new CSS file
+import './GameSelection.css'; 
 
 const GameSelection = () => {
   const [games, setGames] = useState([]);

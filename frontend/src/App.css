@@ -611,12 +611,6 @@ body {
   color: var(--muted-color);
 }
 
-/* Loading Spinner */
-.spinner-border {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
 /* Improved Success Message */
 .success-glow {
   animation: glow 1.5s ease-in-out infinite alternate;
