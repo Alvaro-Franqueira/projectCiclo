@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,17 +14,38 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Filter for handling JWT authentication in the casino system.
+ * This filter intercepts incoming requests, extracts the JWT token from the Authorization header,
+ * validates the token, and sets the authentication in the security context if valid.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final UserDetailsServiceImpl userDetailsService;
 
+    /**
+     * Constructs a new JwtAuthenticationFilter with the required JwtUtils and UserDetailsService.
+     *
+     * @param jwtUtils The utility for handling JWT operations.
+     * @param userDetailsService The service for loading user details.
+     */
     public JwtAuthenticationFilter(JwtUtils jwtUtils, UserDetailsServiceImpl userDetailsService) {
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
     }
 
+    /**
+     * Processes each request to extract and validate the JWT token.
+     * If the token is valid, it sets the authentication in the security context.
+     *
+     * @param request The HTTP request.
+     * @param response The HTTP response.
+     * @param filterChain The filter chain to continue processing the request.
+     * @throws ServletException If an error occurs during servlet processing.
+     * @throws IOException If an I/O error occurs.
+     */
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, 
                                    @NonNull HttpServletResponse response, 

@@ -10,7 +10,11 @@ import udaw.casino.model.Bet;
 import udaw.casino.model.Game;
 import udaw.casino.model.User;
 
-
+/**
+ * Repository interface for managing Bet entities in the casino system.
+ * Provides methods for finding, counting, and calculating statistics related to bets,
+ * including user-specific and game-specific operations.
+ */
 @Repository
 public interface BetRepository extends JpaRepository<Bet, Long> {
 

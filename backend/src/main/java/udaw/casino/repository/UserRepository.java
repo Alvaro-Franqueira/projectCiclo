@@ -7,6 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import udaw.casino.model.User;
 
+/**
+ * Repository interface for managing User entities in the casino system.
+ * Provides methods for finding users by username or email, and checking
+ * the existence of users with specific credentials.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 

@@ -7,21 +7,49 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Custom validator for email format using Apache Commons Validator
+ * Custom validator for email format in the casino system.
+ * This validator implements the validation logic for the @ValidEmail annotation.
+ * It uses Apache Commons Validator for robust email format validation and adds
+ * additional checks for length and disposable email domains.
+ * 
+ * Validation rules:
+ * - Email must be properly formatted (using Apache Commons Validator)
+ * - Maximum length: 100 characters
+ * - Must not be from a known disposable email domain
  */
 public class EmailConstraintValidator implements ConstraintValidator<ValidEmail, String> {
 
+    /** Apache Commons EmailValidator instance for robust email format validation */
     private static final EmailValidator EMAIL_VALIDATOR = EmailValidator.getInstance(true);
+    
+    /** List of known disposable email domains that are blocked */
     private static final List<String> DISPOSABLE_DOMAINS = Arrays.asList(
             "mailinator.com", "yopmail.com", "tempmail.com", "guerrillamail.com", 
             "throwawaymail.com", "10minutemail.com", "trashmail.com", "sharklasers.com",
             "temp-mail.org", "fakeinbox.com");
 
+    /**
+     * Initializes the validator.
+     * No initialization is needed as we use static validators.
+     *
+     * @param constraintAnnotation The constraint annotation
+     */
     @Override
     public void initialize(ValidEmail constraintAnnotation) {
         // No initialization needed
     }
 
+    /**
+     * Validates the email address.
+     * Performs multiple validation checks:
+     * 1. Length check (max 100 characters)
+     * 2. Format validation using Apache Commons Validator
+     * 3. Disposable domain check
+     *
+     * @param email The email address to validate
+     * @param context The validation context
+     * @return true if the email is valid, false otherwise
+     */
     @Override
     public boolean isValid(String email, ConstraintValidatorContext context) {
         // Skip validation if email is null (handled by @NotBlank)

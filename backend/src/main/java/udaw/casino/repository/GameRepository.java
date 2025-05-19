@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import udaw.casino.model.Game;
 
+/**
+ * Repository interface for managing Game entities in the casino system.
+ * Provides methods for finding games by name and other standard CRUD operations.
+ */
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
 

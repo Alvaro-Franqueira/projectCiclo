@@ -18,6 +18,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import udaw.casino.security.JwtAuthenticationFilter; // Make sure this path is correct
 
+/**
+ * Configuration class for Spring Security in the casino system.
+ * This class sets up security rules, authentication mechanisms, and access control for the application.
+ * It uses JWT for stateless authentication and defines endpoints accessible to different user roles.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // Enables @PreAuthorize, @PostAuthorize, @Secured
@@ -27,6 +32,13 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Constructs a new SecurityConfig with the required JwtAuthenticationFilter, UserDetailsService, and PasswordEncoder.
+     *
+     * @param jwtAuthenticationFilter The filter for handling JWT authentication.
+     * @param userDetailsService The service for loading user details.
+     * @param passwordEncoder The encoder for handling password operations.
+     */
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           UserDetailsService userDetailsService,
                           PasswordEncoder passwordEncoder) {
@@ -35,6 +47,11 @@ public class SecurityConfig {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Configures the AuthenticationManager to use the UserDetailsService and PasswordEncoder.
+     *
+     * @return An AuthenticationManager configured for the application.
+     */
     @Bean
     public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -43,6 +60,14 @@ public class SecurityConfig {
         return new ProviderManager(authProvider);
     }
 
+    /**
+     * Configures the SecurityFilterChain to define security rules and authentication mechanisms.
+     * This method sets up CORS, CSRF, session management, and endpoint access control.
+     *
+     * @param http The HttpSecurity object to configure.
+     * @return A SecurityFilterChain configured for the application.
+     * @throws Exception If an error occurs during configuration.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
