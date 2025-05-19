@@ -483,7 +483,7 @@ const handleSpinEnd = () => {
             {/* Section 3 (DOM order): Last Numbers History */}
             {/* Large Screen: order-md-3 (Right) */}
             {/* Small Screen: No specific order in provided CSS, will likely appear FIRST due to order:0 default. User may need to add CSS order. */}
-            <Col xs={12} md={3} className="last-numbers-section order-md-3 mb-3 mb-md-0">
+            <Col xs={12} md={3} sm={12} className="last-numbers-section order-md-3 ">
                  {/* Applying z-index for potential overlap. Better in CSS. */}
                 <Card style={{ position: 'relative', zIndex: 1 }}>
                     <Card.Header>Last Numbers</Card.Header>

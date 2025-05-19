@@ -27,7 +27,8 @@ const Hand = ({ title, cards }) => {
             <Card 
               value={card.value} 
               suit={card.suit} 
-              hidden={card.hidden} 
+              hidden={card.hidden}
+              index={index}
             />
           </div>
         ))}

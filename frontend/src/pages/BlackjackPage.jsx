@@ -51,17 +51,6 @@ const BlackjackPage = () => {
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
       position: 'relative'
     }}>
-      {/* Casino chips decoration */}
-      <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 1 }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'red', border: '5px dashed white', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }}></div>
-      </div>
-      <div style={{ position: 'absolute', top: '40px', left: '40px', zIndex: 0 }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'blue', border: '5px dashed white', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }}></div>
-      </div>
-      <div style={{ position: 'absolute', top: '20px', right: '30px', zIndex: 1 }}>
-        <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'black', border: '5px dashed gold', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }}></div>
-      </div>
-
       <Container>
         <Row className="justify-content-center mb-4">
           <Col md={10}>

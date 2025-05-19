@@ -147,7 +147,13 @@
 
 /* Last numbers section styles */
 .last-numbers-section {
-  order: 0;
+  order: 0 !important;
+}
+
+@media (min-width: 992px) {
+  .last-numbers-section {
+    order: 3 !important;
+  }
 }
 
 .history-numbers-body {

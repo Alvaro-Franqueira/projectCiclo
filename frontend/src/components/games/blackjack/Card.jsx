@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../../../assets/styles/Card.module.css';
 
-const Card = ({ value, suit, hidden }) => {
+const Card = ({ value, suit, hidden, index }) => {
   const [wasHidden, setWasHidden] = useState(hidden);
   const [isFlipping, setIsFlipping] = useState(false);
-  const [animation, setAnimation] = useState(true);
+  const [isDealing, setIsDealing] = useState(true);
   
   useEffect(() => {
-    // Remove animation class after it plays
+    // Remove dealing animation after it plays
     const timer = setTimeout(() => {
-      setAnimation(false);
-    }, 500);
+      setIsDealing(false);
+    }, 500 + (index * 100)); // Stagger the animation based on card index
     
     return () => clearTimeout(timer);
   }, []);
@@ -40,9 +40,13 @@ const Card = ({ value, suit, hidden }) => {
     const baseStyle = {
       boxShadow: '0 4px 8px rgba(0, 0, 0, 0.5)',
       border: '1px solid rgba(255, 255, 255, 0.3)',
-      transform: animation ? 'translateY(-10px)' : isFlipping ? 'rotateY(180deg)' : 'rotateY(0deg)',
-      opacity: animation ? 0.9 : 1,
-      transition: isFlipping ? 'transform 0.6s ease-out' : 'all 0.3s ease-out',
+      transform: isDealing ? 
+        `translate(-100vw, -100vh) rotate(${Math.random() * 360}deg)` : 
+        isFlipping ? 'rotateY(180deg)' : 'rotateY(0deg)',
+      opacity: isDealing ? 0 : 1,
+      transition: isDealing ? 
+        `transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 100}ms, opacity 0.3s ease ${index * 100}ms` : 
+        isFlipping ? 'transform 0.6s ease-out' : 'all 0.3s ease-out',
       borderRadius: '10px',
       width: '100px',
       height: '140px',

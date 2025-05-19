@@ -348,7 +348,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
                 <td>{new Date(user.registrationDate).toLocaleDateString()}</td>
                 <td>
                   <Button
-                    variant="outline-primary"
+                    variant="outline-secondary"
                     size="sm"
                     className="me-2 mb-1" // Added mb-1 for stacking on small screens
                     onClick={() => handleUserEditClick(user)} // Use handleUserEditClick
@@ -520,7 +520,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
                 <td>{game.description?.substring(0, 50)}{game.description?.length > 50 ? '...' : ''}</td>
                 <td>
                   <Button
-                    variant="outline-primary"
+                    variant="outline-secondary"
                     size="sm"
                     className="me-2 mb-1" // Added mb-1
                     onClick={() => handleShowEditModal(game)} // Use handleShowEditModal
