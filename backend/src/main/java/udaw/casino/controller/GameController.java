@@ -102,10 +102,12 @@ public class GameController {
     public ResponseEntity<?> getGameById(@PathVariable Long id) {
         try {
             Game game = gameService.getGameById(id);
-            return ResponseEntity.ok(game);
+            GameDTO gameDTO = new GameDTO(game);
+            return ResponseEntity.ok(gameDTO);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
+            log.error("Error fetching game with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to fetch game"));
         }

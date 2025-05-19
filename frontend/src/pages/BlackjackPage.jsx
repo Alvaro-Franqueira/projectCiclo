@@ -65,24 +65,25 @@ const BlackjackPage = () => {
       <Container>
         <Row className="justify-content-center mb-4">
           <Col md={10}>
-            <div className="text-center" style={{ 
-              padding: '15px',
-              background: 'rgba(0, 0, 0, 0.6)',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
-            }}>
-              <h1 className="text-center mb-3" style={{ 
-                color: 'gold', 
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-                fontFamily: '"Playfair Display", serif'
-              }}>
-                {gameInfo?.nombre || 'Blackjack'}
-              </h1>
-              <p className="text-center" style={{ color: 'white' }}>
-                {gameInfo?.descripcion || 'Classic card game where you compete against the dealer to get as close to 21 as possible without going over.'}
-              </p>
-            </div>
+          <div className="text-center" style={{ 
+        padding: '15px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+        border: '2px solid gold'
+    }}>
+        <h1 className="text-center mb-3" style={{ 
+        color: 'gold', 
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+        fontFamily: '"Playfair Display", serif'
+        }}>
+        {gameInfo?.name || 'Slot Machine'}
+        </h1>
+        <p className="text-center" style={{ color: 'white' }}>
+        {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+        </p>
+    </div>
 
             {!isAuthenticated && (
               <Alert variant="warning" className="text-center">

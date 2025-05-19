@@ -26,28 +26,7 @@ import {
     Filler
 } from 'chart.js';
 
-// Add CSS for the shake animation
-const shakeAnimation = `
-@keyframes shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  10% { transform: translate(-1px, -2px) rotate(-1deg); }
-  20% { transform: translate(-3px, 0px) rotate(1deg); }
-  30% { transform: translate(3px, 2px) rotate(0deg); }
-  40% { transform: translate(1px, -1px) rotate(1deg); }
-  50% { transform: translate(-1px, 2px) rotate(-1deg); }
-  60% { transform: translate(-3px, 1px) rotate(0deg); }
-  70% { transform: translate(3px, 1px) rotate(-1deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  90% { transform: translate(1px, 2px) rotate(0deg); }
-  100% { transform: translate(1px, -2px) rotate(-1deg); }
-}
-`;
 
-// Create a style element for the animation
-const styleElement = document.createElement('style');
-styleElement.type = 'text/css';
-styleElement.appendChild(document.createTextNode(shakeAnimation));
-document.head.appendChild(styleElement);
 
 // Register Chart.js components
 ChartJS.register(
@@ -707,20 +686,20 @@ const UserProfile = () => {
                                         </Card>
                                         
                                         <Row>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Win Rate</h6><h4>{(stats.winRate?? 0).toFixed(1)}%</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Won</h6><h4 className="text-success">${stats.totalWon.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Total Lost</h6><h4 className="text-danger">${stats.totalLost.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Net Profit</h6><h4 className={stats.netProfit >= 0 ? 'text-success' : 'text-danger'}>${stats.netProfit.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max bet</h6><h4>${stats.maxBet.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max Loss</h6><h4 className="text-danger">${stats.maxLoss.toFixed(2)}</h4></div></Col>
-                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item text-center p-2 rounded light-border" style={{ backgroundColor: '#334155' }}><h6>Max Win</h6><h4 className="text-success">${stats.maxWin.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Total Bets</h6><h4>{stats.totalBets}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Total Wagered</h6><h4>${stats.totalWagered.toFixed(2)}</h4 ></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Win Rate</h6><h4>{(stats.winRate?? 0).toFixed(1)}%</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Total Won</h6><h4 className="text-success">${stats.totalWon.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Total Lost</h6><h4 className="text-danger">${stats.totalLost.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Net Profit</h6><h4 className={stats.netProfit >= 0 ? 'text-success' : 'text-danger'}>${stats.netProfit.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Max bet</h6><h4>${stats.maxBet.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Max Loss</h6><h4 className="text-danger">${stats.maxLoss.toFixed(2)}</h4></div></Col>
+                                            <Col sm={6} md={4} className="mb-3"><div className="stat-item"><h6>Max Win</h6><h4 className="text-success">${stats.maxWin.toFixed(2)}</h4></div></Col>
                                         </Row>
-                                        <h5 className="mt-4 mb-3 d-flex justify-content-between align-items-center">
+                                        <h5 className="mt-4 mb-3 d-flex justify-content-between align-items-center text-white">
                                             <span>Game Statistics</span>
                                             <Button variant="outline-primary" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-                                            {isRefreshing ? (<><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Refreshing...</>) : (<><FaSync className="me-1" /> Refresh Profile</>)}
+                                            {isRefreshing ? (<><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Refreshing...</>) : (<><FaSync className="me-1 "  /> Refresh Profile</>)}
                                             </Button>
                                         </h5>
                                         <Row>
@@ -852,13 +831,13 @@ const UserProfile = () => {
                                                             <tr key={bet.id || index}>
                                                                 <td className="align-middle">
                                                                     {(bet.game?.name === 'Dice' || bet.gameId === 2) ? (
-                                                                        <div className="d-flex align-items-center"><GiRollingDices size={20} color="#3498db" className="me-2" /><span>Dice Game</span></div>
+                                                                        <div className="d-flex align-items-center"><GiRollingDices size={20} color="#3498db" className="me-2" /><span>Dice</span></div>
                                                                     ) : (bet.game?.name === 'Roulette' || bet.gameId === 1) ? (
-                                                                        <div className="d-flex align-items-center"><img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" /><span>Roulette Game</span></div>
+                                                                        <div className="d-flex align-items-center"><img src={rouletteImg} alt="Roulette" width={25} height={20} className="me-2" /><span>Roulette</span></div>
                                                                     ) : (bet.game?.name === 'Blackjack' || bet.gameId === 9) ? (
-                                                                        <div className="d-flex align-items-center"><img src={blackjackImg} alt="Blackjack" width={25} height={20} className="me-2" /><span>Blackjack Game</span></div>
+                                                                        <div className="d-flex align-items-center"><img src={blackjackImg} alt="Blackjack" width={25} height={20} className="me-2" /><span>Blackjack</span></div>
                                                                     ) : (bet.game?.name === 'Slot Machine' || bet.gameId === 7 || bet.gameId === 10 || bet.type === 'SLOT_MACHINE') ? (
-                                                                        <div className="d-flex align-items-center"><img src={slotMachineImg} alt="Slot Machine" width={25} height={20} className="me-2" /><span>Slot Machine Game</span></div>
+                                                                        <div className="d-flex align-items-center"><img src={slotMachineImg} alt="Slot Machine" width={25} height={20} className="me-2" /><span>Slot Machine</span></div>
                                                                     ) : (
                                                                         <span>{bet.game?.name || 'Unknown Game'}</span>
                                                                     )}
@@ -964,12 +943,12 @@ const UserProfile = () => {
                                                     <tbody>
                                                         {rankings
                                                             .filter(r => !r.game)
-                                                            .sort((a, b) => (a.position || 999) - (b.position || 999))
+                                                            .sort((a, b) => a.position - b.position)
                                                             .map((ranking, index) => (
                                                                 <tr key={index}>
                                                                     <td>{ranking.type?.replace(/_/g, ' ') || 'Unknown'}</td>
                                                                     <td>
-                                                                        {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')
+                                                                        {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT') || ranking.type?.includes('LOSERS')
                                                                             ? `$${parseFloat(ranking.score || 0).toFixed(2)}`
                                                                             : ranking.type?.includes('WIN_RATE')
                                                                             ? `${parseFloat(ranking.score || 0).toFixed(1)}%`
@@ -1009,12 +988,12 @@ const UserProfile = () => {
                                                                 </thead>
                                                                 <tbody>
                                                                     {gameRankings
-                                                                        .sort((a, b) => (a.position || 999) - (b.position || 999))
+                                                                        .sort((a, b) => (a.position) - (b.position))
                                                                         .map((ranking, index) => (
                                                                             <tr key={index}>
                                                                                 <td>{ranking.type?.replace(/_/g, ' ') || 'Unknown'}</td>
                                                                                 <td>
-                                                                                    {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')
+                                                                                    {ranking.type?.includes('PROFIT') || ranking.type?.includes('AMOUNT')|| ranking.type?.includes('LOSERS') || ranking.type?.includes('LOSSES')
                                                                                         ? `$${parseFloat(ranking.score || 0).toFixed(2)}`
                                                                                         : ranking.type?.includes('WIN_RATE')
                                                                                         ? `${parseFloat(ranking.score || 0).toFixed(1)}%`

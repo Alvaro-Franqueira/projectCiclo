@@ -51,26 +51,6 @@ const SlotMachinePage = () => {
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
       position: 'relative'
     }}>
-      {/* Decorative elements */}
-      <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1 }}>
-        <div style={{ 
-          width: '50px', 
-          height: '50px', 
-          borderRadius: '50%', 
-          background: 'linear-gradient(to bottom right, #FFD700, #FFA500)', 
-          boxShadow: '0 0 20px rgba(255, 215, 0, 0.7)'
-        }}></div>
-      </div>
-      <div style={{ position: 'absolute', top: '30px', right: '30px', zIndex: 1 }}>
-        <div style={{ 
-          width: '70px', 
-          height: '70px', 
-          borderRadius: '50%', 
-          background: 'linear-gradient(to bottom right, #FF416C, #FF4B2B)', 
-          boxShadow: '0 0 20px rgba(255, 75, 43, 0.7)'
-        }}></div>
-      </div>
-
       <Container>
         <Row className="justify-content-center mb-4">
           <Col md={10}>
@@ -94,11 +74,7 @@ const SlotMachinePage = () => {
               </p>
             </div>
 
-            {!isAuthenticated && (
-              <Alert variant="warning" className="text-center">
-                Please log in to play and save your progress.
-              </Alert>
-            )}
+          
           </Col>
         </Row>
 
@@ -117,7 +93,7 @@ const SlotMachinePage = () => {
               border: '1px solid gold'
             }}>
               <Card.Body>
-                <h3 className="mb-3" style={{ color: 'gold', borderBottom: '1px solid rgba(255, 215, 0, 0.3)', paddingBottom: '10px' }}>How to Play</h3>
+                <h3>How to Play</h3>
                 <ul style={{ paddingLeft: '20px' }}>
                   <li className="mb-2">Select your bet amount using the + and - buttons</li>
                   <li className="mb-2">Click the SPIN button to start the reels</li>

@@ -24,9 +24,26 @@ const DiceGame = () => {
   const [messageVisible, setMessageVisible] = useState(false);
   const [history, setHistory] = useState([]);
   const [clickPosition, setClickPosition] = useState({ x: 0.5, y: 0.5 });
-
+  const [gameInfo, setGameInfo] = useState(null);
   // --- Effects ---
-
+  useEffect(() => {
+    const fetchGameInfo = async () => {
+        try {
+          const gameData = await gameService.getGameById(1);
+          console.log('Game data from API:', gameData);
+          setGameInfo(gameData);
+        } 
+        catch (err) {
+            console.error('Error managing game:', err);
+            // Set default game info if all else fails
+            setGameInfo({
+            name: 'Roulette',
+            description: 'Try your luck with our classic Roulette!'
+            });
+        } 
+        };
+fetchGameInfo();
+  }, []);
   // Initialize balance from context ONCE or when user ID changes
   useEffect(() => {
     if (user?.id) {
@@ -372,14 +389,25 @@ const DiceGame = () => {
         </div>
       )}
 
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-          <FaDice className="me-2" /> Casino Dice
-        </h2>
-        <Link to="/profile" className="btn btn-outline-primary">
-          <FaChartBar className="me-2" /> View My Statistics
-        </Link>
-      </div>
+<div className="text-center" style={{ 
+        padding: '15px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+        border: '2px solid gold'
+    }}>
+        <h1 className="text-center mb-3" style={{ 
+        color: 'gold', 
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+        fontFamily: '"Playfair Display", serif'
+        }}>
+        {gameInfo?.name || 'Slot Machine'}
+        </h1>
+        <p className="text-center" style={{ color: 'white' }}>
+        {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+        </p>
+    </div>
 
       <Row className="justify-content-center">
         {/* Game Area */}

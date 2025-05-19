@@ -839,9 +839,16 @@ body {
 .balance-card{
   color: var(--accent-color);}
 
-  .ranking-badges{
+.ranking-badges{
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-  } 
+} 
+
+.whitener{
+color: white;
+}
+.h6 {
+  color: white !important;
+}

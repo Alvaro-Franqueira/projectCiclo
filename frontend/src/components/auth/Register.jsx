@@ -194,17 +194,13 @@ const Register = () => {
                   <Form.Control.Feedback type="invalid">
                     {errors.password || serverErrors.password}
                   </Form.Control.Feedback>
-                  {!errors.password && !serverErrors.password && (
-                    <Form.Text className="text-muted">
-                      Password must be 8-30 characters and include uppercase, lowercase, digit, and special character (including periods).
-                    </Form.Text>
-                  )}
+
                 </Form.Group>
 
                 <Form.Group className="auth-form-group">
-                  <Form.Label className="auth-label" htmlFor='confirmPassword'>Confirm Password</Form.Label>
+                  <Form.Label className="auth-label text white" htmlFor='confirmPassword'>Confirm Password</Form.Label>
                   <Form.Control
-                    className="auth-input"
+                    className="input-form"
                     id='confirmPassword'
                     type="password"
                     name="confirmPassword"

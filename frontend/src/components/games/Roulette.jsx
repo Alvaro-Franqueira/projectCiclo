@@ -81,7 +81,7 @@ function RouletteGame() {
   const [messageVisible, setMessageVisible] = useState(false);
   const [betHistory, setBetHistory] = useState([]); // Recent winning numbers (for "Last Numbers" display)
   const [gameHistory, setGameHistory] = useState([]); // User's past bet results for this game (for "Your Recent Bets" display)
-
+  const [gameInfo, setGameInfo] = useState(null);
   // --- Effects ---
     useEffect(() => {
         const fetchBalance = async () => {
@@ -98,6 +98,26 @@ function RouletteGame() {
         };
         fetchBalance();
     }, [user?.id]);
+
+    
+  useEffect(() => {
+    const fetchGameInfo = async () => {
+        try {
+          const gameData = await gameService.getGameById(1);
+          console.log('Game data from API:', gameData);
+          setGameInfo(gameData);
+        } 
+        catch (err) {
+            console.error('Error managing game:', err);
+            // Set default game info if all else fails
+            setGameInfo({
+            name: 'Roulette',
+            description: 'Try your luck with our classic Roulette!'
+            });
+        } 
+        };
+fetchGameInfo();
+  }, []);
 
     const fetchUserGameHistory = useCallback(async () => {
         if (!user?.id) return;
@@ -342,10 +362,7 @@ const handleSpinEnd = () => {
   const maxHeightForFiveItems = '340px';
   return (
     <Container fluid className="roulette-container py-4">
-        {/* Decorative corner elements */}
-        <div className="corner-top-right"></div>
-        <div className="corner-bottom-left"></div>
-        
+
         {/* Floating message */}
         {message.text && (
           <div 
@@ -369,13 +386,29 @@ const handleSpinEnd = () => {
           </div>
         )}
 
-        <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex align-items-center roulette-title">
-            <GiAbstract013 size={50} />
-            <h2 className='roulette-heading'>Roulette</h2>
-            </div>
 
-        </div>
+    <div className="text-center" style={{ 
+        padding: '15px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+        border: '2px solid gold'
+    }}>
+        <h1 className="text-center mb-3" style={{ 
+        color: 'gold', 
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+        fontFamily: '"Playfair Display", serif'
+        }}>
+        {gameInfo?.name || 'Slot Machine'}
+        </h1>
+        <p className="text-center" style={{ color: 'white' }}>
+        {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+        </p>
+    </div>
+
+
+        
 
         <Row className="mb-3"> {/* Balance Display */}
             <Col>

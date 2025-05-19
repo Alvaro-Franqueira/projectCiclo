@@ -37,11 +37,7 @@ import { useAuth } from './context/AuthContext';
 function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
   
-  // Debug: Log user object to see what's coming from the backend
-  console.log('User object in AppRoutes:', user);
-  console.log('User role type:', typeof user?.role);
-  console.log('User role value:', user?.role);
-  
+
   // Check for admin role directly from user object
   const isAdmin = user?.role === 'ADMIN';
   const location = useLocation();

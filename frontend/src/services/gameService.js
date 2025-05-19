@@ -23,6 +23,7 @@ const gameService = {
       const response = await api.get(GAME_ENDPOINTS.GAME_BY_ID(gameId));
       return response.data;
     } catch (error) {
+      console.error('Error fetching game by ID:', error.response?.data || error.message);
       throw error.response?.data || { message: 'Failed to fetch game details' };
     }
   },

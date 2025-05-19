@@ -441,7 +441,7 @@ const Blackjack = () => {
 
         {/* Balance Display */}
         <div className="text-center mb-4">
-          <div className="balance-display">
+          <div className="balance-display-bj">
             <h1 className="mb-0 d-flex align-items-center">
               <FaCoins className="text-accent me-2" style={{ fontSize: '0.8em' }} />
               ${balance.toFixed(2)}
