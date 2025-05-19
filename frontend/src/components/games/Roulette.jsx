@@ -423,10 +423,10 @@ const handleSpinEnd = () => {
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
         fontFamily: '"Playfair Display", serif'
         }}>
-        {gameInfo?.name || 'Slot Machine'}
+        {gameInfo?.name || 'Roulette'}
         </h1>
         <p className="text-center" style={{ color: 'white' }}>
-        {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+        {gameInfo?.description || 'Try your luck with our classic Roulette game!'}
         </p>
     </div>
 
@@ -504,8 +504,7 @@ const handleSpinEnd = () => {
             </Col>
 
             {/* Section 3 (DOM order): Last Numbers History */}
-            {/* Large Screen: order-md-3 (Right) */}
-            {/* Small Screen: No specific order in provided CSS, will likely appear FIRST due to order:0 default. User may need to add CSS order. */}
+            {/* Large Screen: order-md-3 (Right) */} 
             <Col xs={12} md={3} sm={12} className="last-numbers-section order-md-3 ">
                  {/* Applying z-index for potential overlap. Better in CSS. */}
                 <Card style={{ position: 'relative', zIndex: 1 }}>
