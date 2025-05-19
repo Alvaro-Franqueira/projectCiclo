@@ -555,6 +555,13 @@ const UserProfile = () => {
                                     <FaUser size={60} />
                                 )}
                             </div>
+                            <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155' , borderColor: "#f59e0b", borderWidth: '1px', borderStyle: 'solid' }}>
+                                <h5 className="mb-1">Current Balance</h5>
+                                <h3 className="mb-0 text-warning">
+                                    <FaCoins className="me-2" />
+                                    {(profileData?.balance ?? 0).toFixed(2)}
+                                </h3>
+                            </div>
                             <Card.Title style={{ paddingBottom: '10px' }}>{profileData.username || 'User'}</Card.Title>
                             <Card.Subtitle className="mb-3 text-white">{profileData.email || 'No email'}</Card.Subtitle>
                             
@@ -616,13 +623,7 @@ const UserProfile = () => {
                                 <div><FaCalendarAlt className="me-2" /><small>Joined</small></div>
                                 <small>{profileData.registrationDate ? new Date(profileData.registrationDate).toLocaleDateString() : 'N/A'}</small>
                             </div>
-                            <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155' , borderColor: "#f59e0b", borderWidth: '1px', borderStyle: 'solid' }}>
-                                <h5 className="mb-1">Current Balance</h5>
-                                <h3 className="mb-0 text-warning">
-                                    <FaCoins className="me-2" />
-                                    {(profileData?.balance ?? 0).toFixed(2)}
-                                </h3>
-                            </div>
+                            
                             <div className="role-badge">
                                 <Badge bg={profileData.role === 'ADMIN' ? 'danger' : 'info'} className="p-2">
                                     {profileData.role || 'USER'}

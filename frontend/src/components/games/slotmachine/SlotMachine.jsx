@@ -4,6 +4,8 @@ import { useAuth } from '../../../context/AuthContext';
 import userService from '../../../services/userService';
 import betService from '../../../services/betService';
 import './SlotMachine.css';
+
+// Import slot machine symbols
 import cherryImg from '../../../components/images/cherry-icon.png';
 import lemonImg from '../../../components/images/lemon-icon.png';
 import orangeImg from '../../../components/images/orange-icon.png';
@@ -12,8 +14,22 @@ import bellImg from '../../../components/images/bell-icon.png';
 import sevenImg from '../../../components/images/seven-icon.png';
 import barImg from '../../../components/images/bar-icon.png';
 
+/**
+ * Slot Machine Game Component
+ * Implements a classic slot machine game with three reels, multiple symbols,
+ * and various winning combinations. Features include:
+ * - Weighted random symbol generation
+ * - Animated spinning reels
+ * - Multiple winning combinations with different payouts
+ * - Real-time balance updates
+ * - Bet history tracking
+ * - Visual feedback for wins and losses
+ */
 const SlotMachine = () => {
+  // ===== Hooks =====
   const { user, isAuthenticated } = useAuth();
+  
+  // ===== State =====
   const [balance, setBalance] = useState(0);
   const [bet, setBet] = useState(10);
   const [loading, setLoading] = useState(true);
@@ -26,7 +42,11 @@ const SlotMachine = () => {
   const reel2Ref = useRef(null);
   const reel3Ref = useRef(null);
   
-  // Define symbols
+  // ===== Constants =====
+  const duration = 2000;
+  /**
+   * Available symbols in the slot machine with their corresponding images
+   */
   const symbols = [
     { id: 'cherry', image: cherryImg },
     { id: 'lemon', image: lemonImg },
@@ -37,25 +57,48 @@ const SlotMachine = () => {
     { id: 'bar', image: barImg }
   ];
   
-  // Define the weights for each symbol (higher number = more likely to appear)
-  // Total weight = 35, so seven has 1/35 = ~2.9% chance to appear
+  /**
+   * Weight distribution for each symbol (higher number = more likely to appear)
+   * Total weight = 35, so seven has 1/35 = ~2.9% chance to appear
+   */
   const weights = {
-    'cherry': 8,  // Increased to make cherry more common
+    'cherry': 8,  // Most common - lowest payout
     'lemon': 7,
     'orange': 6,
     'plum': 6,
     'bell': 4,
     'bar': 3,
-    'seven': 1    // Rare - highest payout
+    'seven': 1    // Rarest - highest payout (jackpot)
   };
   
-  // Current state of the reels
+  /**
+   * Current state of the reels
+   * Each reel tracks its spinning state and current symbol
+   */
   const [reelState, setReelState] = useState([
     { spinning: false, symbol: 'cherry' },
     { spinning: false, symbol: 'cherry' },
     { spinning: false, symbol: 'cherry' }
   ]);
   
+  // ===== Effects =====
+  
+  /**
+   * Load user balance on component mount
+   */
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      loadUserBalance();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
+  // ===== Service Functions =====
+  
+  /**
+   * Loads the current user's balance from the server
+   */
   const loadUserBalance = async () => {
     try {
       setLoading(true);
@@ -69,6 +112,10 @@ const SlotMachine = () => {
     }
   };
 
+  /**
+   * Updates the user's balance on the server
+   * @param {number|Function} newBalanceOrFn - New balance value or function to calculate it
+   */
   const updateBalance = async (newBalanceOrFn) => {
     try {
       const newBalance = typeof newBalanceOrFn === 'function' 
@@ -83,13 +130,18 @@ const SlotMachine = () => {
     }
   };
 
+  /**
+   * Records a bet in the user's history
+   * @param {boolean} isWin - Whether the bet was a win
+   * @param {number} amount - Amount won (if win) or lost (if loss)
+   */
   const recordBet = async (isWin, amount) => {
     if (!user?.id) return;
     
     try {
       const betData = {
         userId: user.id,
-        gameId: 7, // Slot Machine game ID is 7, not 10
+        gameId: 7, // Slot Machine game ID
         amount: bet,
         status: isWin ? 'WON' : 'LOST',
         type: 'SLOT_MACHINE',
@@ -109,24 +161,16 @@ const SlotMachine = () => {
     }
   };
   
-  // Load user balance
-  useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      loadUserBalance();
-    } else {
-      setLoading(false);
-    }
-  }, [isAuthenticated, user]);
-
-  // Get a random symbol based on weights
+  // ===== Game Logic Functions =====
+  
+  /**
+   * Generates a random symbol based on the defined weights
+   * @returns {string} ID of the selected symbol
+   */
   const getRandomSymbol = () => {
-    // Sum of all weights
     const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-    
-    // Generate a random number between 0 and the sum of all weights
     let randomNum = Math.random() * totalWeight;
     
-    // Find which symbol this random number corresponds to
     for (const symbol of symbols) {
       const weight = weights[symbol.id];
       if (randomNum < weight) {
@@ -135,20 +179,22 @@ const SlotMachine = () => {
       randomNum -= weight;
     }
     
-    // Fallback (should never reach here)
-    return 'cherry';
+    return 'cherry'; // Fallback
   };
   
-  // Spin animation for a single reel
-  const spinReel = (reelIndex, duration = 2000, callback) => {
-    // Set reel to spinning state
+  /**
+   * Animates a single reel's spin
+   * @param {number} reelIndex - Index of the reel to spin
+   * @param {number} duration - Duration of the spin in milliseconds
+   * @param {Function} callback - Function to call when spin completes
+   */
+  const spinReel = (reelIndex, duration, callback) => {
     setReelState(prev => {
       const newState = [...prev];
       newState[reelIndex] = { ...newState[reelIndex], spinning: true };
       return newState;
     });
     
-    // Animate spinning by quickly changing symbols
     const spinInterval = setInterval(() => {
       setReelState(prev => {
         const newState = [...prev];
@@ -163,9 +209,6 @@ const SlotMachine = () => {
     // Stop spinning after duration
     setTimeout(() => {
       clearInterval(spinInterval);
-      
-      // Set final symbol based on weighted random selection
-      // const finalSymbol = getTestSymbol(reelIndex); // For testing specific combinations
       const finalSymbol = getRandomSymbol();
       
       setReelState(prev => {
@@ -181,29 +224,27 @@ const SlotMachine = () => {
     }, duration);
   };
   
-  // Calculate winnings based on the symbols
+  /**
+   * Calculates winnings based on the final symbol combination
+   * @param {string[]} symbols - Array of three symbol IDs
+   * @returns {Object} Object containing win status and amount
+   */
   const calculateWinnings = (symbols) => {
-    // Check for three of a kind
+    // Three of a kind
     if (symbols[0] === symbols[1] && symbols[1] === symbols[2]) {
       switch (symbols[0]) {
-        case 'seven':
-          return { win: true, amount: bet * 50 }; // Jackpot
-        case 'bar':
-          return { win: true, amount: bet * 20 };
-        case 'bell':
-          return { win: true, amount: bet * 15 };
+        case 'seven': return { win: true, amount: bet * 50 }; 
+        case 'bar': return { win: true, amount: bet * 20 };
+        case 'bell': return { win: true, amount: bet * 15 };
         case 'plum':
-        case 'orange':
-          return { win: true, amount: bet * 10 };
+        case 'orange': return { win: true, amount: bet * 10 };
         case 'lemon':
-        case 'cherry':
-          return { win: true, amount: bet * 5 };
-        default:
-          return { win: false, amount: 0 };
+        case 'cherry': return { win: true, amount: bet * 5 };
+        default: return { win: false, amount: 0 };
       }
     }
     
-    // Check for two cherries
+    // Two cherries
     if (
       (symbols[0] === 'cherry' && symbols[1] === 'cherry') ||
       (symbols[1] === 'cherry' && symbols[2] === 'cherry') ||
@@ -212,7 +253,7 @@ const SlotMachine = () => {
       return { win: true, amount: bet * 2 };
     }
     
-    // Any one cherry
+    // One cherry
     if (symbols.includes('cherry')) {
       return { win: true, amount: bet * 1 };
     }
@@ -220,6 +261,12 @@ const SlotMachine = () => {
     return { win: false, amount: 0 };
   };
 
+  // ===== Event Handlers =====
+  
+  /**
+   * Handles the spin button click
+   * Initiates the spinning animation and processes the result
+   */
   const handleSpin = () => {
     if (spinning) return;
     
@@ -229,52 +276,30 @@ const SlotMachine = () => {
     }
     
     try {
-      // Clear previous messages
       setMessage('');
       setError('');
-      
-      // Deduct bet amount from balance
       updateBalance(currentBalance => currentBalance - bet);
-      
-      // Start spinning
       setSpinning(true);
       
-      // Store final symbols for result calculation
       const finalSymbols = [];
-      
-      // Calculate probability for logging/debugging
-      const jackpotProbability = (weights['seven'] / Object.values(weights).reduce((sum, w) => sum + w, 0)) ** 3 * 100;
-      console.log(`Jackpot probability: ${jackpotProbability.toFixed(4)}%`);
-      
-      // Spin each reel with staggered timing
-      spinReel(0, 2000, (symbol) => {
+     
+      // Spin reels with staggered timing
+      spinReel(0, duration, (symbol) => {
         finalSymbols[0] = symbol;
-        
-        // When all reels have stopped
-        if (finalSymbols.length === 3) {
-          handleSpinComplete(finalSymbols);
-        }
+        if (finalSymbols.length === 3) handleSpinComplete(finalSymbols);
       });
       
       setTimeout(() => {
         spinReel(1, 2500, (symbol) => {
           finalSymbols[1] = symbol;
-          
-          // When all reels have stopped
-          if (finalSymbols.length === 3) {
-            handleSpinComplete(finalSymbols);
-          }
+          if (finalSymbols.length === 3) handleSpinComplete(finalSymbols);
         });
       }, 300);
       
       setTimeout(() => {
         spinReel(2, 3000, (symbol) => {
           finalSymbols[2] = symbol;
-          
-          // When all reels have stopped
-          if (finalSymbols.length === 3) {
-            handleSpinComplete(finalSymbols);
-          }
+          if (finalSymbols.length === 3) handleSpinComplete(finalSymbols);
         });
       }, 600);
       
@@ -285,31 +310,49 @@ const SlotMachine = () => {
     }
   };
 
-  // Handle the result when all reels have stopped
+  /**
+   * Handles the completion of a spin
+   * Calculates and processes winnings
+   * @param {string[]} symbols - Final symbol combination
+   */
   const handleSpinComplete = (symbols) => {
     console.log('Final symbols:', symbols);
-    
-    // Calculate winnings
     const result = calculateWinnings(symbols);
     
     if (result.win) {
       setMessage(`You won $${result.amount}!`);
-      // Record a winning bet
       recordBet(true, result.amount);
     } else {
       setMessage('Better luck next time!');
-      // Record a losing bet
       recordBet(false);
     }
     
     setSpinning(false);
   };
 
+  /**
+   * Handles bet amount changes
+   * @param {number} amount - Amount to adjust bet by
+   */
   const handleBetChange = (amount) => {
     const newBet = Math.max(1, Math.min(100, bet + amount));
     setBet(newBet);
   };
 
+  // ===== Helper Functions =====
+  
+  /**
+   * Gets the image URL for a symbol by its ID
+   * @param {string} symbolId - ID of the symbol
+   * @returns {string} URL of the symbol's image
+   */
+  const getSymbolImage = (symbolId) => {
+    const symbol = symbols.find(s => s.id === symbolId);
+    return symbol ? symbol.image : '';
+  };
+
+  // ===== Render Functions =====
+  
   if (!isAuthenticated) {
     return (
       <Container className="text-center mt-5">
@@ -330,16 +373,11 @@ const SlotMachine = () => {
     );
   }
 
-  // Find the image URL for a symbol by its ID
-  const getSymbolImage = (symbolId) => {
-    const symbol = symbols.find(s => s.id === symbolId);
-    return symbol ? symbol.image : '';
-  };
-
   return (
     <Container className="text-center mt-4 slot-machine-container">
       {error && <Alert variant="danger">{error}</Alert>}
       
+      {/* Balance and Bet Controls */}
       <Row className="mb-3">
         <Col md={6} className="text-center">
           <div className="balance-display">
@@ -355,6 +393,7 @@ const SlotMachine = () => {
         </Col>
       </Row>
       
+      {/* Result Message */}
       {message && (
         <Row className="mb-3">
           <Col>
@@ -363,6 +402,7 @@ const SlotMachine = () => {
         </Row>
       )}
       
+      {/* Slot Machine Reels */}
       <Row className="justify-content-center mb-4">
         <Col md={10}>
           <div className="slot-machine">
@@ -392,6 +432,7 @@ const SlotMachine = () => {
         </Col>
       </Row>
       
+      {/* Spin Button */}
       <Row className="justify-content-center">
         <Col md={6}>
           <Button 
@@ -406,11 +447,13 @@ const SlotMachine = () => {
         </Col>
       </Row>
       
+      {/* Payout Table */}
       <Row className="mt-4">
         <Col>
           <div className="payout-table">
             <h4>Payout Table</h4>
             <div className="payout-grid">
+              {/* Three of a Kind Payouts */}
               <div className="payout-row">
                 <div className="combination">
                   <img src={sevenImg} alt="Seven" className="payout-symbol" />
@@ -444,6 +487,7 @@ const SlotMachine = () => {
                 <div className="probability">1 in {Math.round(1/((weights['bell']/Object.values(weights).reduce((sum, w) => sum + w, 0))**3))} spins</div>
               </div>
               
+              {/* Fruit Combinations */}
               <div className="payout-row">
                 <div className="combination">
                   <img src={plumImg} alt="Plum" className="payout-symbol" />
@@ -488,6 +532,7 @@ const SlotMachine = () => {
                 <div className="probability">1 in {Math.round(1/((weights['cherry']/Object.values(weights).reduce((sum, w) => sum + w, 0))**3))} spins</div>
               </div>
               
+              {/* Partial Cherry Combinations */}
               <div className="payout-row">
                 <div className="combination">
                   <img src={cherryImg} alt="Cherry" className="payout-symbol" />
@@ -508,6 +553,7 @@ const SlotMachine = () => {
               </div>
             </div>
             
+            {/* Odds Explanation */}
             <div className="odds-explanation mt-4">
               <h5>How the Odds Work</h5>
               <p>Each symbol has a different probability of appearing:</p>

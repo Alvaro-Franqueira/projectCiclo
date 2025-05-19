@@ -7,6 +7,14 @@ import authService from '../../services/authService';
 import logoCasino from '../images/logo-casino.png';
 import '../../assets/styles/Auth.css';
 
+/**
+ * Validation schema for user registration form.
+ * Enforces the following rules:
+ * - Username: 3-50 characters, required
+ * - Email: Valid format, max 100 chars, no disposable domains, required
+ * - Password: 8+ chars, uppercase, lowercase, number, special char, required
+ * - Confirm Password: Must match password, required
+ */
 const registerSchema = Yup.object().shape({
   username: Yup.string()
     .min(3, 'Username must be at least 3 characters')
@@ -41,12 +49,25 @@ const registerSchema = Yup.object().shape({
     .required('Confirm password is required')
 });
 
+/**
+ * Registration component for new user signup.
+ * Handles form validation, submission, and error handling.
+ * Provides feedback for validation errors and server responses.
+ * Redirects to login page on successful registration.
+ */
 const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [serverErrors, setServerErrors] = useState({});
   const navigate = useNavigate();
 
+  /**
+   * Handles the registration form submission.
+   * Validates input, sends registration request, and handles response.
+   * 
+   * @param {Object} values - Form values from Formik
+   * @param {Object} formikHelpers - Formik helper functions
+   */
   const handleRegister = async (values, { setSubmitting, resetForm, setErrors }) => {
     try {
       // Clear previous errors
@@ -138,6 +159,7 @@ const Register = () => {
                 e.preventDefault(); // Prevent form from causing page reload
                 handleSubmit(e);
               }}>
+                {/* Username input field with validation */}
                 <Form.Group className="auth-form-group">
                   <Form.Label className="auth-label" htmlFor='username'>Username</Form.Label>
                   <Form.Control
@@ -158,6 +180,7 @@ const Register = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
+                {/* Email input field with validation */}
                 <Form.Group className="auth-form-group">
                   <Form.Label className="auth-label" htmlFor='email'>Email</Form.Label>
                   <Form.Control
@@ -177,6 +200,7 @@ const Register = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
+                {/* Password input field with validation */}
                 <Form.Group className="auth-form-group">
                   <Form.Label className="auth-label" htmlFor='password'>Password</Form.Label>
                   <Form.Control
@@ -194,9 +218,9 @@ const Register = () => {
                   <Form.Control.Feedback type="invalid">
                     {errors.password || serverErrors.password}
                   </Form.Control.Feedback>
-
                 </Form.Group>
 
+                {/* Confirm password input field with validation */}
                 <Form.Group className="auth-form-group">
                   <Form.Label className="auth-label text white" htmlFor='confirmPassword'>Confirm Password</Form.Label>
                   <Form.Control
@@ -216,6 +240,7 @@ const Register = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
 
+                {/* Submit button */}
                 <Button 
                   className="auth-btn" 
                   type="submit" 
@@ -227,6 +252,7 @@ const Register = () => {
             )}
           </Formik>
           
+          {/* Login link for existing users */}
           <div className="auth-footer">
             <p>Already have an account? <Link to="/login" className="auth-link">Login</Link></p>
           </div>
