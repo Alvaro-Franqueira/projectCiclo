@@ -25,6 +25,7 @@ import BalanceChart from '../components/profile/BalanceChart';
 import GameStats from '../components/profile/GameStats';
 import BetHistory from '../components/profile/BetHistory';
 import RankingsList from '../components/profile/RankingsList';
+import './UserProfile.css'; // Import the new CSS file for spinner styles
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -222,9 +223,9 @@ const UserProfile = () => {
                 ...(Array.isArray(slotBets7) ? slotBets7 : []),
                 ...(Array.isArray(slotBets10) ? slotBets10 : [])
             ];
-
+            
             // Update game statistics state
-            setGameStats({
+            setGameStats({ 
                 dice: calculateGameStats(diceBets),
                 roulette: calculateGameStats(rouletteBets),
                 blackjack: calculateGameStats(blackjackBets),
@@ -297,7 +298,7 @@ const UserProfile = () => {
             setError('Failed to clear ranking cache. Please try again.');
         }
     };
-
+    
     // Loading State
     if (loading) {
         return (
@@ -334,7 +335,7 @@ const UserProfile = () => {
                 {/* Main Content Area - Stats/History/Rankings Tabs */}
                 <Col lg={8}>
                     <Card className='no-shadow'>
-                        <Card.Header style={{ margin: 10, marginLeft:20, padding: 0, display: 'inline-block' }}>
+                    <Card.Header style={{ margin: 10, marginLeft:20, padding: 0, display: 'inline-block' }}>
                             <Tabs defaultActiveKey="stats" id="profile-tabs" className="card-header-tabs justify-content-around">
                                 {/* Statistics Tab - Balance chart and game stats */}
                                 <Tab eventKey="stats" title={<><FaCoins className="me-1" /> Statistics</>}>
