@@ -1,52 +1,97 @@
-// src/components/admin/UserManagement.js (or whatever its path is)
+/**
+ * UserManagement Component
+ * A comprehensive admin interface for managing both users and games in the casino platform.
+ * 
+ * Features:
+ * - User management (CRUD operations)
+ * - User balance management
+ * - User search and filtering
+ * - Game management (CRUD operations)
+ * - Game search and filtering
+ * - Real-time updates and error handling
+ * - Responsive UI with loading states
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Table, Button, Form, Modal, Alert, Spinner, Badge, Image } from 'react-bootstrap'; // Added Image
+import { Container, Table, Button, Form, Modal, Alert, Spinner, Badge } from 'react-bootstrap';
 import {
   FaUserEdit,
   FaUser,
   FaCoins,
   FaTrash,
-  FaSearch, // Use FaSearch for both or differentiate if needed
-  FaGamepad, // Added Gamepad icon
-  FaPlus,    // Added Plus icon
-  FaEdit,    // Added Edit icon
-  FaTrashAlt // Added TrashAlt icon
+  FaSearch,
+  FaGamepad,
+  FaPlus,
+  FaEdit,
+  FaTrashAlt
 } from 'react-icons/fa';
-import userService from '../../services/userService'; // Adjust path as needed
-import gameService from '../../services/gameService'; // Import gameService
-import '../../assets/styles/UserManagement.css'; // Import our new styles
+import userService from '../../services/userService';
+import gameService from '../../services/gameService';
+import '../../assets/styles/UserManagement.css';
 
-// --- User Management Section ---
-const UserManagement = () => { // NOTE: This component now handles BOTH users and games
-  // --- User Management State ---
+// ===== Constants =====
+
+/**
+ * Initial state for user edit form
+ * @type {Object}
+ */
+const initialUserFormState = {
+  username: '',
+  email: '',
+  role: 'USER'
+};
+
+/**
+ * Initial state for game form
+ * @type {Object}
+ */
+const initialGameFormState = {
+  name: '',
+  description: '',
+};
+
+// ===== Component =====
+
+const UserManagement = () => {
+  // ===== User Management State =====
   const [users, setUsers] = useState([]);
-  const [userLoading, setUserLoading] = useState(true); // Renamed for clarity
-  const [userError, setUserError] = useState('');     // Renamed for clarity
-  const [userSearchTerm, setUserSearchTerm] = useState(''); // Renamed for clarity
-  const [showUserEditModal, setShowUserEditModal] = useState(false); // Renamed for clarity
-  const [showUserBalanceModal, setShowUserBalanceModal] = useState(false); // Renamed for clarity
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [showUserEditModal, setShowUserEditModal] = useState(false);
+  const [showUserBalanceModal, setShowUserBalanceModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [userBalanceAmount, setUserBalanceAmount] = useState(0); // Renamed for clarity
-  const [userEditFormData, setUserEditFormData] = useState({ // Renamed for clarity
-    username: '',
-    email: '',
-    role: 'USER'
-  });
-  // No longer need currentUser state if not used
+  const [userBalanceAmount, setUserBalanceAmount] = useState(0);
+  const [userEditFormData, setUserEditFormData] = useState(initialUserFormState);
 
-  // --- User Management Effects & Handlers ---
+  // ===== Game Management State =====
+  const [games, setGames] = useState([]);
+  const [gameLoading, setGameLoading] = useState(true);
+  const [gameError, setGameError] = useState('');
+  const [gameSearchTerm, setGameSearchTerm] = useState('');
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [gameFormData, setGameFormData] = useState(initialGameFormState);
+
+  // ===== User Management Effects & Handlers =====
+
+  /**
+   * Fetches all users from the API
+   * Updates the users state and handles loading/error states
+   */
   const fetchUsers = useCallback(async () => {
     try {
-      setUserLoading(true); // Use renamed state
+      setUserLoading(true);
       const usersData = await userService.getAllUsers();
       setUsers(usersData);
-      setUserError(''); // Use renamed state
+      setUserError('');
     } catch (err) {
-      setUserError(err.message || 'Failed to load users. Please try again later.'); // Use renamed state
+      setUserError(err.message || 'Failed to load users. Please try again later.');
       console.error("User fetch error:", err);
-      setUsers([]); // Clear users on error
+      setUsers([]);
     } finally {
-      setUserLoading(false); // Use renamed state
+      setUserLoading(false);
     }
   }, []);
 
@@ -54,95 +99,127 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleUserSearch = (e) => {
-    setUserSearchTerm(e.target.value); // Use renamed state
-  };
-
+  /**
+   * Filters users based on search term
+   * Matches against username and email
+   */
   const filteredUsers = users.filter(user =>
-    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase())) || // Use renamed state
+    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
     (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase()))
   );
 
+  /**
+   * Handles user search input changes
+   * @param {Event} e - The input change event
+   */
+  const handleUserSearch = (e) => {
+    setUserSearchTerm(e.target.value);
+  };
+
+  /**
+   * Opens the user edit modal and populates form data
+   * @param {Object} user - The user to edit
+   */
   const handleUserEditClick = (user) => {
     setSelectedUser(user);
-    setUserEditFormData({ // Use renamed state
+    setUserEditFormData({
       username: user.username,
       email: user.email,
       role: user.role
     });
-    setShowUserEditModal(true); // Use renamed state
-    setUserError(''); // Clear errors on opening modal
+    setShowUserEditModal(true);
+    setUserError('');
   };
 
+  /**
+   * Opens the user balance modal and sets initial balance
+   * @param {Object} user - The user to update balance for
+   */
   const handleUserBalanceClick = (user) => {
     setSelectedUser(user);
-    setUserBalanceAmount(user.balance || 0); // Use renamed state, default to 0
-    setShowUserBalanceModal(true); // Use renamed state
-    setUserError(''); // Clear errors on opening modal
+    setUserBalanceAmount(user.balance || 0);
+    setShowUserBalanceModal(true);
+    setUserError('');
   };
 
+  /**
+   * Handles changes in the user edit form
+   * @param {Event} e - The form change event
+   */
   const handleUserEditFormChange = (e) => {
     const { name, value } = e.target;
-    setUserEditFormData({ // Use renamed state
-      ...userEditFormData, // Use renamed state
+    setUserEditFormData(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
+  /**
+   * Handles changes in the user balance input
+   * @param {Event} e - The input change event
+   */
   const handleUserBalanceChange = (e) => {
-    setUserBalanceAmount(parseFloat(e.target.value) || 0); // Use renamed state, default to 0
+    setUserBalanceAmount(parseFloat(e.target.value) || 0);
   };
 
+  /**
+   * Submits user edit form and updates user data
+   * Handles success and error states
+   */
   const handleUserEditSubmit = async () => {
     try {
-      setUserLoading(true); // Use renamed state
-      setUserError(''); // Clear previous errors
+      setUserLoading(true);
+      setUserError('');
 
-      await userService.updateUser(selectedUser.id, userEditFormData); // Use renamed state
+      await userService.updateUser(selectedUser.id, userEditFormData);
 
-      // Update user in the list
       setUsers(users.map(user =>
-        user.id === selectedUser.id ? { ...user, ...userEditFormData } : user // Use renamed state
+        user.id === selectedUser.id ? { ...user, ...userEditFormData } : user
       ));
 
-      setShowUserEditModal(false); // Use renamed state
+      setShowUserEditModal(false);
     } catch (err) {
-      setUserError(err.message || 'Failed to update user. Please try again.'); // Use renamed state
+      setUserError(err.message || 'Failed to update user. Please try again.');
       console.error("User update error:", err);
     } finally {
-      setUserLoading(false); // Use renamed state
+      setUserLoading(false);
     }
   };
 
+  /**
+   * Submits user balance update
+   * Updates user balance in the list and handles errors
+   */
   const handleUserBalanceSubmit = async () => {
     try {
-      setUserLoading(true); // Use renamed state
-      setUserError(''); // Clear previous errors
-      console.log('Updating balance for user:', selectedUser.id, 'to:', userBalanceAmount); // Use renamed state
-      await userService.updateUserBalance(selectedUser.id, userBalanceAmount); // Use renamed state
+      setUserLoading(true);
+      setUserError('');
+      
+      await userService.updateUserBalance(selectedUser.id, userBalanceAmount);
 
-      // Update user balance in the list
       setUsers(users.map(user =>
-        user.id === selectedUser.id ? { ...user, balance: userBalanceAmount } : user // Use renamed state
+        user.id === selectedUser.id ? { ...user, balance: userBalanceAmount } : user
       ));
 
-      setShowUserBalanceModal(false); // Use renamed state
+      setShowUserBalanceModal(false);
     } catch (err) {
-      setUserError(err.message || 'Failed to update user balance. Please try again.'); // Use renamed state
+      setUserError(err.message || 'Failed to update user balance. Please try again.');
       console.error("Balance update error:", err);
     } finally {
-      setUserLoading(false); // Use renamed state
+      setUserLoading(false);
     }
   };
 
-  // Add handler for deleting a user
+  /**
+   * Deletes a user after confirmation
+   * @param {number} userId - The ID of the user to delete
+   */
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       setUserLoading(true);
       setUserError('');
       try {
         await userService.deleteUser(userId);
-        // Remove the deleted user from the list
         setUsers(users.filter(user => user.id !== userId));
       } catch (err) {
         setUserError(err.message || 'Failed to delete user. Please try again.');
@@ -153,38 +230,24 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     }
   };
 
-  // --- Game Management Section ---
-  // --- Game Management State ---
-  const [games, setGames] = useState([]);
-  const [gameLoading, setGameLoading] = useState(true); // New state for game loading
-  const [gameError, setGameError] = useState('');     // New state for game errors
-  const [gameSearchTerm, setGameSearchTerm] = useState(''); // New state for game search
-  const [showGameModal, setShowGameModal] = useState(false); // New state for game modal
-  const [selectedGame, setSelectedGame] = useState(null); // New state for selected game (edit)
-  const [isEditMode, setIsEditMode] = useState(false); // New state to distinguish add/edit
-  const [gameFormData, setGameFormData] = useState({ // New state for game form data
-    name: '',
-    description: '',
-  });
+  // ===== Game Management Effects & Handlers =====
 
-  const initialGameFormState = { // New initial state for game form
-    name: '',
-    description: '',
-  };
-
-  // --- Game Management Effects & Handlers ---
+  /**
+   * Fetches all games from the API
+   * Updates the games state and handles loading/error states
+   */
   const fetchGames = useCallback(async () => {
     try {
-      setGameLoading(true); // Use new state
+      setGameLoading(true);
       const gamesData = await gameService.getAllGames();
-      setGames(gamesData || []); // Use new state, default to empty array
-      setGameError(''); // Use new state
+      setGames(gamesData || []);
+      setGameError('');
     } catch (err) {
-      setGameError(err.message || 'Failed to load games. Please try again later.'); // Use new state
+      setGameError(err.message || 'Failed to load games. Please try again later.');
       console.error("Game fetch error:", err);
-      setGames([]); // Clear games on error
+      setGames([]);
     } finally {
-      setGameLoading(false); // Use new state
+      setGameLoading(false);
     }
   }, []);
 
@@ -192,23 +255,38 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
     fetchGames();
   }, [fetchGames]);
 
-  const handleGameSearch = (e) => {
-    setGameSearchTerm(e.target.value); // Use new state
-  };
-
+  /**
+   * Filters games based on search term
+   * Matches against name and description
+   */
   const filteredGames = games.filter(game =>
-    (game.name && game.name.toLowerCase().includes(gameSearchTerm.toLowerCase())) || // Use new state
+    (game.name && game.name.toLowerCase().includes(gameSearchTerm.toLowerCase())) ||
     (game.description && game.description.toLowerCase().includes(gameSearchTerm.toLowerCase()))
   );
 
+  /**
+   * Handles game search input changes
+   * @param {Event} e - The input change event
+   */
+  const handleGameSearch = (e) => {
+    setGameSearchTerm(e.target.value);
+  };
+
+  /**
+   * Opens the add game modal with initial state
+   */
   const handleShowAddModal = () => {
     setSelectedGame(null);
     setIsEditMode(false);
     setGameFormData(initialGameFormState);
     setShowGameModal(true);
-    setGameError(''); // Clear errors on opening modal
+    setGameError('');
   };
 
+  /**
+   * Opens the edit game modal with game data
+   * @param {Object} game - The game to edit
+   */
   const handleShowEditModal = (game) => {
     setSelectedGame(game);
     setIsEditMode(true);
@@ -217,81 +295,97 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
       description: game.description
     });
     setShowGameModal(true);
-    setGameError(''); // Clear errors on opening modal
+    setGameError('');
   };
 
+  /**
+   * Closes the game modal and resets state
+   */
   const handleCloseGameModal = () => {
     setShowGameModal(false);
     setSelectedGame(null);
-    setGameError(''); // Clear errors on closing modal
+    setGameError('');
   };
 
+  /**
+   * Handles changes in the game form
+   * @param {Event} e - The form change event
+   */
   const handleGameFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setGameFormData({
-      ...gameFormData,
+    setGameFormData(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : (type === 'number' ? parseFloat(value) : value)
-    });
+    }));
   };
 
+  /**
+   * Submits game form for create/update
+   * Handles validation and error states
+   * @param {Event} e - The form submit event
+   */
   const handleGameSubmit = async (e) => {
     e.preventDefault();
-    setGameLoading(true); // Use new state
-    setGameError(''); // Clear previous errors
+    setGameLoading(true);
+    setGameError('');
 
-    // Basic validation
     if (!gameFormData.name || !gameFormData.description) {
-        setGameError("Name and description are required.");
-        setGameLoading(false);
-        return;
+      setGameError("Name and description are required.");
+      setGameLoading(false);
+      return;
     }
-    const gameDataToSend = {
-      name: gameFormData.name,
-      description: gameFormData.description,
-    };
+
     try {
       if (isEditMode && selectedGame) {
-        await gameService.updateGame(selectedGame.id, {id: selectedGame.id, ...gameDataToSend});
+        await gameService.updateGame(selectedGame.id, {
+          id: selectedGame.id,
+          ...gameFormData
+        });
       } else {
         await gameService.addGame(gameFormData);
       }
-      await fetchGames(); // Refresh the game list
+      await fetchGames();
       handleCloseGameModal();
     } catch (err) {
-      setGameError(err.message || 'Failed to save game. Please check the details.'); // Use new state
-      console.error("Game submit error:", err);
+      setGameError(err.message || 'Failed to save game. Please check the details.');
     } finally {
-      setGameLoading(false); // Use new state
+      setGameLoading(false);
     }
   };
 
+  /**
+   * Deletes a game after confirmation
+   * @param {number} gameId - The ID of the game to delete
+   */
   const handleDeleteGame = async (gameId) => {
     if (window.confirm('Are you sure you want to delete this game?')) {
-      setGameLoading(true); // Use new state
-      setGameError(''); // Clear errors
+      setGameLoading(true);
+      setGameError('');
       try {
         await gameService.deleteGame(gameId);
-        await fetchGames(); // Refresh the game list
+        await fetchGames();
       } catch (err) {
-        setGameError(err.message || 'Failed to delete game.'); // Use new state
+        setGameError(err.message || 'Failed to delete game.');
         console.error("Game delete error:", err);
       } finally {
-        setGameLoading(false); // Use new state
+        setGameLoading(false);
       }
     }
   };
 
-  // --- Combined Render ---
-  // Display loading spinner only if NO data for either section is loaded yet
+  // ===== Render Functions =====
+
+  /**
+   * Renders loading state when no data is available
+   */
   if (userLoading && users.length === 0 && gameLoading && games.length === 0) {
-     return (
+    return (
       <Container className="text-center my-5">
         <Spinner animation="border" />
         <p className="mt-2">Loading management data...</p>
       </Container>
     );
   }
-
 
   return (
     <Container>
@@ -359,7 +453,7 @@ const UserManagement = () => { // NOTE: This component now handles BOTH users an
                     variant="outline-success"
                     size="sm"
                     className="me-2 mb-1" // Added me-2 for horizontal spacing
-                    onClick={() => handleUserBalanceClick(user)} // Use handleUserBalanceClick
+                    onClick={() => handleUserBalanceClick(user)}
                   >
                     <FaCoins /> Balance
                   </Button>

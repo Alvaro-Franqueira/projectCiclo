@@ -1,3 +1,16 @@
+/**
+ * StripeContainer Component
+ * A container component that initializes and configures Stripe payment integration.
+ * 
+ * Features:
+ * - Dynamic Stripe initialization with publishable key
+ * - Loading states with visual feedback
+ * - Error handling for configuration issues
+ * - Stripe Elements integration
+ * - Customizable appearance options
+ * - Support for multiple payment methods
+ */
+
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -6,15 +19,33 @@ import paymentService from '../../services/paymentService';
 import { Container, Row, Col, Spinner, Image } from 'react-bootstrap';
 import logoCasino from '../images/logo-casino.png';
 
-// We'll load Stripe dynamically once we get the publishable key from the backend
+// ===== Constants =====
+
+/**
+ * Stripe instance - initialized dynamically with publishable key
+ */
 let stripePromise = null;
 
+// ===== Component =====
+
+/**
+ * StripeContainer Component
+ * Initializes Stripe and provides payment form context
+ * 
+ * @param {Object} props - Component props
+ * @param {Function} props.setMessage - Function to display status messages
+ */
 const StripeContainer = ({ setMessage }) => {
+  // ===== State =====
   const [loading, setLoading] = useState(true);
   const [options, setOptions] = useState(null);
 
+  // ===== Effects =====
+
+  /**
+   * Effect to fetch Stripe configuration and initialize payment system
+   */
   useEffect(() => {
-    // Fetch the publishable key from the backend
     const fetchConfig = async () => {
       try {
         setLoading(true);
@@ -25,7 +56,7 @@ const StripeContainer = ({ setMessage }) => {
           // Initialize Stripe with the publishable key
           stripePromise = loadStripe(config.publishableKey);
           
-          // Set Stripe appearance options with mode and payment methods
+          // Set Stripe appearance options
           setOptions({
             mode: 'payment',
             amount: 1000, // Default amount in cents (10 EUR)
@@ -61,6 +92,13 @@ const StripeContainer = ({ setMessage }) => {
     fetchConfig();
   }, [setMessage]);
 
+  // ===== Render Functions =====
+
+  /**
+   * Renders the loading screen with animation
+   * @param {string} message - Loading message to display
+   * @returns {JSX.Element} Loading screen component
+   */
   const renderLoadingScreen = (message) => {
     return (
       <Container className="text-center my-5">
@@ -84,14 +122,19 @@ const StripeContainer = ({ setMessage }) => {
     );
   };
 
+  // ===== Main Render =====
+
+  // Show loading screen while initializing
   if (loading) {
     return renderLoadingScreen('Loading payment system...');
   }
 
+  // Show loading screen if Stripe is not initialized
   if (!options || !stripePromise) {
     return renderLoadingScreen('Initializing payment system...');
   }
 
+  // Render Stripe Elements with CheckoutForm
   return (
     <Elements stripe={stripePromise} options={options}>
       <CheckoutForm setMessage={setMessage} />

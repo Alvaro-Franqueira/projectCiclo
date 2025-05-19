@@ -1,3 +1,16 @@
+/**
+ * RankingList Component
+ * A comprehensive ranking system for the casino platform that displays player statistics and achievements.
+ * 
+ * Features:
+ * - Overall rankings (profit, bet amount, win rate, losses)
+ * - Game-specific rankings (Dice, Roulette, Blackjack, Slot Machine)
+ * - Real-time data updates with cache management
+ * - Responsive UI with loading states
+ * - Visual indicators for top performers
+ * - Multiple ranking metrics per game
+ */
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Container, Table, Tabs, Tab, Alert, Spinner, Badge, Card, Row, Col, Image } from 'react-bootstrap';
 import { FaTrophy, FaCircle, FaCoins, FaGamepad, FaPercentage, FaChartLine, FaMedal, FaCrown, FaDice, FaDollarSign, FaArrowDown, FaSkull, FaThumbsDown } from 'react-icons/fa';
@@ -10,11 +23,34 @@ import silverLogo from '../images/silver-logo.png';
 import bronzeLogo from '../images/bronze-logo.png';
 import './RankingList.css';
 
-// Import the ranking types enum for consistent usage
+// ===== Constants =====
+
+/**
+ * Ranking types enum for consistent usage across the component
+ */
 const { RANKING_TYPES } = rankingService;
 
+/**
+ * Icon for losers ranking tab
+ */
 const iconLosers = <Icon path={mdiEmoticonPoop} size={0.8} />;
-// Create a memoized ranking table component to prevent unnecessary re-renders
+
+// ===== Memoized Components =====
+
+/**
+ * RankingTable Component
+ * A memoized table component for displaying ranking data
+ * 
+ * @param {Object} props - Component props
+ * @param {Array} props.rankingsData - Array of ranking data
+ * @param {string} props.rankingType - Type of ranking being displayed
+ * @param {boolean} props.isLoading - Loading state
+ * @param {string} props.error - Error message if any
+ * @param {Function} props.getRankIcon - Function to get rank icon
+ * @param {Function} props.getValueColor - Function to get value color
+ * @param {Function} props.formatValue - Function to format value
+ * @param {Function} props.getColumnTitle - Function to get column title
+ */
 const RankingTable = React.memo(({ 
   rankingsData, 
   rankingType,
@@ -95,10 +131,21 @@ const RankingTable = React.memo(({
 // Prevent re-rendering when props haven't changed
 RankingTable.displayName = 'RankingTable';
 
+// ===== Main Component =====
+
+/**
+ * RankingList Component
+ * Main component for displaying player rankings and statistics
+ */
 const RankingList = () => {
+  // ===== State Management =====
+  
+  // Tab and ranking type states
   const [activeTab, setActiveTab] = useState('overall');
   const [rankingType, setRankingType] = useState(RANKING_TYPES.OVERALL_PROFIT);
   const [gameRankingType, setGameRankingType] = useState(RANKING_TYPES.BY_GAME_AMOUNT);
+  
+  // Overall rankings state
   const [rankings, setRankings] = useState([]);
   const [games, setGames] = useState([]);
   const [selectedGameId, setSelectedGameId] = useState(null);
@@ -106,7 +153,7 @@ const RankingList = () => {
   const [error, setError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Game-specific rankings
+  // Game-specific rankings states
   const [diceRankings, setDiceRankings] = useState([]);
   const [rouletteRankings, setRouletteRankings] = useState([]);
   const [blackjackRankings, setBlackjackRankings] = useState([]);
@@ -116,13 +163,20 @@ const RankingList = () => {
   const [blackjackLoading, setBlackjackLoading] = useState(true);
   const [slotLoading, setSlotLoading] = useState(true);
   
-  // IDs of specific games
+  // Game IDs state
   const [diceGameId, setDiceGameId] = useState(null);
   const [rouletteGameId, setRouletteGameId] = useState(null);
   const [blackjackGameId, setBlackjackGameId] = useState(null);
   const [slotGameId, setSlotGameId] = useState(null);
 
-  // Memoize utility functions to prevent recreating them on each render
+  // ===== Utility Functions =====
+
+  /**
+   * Formats a value based on the ranking type
+   * @param {number|string} value - The value to format
+   * @param {string} type - The ranking type
+   * @returns {string} Formatted value
+   */
   const formatValue = useCallback((value, type) => {
     if (value === undefined || value === null) return '0';
     
@@ -143,6 +197,12 @@ const RankingList = () => {
     }
   }, []);
 
+  /**
+   * Gets the color for a value based on the ranking type
+   * @param {number|string} value - The value to get color for
+   * @param {string} type - The ranking type
+   * @returns {string} Color class name
+   */
   const getValueColor = useCallback((value, type) => {
     if (value === undefined || value === null) return 'secondary';
     
@@ -161,6 +221,11 @@ const RankingList = () => {
     return 'primary';
   }, []);
 
+  /**
+   * Gets the rank icon for a position
+   * @param {number} index - The position in ranking
+   * @returns {JSX.Element} Rank icon
+   */
   const getRankIcon = useCallback((index) => {
     if (index === 0) {
       return (
@@ -198,6 +263,11 @@ const RankingList = () => {
     return <span className="rank-number">#{index + 1}</span>;
   }, []);
 
+  /**
+   * Gets the column title based on ranking type
+   * @param {string} rankingTypeToUse - The ranking type
+   * @returns {string} Column title
+   */
   const getColumnTitle = useCallback((rankingTypeToUse) => {
     if (rankingTypeToUse === 'OVERALL_PROFIT' || rankingTypeToUse === 'BY_GAME_PROFIT') {
       return 'Total Profit';
@@ -216,7 +286,15 @@ const RankingList = () => {
     }
   }, []);
 
-  // Memoize the fetchGameRankings function to prevent recreating it on each render
+  // ===== Data Fetching =====
+
+  /**
+   * Fetches game-specific rankings
+   * @param {number} gameId - The game ID
+   * @param {string} rankingType - The ranking type
+   * @param {Function} setRankingsState - State setter for rankings
+   * @param {Function} setLoadingState - State setter for loading
+   */
   const fetchGameRankings = useCallback(async (gameId, rankingType, setRankingsState, setLoadingState) => {
     if (!gameId) {
       setRankingsState([]);
@@ -251,6 +329,11 @@ const RankingList = () => {
     }
   }, []);
 
+  // ===== Effects =====
+
+  /**
+   * Effect to fetch games and set up game IDs
+   */
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -295,7 +378,9 @@ const RankingList = () => {
     fetchGames();
   }, []); // Only run once on component mount
 
-  // Combined useEffect to handle all ranking data fetching
+  /**
+   * Effect to fetch all ranking data
+   */
   useEffect(() => {
     // Use a ref to track if the component is still mounted
     let isMounted = true;
@@ -422,11 +507,19 @@ const RankingList = () => {
     fetchGameRankings // Include the memoized function in dependencies
   ]);
 
+  // ===== Event Handlers =====
+
+  /**
+   * Handles tab selection
+   * @param {string} key - The selected tab key
+   */
   const handleTabSelect = useCallback((key) => {
     setActiveTab(key);
   }, []);
   
-  // Clear ranking cache and reload the page
+  /**
+   * Clears ranking cache and reloads data
+   */
   const clearRankingCache = () => {
     try {
       setIsRefreshing(true);
@@ -448,19 +541,39 @@ const RankingList = () => {
     }
   };
 
+  /**
+   * Handles overall ranking type selection
+   * @param {string} type - The selected ranking type
+   */
   const handleOverallRankingTypeSelect = useCallback((type) => {
     setRankingType(type);
   }, []);
   
+  /**
+   * Handles game ranking type selection
+   * @param {string} type - The selected ranking type
+   */
   const handleGameRankingTypeSelect = useCallback((type) => {
     setGameRankingType(type);
   }, []);
 
+  /**
+   * Handles game selection
+   * @param {number} gameId - The selected game ID
+   */
   const handleGameSelect = useCallback((gameId) => {
     setSelectedGameId(gameId);
   }, []);
 
-  // Replace the renderRankingTable function with our memoized component
+  // ===== Render Functions =====
+
+  /**
+   * Renders the ranking table
+   * @param {Array} rankingsData - The rankings data
+   * @param {string} rankingTypeToUse - The ranking type
+   * @param {boolean} isLoading - Loading state
+   * @returns {JSX.Element} Ranking table
+   */
   const renderRankingTable = (rankingsData, rankingTypeToUse, isLoading = false) => {
     return (
       <RankingTable
@@ -476,6 +589,10 @@ const RankingList = () => {
     );
   };
 
+  /**
+   * Renders overall rankings section
+   * @returns {JSX.Element} Overall rankings section
+   */
   const renderOverallRankings = () => {
     return (
       <div className="overall-rankings">
@@ -524,6 +641,10 @@ const RankingList = () => {
     );
   };
 
+  /**
+   * Renders game rankings tabs
+   * @returns {JSX.Element} Game rankings tabs
+   */
   const renderGameRankingsTabs = () => {
     return (
       <Tabs
@@ -553,6 +674,10 @@ const RankingList = () => {
     );
   };
 
+  /**
+   * Renders game rankings section
+   * @returns {JSX.Element} Game rankings section
+   */
   const renderGameRankings = () => {
     return (
       <div className="game-specific-rankings">
@@ -630,6 +755,7 @@ const RankingList = () => {
     );
   };
 
+  // ===== Main Render =====
   return (
     <Container>
       <Card className="ranking-card">
