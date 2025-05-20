@@ -14,8 +14,7 @@
  * - Deck tracking
  */
 import React, { useState, useEffect } from 'react';
-import { Container, Alert, Spinner, Badge, Button } from 'react-bootstrap';
-import Status from './Status';
+import { Container, Alert } from 'react-bootstrap';
 import Controls from './Controls';
 import Hand from './Hand';
 import MessagePopup from './MessagePopup';

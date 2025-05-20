@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Alert, Card } from 'react-bootstrap';
-import SlotMachine from '../components/games/slotmachine/SlotMachine';
-import { useAuth } from '../context/AuthContext';
+import { Container, Row, Col, Card } from 'react-bootstrap';
+import SlotMachine from '../components/games/SlotMachine';
 import gameService from '../services/gameService';
 
 const SlotMachinePage = () => {
-  const { isAuthenticated } = useAuth();
   const [gameInfo, setGameInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchGameInfo = async () => {
@@ -48,14 +45,12 @@ const SlotMachinePage = () => {
           <Col md={10}>
             <div className="header-card">
               <h1>
-                {gameInfo?.name || 'Slot Machine'}
+                {gameInfo?.name}
               </h1>
               <p>
-                {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
+                {gameInfo?.description}
               </p>
             </div>
-
-          
           </Col>
         </Row>
 

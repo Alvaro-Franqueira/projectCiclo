@@ -494,7 +494,7 @@ const DiceGame = () => {
 
                 {/* Roll Button */}
                 <Button
-                  variant="primary"
+                  variant="success"
                   className="dice-roll-btn"
                   type="submit"
                   disabled={isRolling || !betAmount || betAmount <= 0 || betAmount > userBalance}

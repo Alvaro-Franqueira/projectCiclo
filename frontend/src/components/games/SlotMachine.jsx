@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Alert } from 'react-bootstrap';
-import { useAuth } from '../../../context/AuthContext';
-import userService from '../../../services/userService';
-import betService from '../../../services/betService';
-import './SlotMachine.css';
+import { useAuth } from '../../context/AuthContext';
+import userService from '../../services/userService';
+import betService from '../../services/betService';
+import '../../assets/styles/SlotMachine.css';
 
 // Import slot machine symbols
-import cherryImg from '../../../components/images/cherry-icon.png';
-import lemonImg from '../../../components/images/lemon-icon.png';
-import orangeImg from '../../../components/images/orange-icon.png';
-import plumImg from '../../../components/images/plum-icon.png';
-import bellImg from '../../../components/images/bell-icon.png';
-import sevenImg from '../../../components/images/seven-icon.png';
-import barImg from '../../../components/images/bar-icon.png';
+import cherryImg from '../../components/images/cherry-icon.png';
+import lemonImg from '../../components/images/lemon-icon.png';
+import orangeImg from '../../components/images/orange-icon.png';
+import plumImg from '../../components/images/plum-icon.png';
+import bellImg from '../../components/images/bell-icon.png';
+import sevenImg from '../../components/images/seven-icon.png';
+import barImg from '../../components/images/bar-icon.png';
 
 /**
  * Slot Machine Game Component

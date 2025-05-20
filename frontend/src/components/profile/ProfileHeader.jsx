@@ -141,7 +141,7 @@ const ProfileHeader = ({ profileData, numberOneRankings }) => {
                         <FaUser size={60} />
                     )}
                 </div>
-                <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155', borderColor: "#f59e0b", borderWidth: '1px', borderStyle: 'solid' }}>
+                <div className="balance-display p-3 mb-3 rounded" style={{ backgroundColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}>
                     <h5 className="mb-1">Current Balance</h5>
                     <h3 className="mb-0 text-warning">
                         <FaCoins className="me-2" />
