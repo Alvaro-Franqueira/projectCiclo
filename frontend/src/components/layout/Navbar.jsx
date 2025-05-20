@@ -152,14 +152,14 @@ const AppNavbar = ({ noSticky }) => {
       <Nav.Link
         as={Link}
         to="/login"
-        className="btn btn-outline-primary btn-sm me-2 my-2 my-lg-0"
+        className="button btn-success pad-2"
       >
         Login
       </Nav.Link>
       <Nav.Link
         as={Link}
         to="/register"
-        className="btn btn-primary btn-sm my-2 my-lg-0"
+        className="btn btn-outline-primary pad-2 ms-2"
       >
         Register
       </Nav.Link>

@@ -56,7 +56,6 @@ a:hover {
   border-radius: 50px;
   color: var(--light-text);
   font-weight: bold;
-  box-shadow: 0 4px 15px rgba(43, 255, 96, 0.5);
   transition: all 0.3s ease;
 }
 

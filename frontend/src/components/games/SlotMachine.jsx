@@ -436,7 +436,7 @@ const SlotMachine = () => {
       <Row className="justify-content-center">
         <Col md={6}>
           <Button 
-            variant="primary" 
+            variant="success" 
             size="lg" 
             className="spin-button"
             onClick={handleSpin}

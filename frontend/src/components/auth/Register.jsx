@@ -245,6 +245,7 @@ const Register = () => {
                   className="auth-btn" 
                   type="submit" 
                   disabled={isSubmitting}
+                  variant="success"
                 >
                   {isSubmitting ? 'Registering...' : 'Register'}
                 </Button>

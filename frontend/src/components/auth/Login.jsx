@@ -148,6 +148,7 @@ const Login = () => {
             className="auth-btn" 
             type="submit" 
             disabled={isSubmitting}
+            variant="success"
           >
             {isSubmitting ? 'Logging in...' : 'Login'}
           </Button>
