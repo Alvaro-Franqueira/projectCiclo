@@ -21,7 +21,7 @@ import gameService from '../../services/gameService';
 import logoCasino from '../images/logo-casino.png';
 import silverLogo from '../images/silver-logo.png';
 import bronzeLogo from '../images/bronze-logo.png';
-import './RankingList.css';
+import '../../assets/styles/RankingList.css';
 
 // ===== Constants =====
 

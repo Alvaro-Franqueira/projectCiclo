@@ -25,7 +25,7 @@ import BalanceChart from '../components/profile/BalanceChart';
 import GameStats from '../components/profile/GameStats';
 import BetHistory from '../components/profile/BetHistory';
 import RankingsList from '../components/profile/RankingsList';
-import './UserProfile.css'; // Import the new CSS file for spinner styles
+import '../assets/styles/UserProfile.css'; // Import the new CSS file for spinner styles
 import {
     Chart as ChartJS,
     CategoryScale,

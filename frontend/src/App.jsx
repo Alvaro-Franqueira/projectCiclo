@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
+import './assets/styles/App.css';
 import './assets/styles/CasinoTheme.css';
 
 import AppRoutes from './AppRoutes';
