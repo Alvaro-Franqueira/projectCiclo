@@ -28,14 +28,10 @@
   filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
 }
 
-
-
 .crown-icon {
   position: relative;
   z-index: 1;
 }
-
-
 
 @keyframes glow-pulse {
   0% { box-shadow: 0 0 3px rgba(245, 158, 11, 0.5); }
@@ -77,8 +73,6 @@
   background-color: #293548;
   color: white;
 }
-
-
 
 .ranking-subtabs .nav-link.active {
   background-color: #1e293b;
@@ -199,9 +193,6 @@
 .rank-column {
   position: relative;
 }
-
-
-
 
 .rank-second {
   color: silver;

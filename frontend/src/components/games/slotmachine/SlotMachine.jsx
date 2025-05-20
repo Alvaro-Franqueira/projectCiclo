@@ -554,7 +554,7 @@ const SlotMachine = () => {
             </div>
             
             {/* Odds Explanation */}
-            <div className="odds-explanation mt-4">
+            <div className="odds-explanation">
               <h5>How the Odds Work</h5>
               <p>Each symbol has a different probability of appearing:</p>
               <ul className="odds-list">

@@ -1,0 +1,41 @@
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.whitener {
+  color: white;
+}
+
+.h6 {
+  color: white !important;
+}
+
+.balance-card {
+  color: var(--accent-color);
+}
+
+.no-shadow {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.light-border {
+  border: 1px solid #64758f !important;
+}
+
+.stat-item {
+  background-color: #334155;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid  #6e7784;
+  color: white;
+  justify-content: center;
+  text-align: center;
+}
+
+.ranking-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+} 

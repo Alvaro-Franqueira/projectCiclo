@@ -66,7 +66,7 @@ npm run build
 - React Router
 - Bootstrap/React Bootstrap
 - Axios
-- Various gaming libraries (React Roulette, Three.js, etc.)
+
 
 ### Backend
 - Spring Boot 3.4

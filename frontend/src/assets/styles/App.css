@@ -65,21 +65,10 @@
   background-color: rgba(59, 130, 246, 0.85) !important;
 }
 
-:root {
-  --primary-color: #1e3a8a;
-  --secondary-color: #10b981;
-  --accent-color: #f59e0b;
-  --dark-color: #111827;
-  --light-color: #f3f4f6;
-  --danger-color: #ef4444;
-  --success-color: #10b981;
-}
-
 /* Payment page specific styles */
 .bg-gradient {
   background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
 }
-
 
 /* Balance display card */
 .balance-display-card {
@@ -324,12 +313,6 @@ color: white;
 
 }
 
-body {
-  background-color: #0f172a;
-  color: var(--light-color);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
 .container {
   background-color: rgba(30, 41, 59, 0.8);
   border-radius: 8px;
@@ -370,15 +353,9 @@ body {
   background-color: #334155;
   color: #f59e0b; /* accent color */
 }
-.no-shadow {
-  border: none !important;
-  box-shadow: none !important;
-}
+
 .dropdown-divider {
   border-top: 1px solid #475569;
-}
-.light-border {
-  border: 1px solid #64758f !important;
 }
 
 /* Card styling */
@@ -452,22 +429,8 @@ body {
 }
 
 /* General Styles for Improved Contrast */
-:root {
-  --primary-color: #1e3a8a;  /* Primary color */
-  --secondary-color: #10b981; /* Greenish for success */
-  --accent-color: #f59e0b;    /* Orange accent color */
-  --dark-color: #111827;      /* Dark color for backgrounds */
-  --light-color: #f3f4f6;     /* Light color for text */
-  --danger-color: #ef4444;    /* Red for error messages */
-  --muted-color: #6b7280;     /* Muted text color for less important text */
-}
 
 /* General Body Styling */
-body {
-  background-color: var(--dark-color);
-  color: var(--light-color);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
 /* Container Styling */
 .container {
@@ -827,16 +790,4 @@ body {
     margin: 2px;
   }
 }
-.text-accent{
-  color: var(--accent-color);
-}
-.balance-card{
-  color: var(--accent-color);}
-
-.ranking-badges{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-} 
 

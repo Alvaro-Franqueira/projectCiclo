@@ -43,36 +43,18 @@ const BlackjackPage = () => {
   }
 
   return (
-    <div className="blackjack-page" style={{ 
-      background: 'linear-gradient(to bottom, #003300, #006600)',
-      minHeight: '90vh',
-      padding: '20px',
-      borderRadius: '10px',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-      position: 'relative'
-    }}>
-      <Container>
-        <Row className="justify-content-center mb-4">
+    <div className="blackjack-page">
+      
+        <Row className="justify-content-center">
           <Col md={10}>
-          <div className="text-center" style={{ 
-        padding: '15px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-        border: '2px solid gold'
-    }}>
-        <h1 className="text-center mb-3" style={{ 
-        color: 'gold', 
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-        fontFamily: '"Playfair Display", serif'
-        }}>
-        {gameInfo?.name || 'Slot Machine'}
-        </h1>
-        <p className="text-center" style={{ color: 'white' }}>
-        {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
-        </p>
-    </div>
+          <div className="header-card">
+            <h1>
+            {gameInfo?.name || 'Blackjack'}
+            </h1>
+            <p>
+            {gameInfo?.description || 'Try your luck with our classic Blackjack game! Beat the dealer to win big prizes.'}
+            </p>
+          </div>
 
             {!isAuthenticated && (
               <Alert variant="warning" className="text-center">
@@ -113,7 +95,6 @@ const BlackjackPage = () => {
             </Card>
           </Col>
         </Row>
-      </Container>
     </div>
   );
 };

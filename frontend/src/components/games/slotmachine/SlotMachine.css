@@ -1,9 +1,8 @@
 .slot-machine-container {
   background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
   border-radius: 10px;
-  padding: 20px;
-  color: white;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  border: 2px solid gold;
 }
 
 .slot-machine {
@@ -143,6 +142,16 @@
   border-radius: 8px;
   padding: 15px;
   margin-top: 20px;
+  justify-content: center;
+  align-items: center;
+  text-align: left;
+}
+.slot-machine-page{
+  background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+  border-radius: 10px;
+  padding: 20px;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);  
 }
 
 .odds-explanation h5 {

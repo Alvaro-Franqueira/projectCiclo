@@ -3,7 +3,8 @@ import { BrowserRouter as Router } from 'react-router-dom';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/styles/App.css';
-import './assets/styles/CasinoTheme.css';
+import './assets/styles/theme.css';
+import './assets/styles/utilities.css';
 
 import AppRoutes from './AppRoutes';
 

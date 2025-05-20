@@ -43,33 +43,14 @@ const SlotMachinePage = () => {
   }
 
   return (
-    <div className="slot-machine-page" style={{ 
-      background: 'linear-gradient(to bottom, #000428, #004e92)',
-      minHeight: '90vh',
-      padding: '20px',
-      borderRadius: '10px',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-      position: 'relative'
-    }}>
-      <Container>
+    <div className="slot-machine-page">
         <Row className="justify-content-center mb-4">
           <Col md={10}>
-            <div className="text-center" style={{ 
-              padding: '15px',
-              background: 'rgba(0, 0, 0, 0.7)',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-              border: '2px solid gold'
-            }}>
-              <h1 className="text-center mb-3" style={{ 
-                color: 'gold', 
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-                fontFamily: '"Playfair Display", serif'
-              }}>
+            <div className="header-card">
+              <h1>
                 {gameInfo?.name || 'Slot Machine'}
               </h1>
-              <p className="text-center" style={{ color: 'white' }}>
+              <p>
                 {gameInfo?.description || 'Try your luck with our classic slot machine game! Match symbols to win big prizes.'}
               </p>
             </div>
@@ -106,7 +87,6 @@ const SlotMachinePage = () => {
             </Card>
           </Col>
         </Row>
-      </Container>
     </div>
   );
 };

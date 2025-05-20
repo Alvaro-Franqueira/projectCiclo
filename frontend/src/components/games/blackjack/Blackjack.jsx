@@ -495,17 +495,16 @@ function Blackjack() {
   }
 
   return (
-    <Container className="mt-4">
+    <div>
+    <div className="game-container">
       {error && <div className="game-alert game-alert-danger">{error}</div>}
-      
-      <div className="game-container">
-        {/* Background pattern */}
+      {/* Background pattern */}
         <div className="pattern-overlay"></div>
 
         {/* Balance Display */}
-        <div className="text-center mb-4">
+        <div>
           <div className="balance-display-bj">
-            <h1 className="mb-0 d-flex align-items-center">
+            <h1>
               <FaCoins className="text-accent me-2" style={{ fontSize: '0.8em' }} />
               ${balance.toFixed(2)}
             </h1>
@@ -576,8 +575,8 @@ function Blackjack() {
         message={message} 
         isVisible={showPopup} 
         onClose={handlePopupClose}
-      />
-    </Container>
+      />  
+    </div>
   );
 }
 

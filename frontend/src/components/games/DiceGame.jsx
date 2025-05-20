@@ -416,22 +416,11 @@ const DiceGame = () => {
       )}
 
       {/* Game Title */}
-      <div className="text-center" style={{ 
-        padding: '15px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-        border: '2px solid gold'
-      }}>
-        <h1 className="text-center mb-3" style={{ 
-          color: 'gold', 
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-          fontFamily: '"Playfair Display", serif'
-        }}>
+      <div className="header-card">
+        <h1>
           {gameInfo?.name || 'Dice Game'}
         </h1>
-        <p className="text-center" style={{ color: 'white' }}>
+        <p>
           {gameInfo?.description || 'Try your luck with our classic dice game! Roll the dice and win big.'}
         </p>
       </div>
