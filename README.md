@@ -1,11 +1,32 @@
 # Virtual Casino
 
-A full-featured virtual casino application with multiple games, user authentication, and administration.
+A full-featured virtual casino application with multiple games, user authentication, payment processing, and administration.
 
 ## Project Structure
 
 - **frontend/**: React application built with Vite
+  - `src/components/`: UI components, organized by domain (games, admin, auth, layout, etc.)
+    - `games/`: Slot Machine, Blackjack, Roulette, Dice Game (each as a component)
+    - `admin/`: User management and admin panel
+    - `auth/`: Login, registration, and protected route components
+    - `layout/`: Shared layout components (e.g., Navbar)
+    - `profile/`, `ranking/`, `payment/`, `images/`: Profile, leaderboard, payment, and image components
+  - `src/pages/`: Main pages (GameSelection, UserProfile, PaymentPage, etc.)
+  - `src/services/`: API service modules for games, users, ranking, auth, payment, etc.
+  - `src/context/`: Context providers for global state (e.g., AuthContext)
+  - `src/assets/`: Images and styles
+    - `styles/`: Global and game-specific CSS (Theme.css, SlotMachine.css, etc.)
+  - `src/utils/`: Utility functions and helpers
+
 - **backend/**: Spring Boot application with Java 17
+  - `src/main/java/udaw/casino/`
+    - `controller/`: REST controllers (User, Game, Bet, Payment, Ranking, Dice, Roulette)
+    - `service/`: Business logic for games, users, bets, payments, rankings
+    - `model/`: Entities (User, Game, Bet, Role, RankingType)
+    - `repository/`: Spring Data JPA repositories
+    - `security/`: JWT authentication, filters, user details
+    - `config/`: Security, Stripe, and web configuration
+    - `dto/`, `exception/`, `validation/`: Data transfer objects, error handling, validation
 
 ## Prerequisites
 
@@ -45,13 +66,21 @@ npm run dev
 
 Or run them separately:
 
-```bash
-# Frontend only
-npm run start:frontend
+#### Run the Frontend Only
 
-# Backend only
+Open a terminal in the project root and run:
+```bash
+npm run start:frontend
+```
+This will start the React app (Vite) on http://localhost:5173/ by default.
+
+#### Run the Backend Only
+
+Open a terminal in the project root and run:
+```bash
 npm run start:backend
 ```
+This will start the Spring Boot backend (Maven) on http://localhost:8080/ by default.
 
 ### Building for Production
 
@@ -66,30 +95,40 @@ npm run build
 - React Router
 - Bootstrap/React Bootstrap
 - Axios
-
+- Vite
 
 ### Backend
 - Spring Boot 3.4
-- Spring Security
+- Spring Security (JWT-based)
 - Spring Data JPA
 - PostgreSQL
-- JWT Authentication
 - Stripe Payment Integration
 
-## Project Structure Best Practices
+## Main Features
 
-- Keep reusable UI components in `frontend/src/components`
-- Use context for global state management in `frontend/src/context`
-- Services for API calls in `frontend/src/services`
-- Backend follows standard Spring Boot architecture with controllers, services, repositories 
+- **Authentication**: Login, registration, JWT-based session management
+- **Games**: Slot Machine, Blackjack, Roulette, Dice Game (all with custom logic and UI)
+- **Admin Panel**: User and game management
+- **Payment Processing**: Stripe integration for credit purchasing
+- **Ranking & Leaderboards**: Real-time ranking calculation and display
+- **User Profile**: Bet history, game stats, balance chart
+
+## Backend API Overview
+
+- `/api/users`: User registration, login, profile
+- `/api/games`: Game listing and details
+- `/api/bets`: Place and retrieve bets
+- `/api/payments`: Payment processing (Stripe)
+- `/api/ranking`: Leaderboard and ranking calculation
+- `/api/roulette`, `/api/dice`: Game-specific endpoints
 
 ## Styling System
 
-The application now uses a consistent styling approach based on the SlotMachine component's aesthetic. The implementation includes:
+The application uses a consistent styling approach based on the SlotMachine component's aesthetic:
 
 ### Global Theme
 
-- `CasinoTheme.css`: Contains global variables and baseline styles for the entire application
+- `Theme.css`: Global variables and baseline styles for the entire application
 - Color palette based on casino themes with gold accents
 - Standardized shadows, gradients, and font settings
 - Reusable component styles for cards, buttons, and forms
@@ -108,19 +147,21 @@ Each game has its own CSS file that extends the global theme:
 - `Auth.css`: Consistent styling for login and registration components
 - `UserManagement.css`: Admin panel styling for user and game management
 
-## Components
+## Components Overview
 
-- **Authentication**: Login and Registration
-- **Games**: 
-  - Slot Machine
-  - Blackjack
-  - Roulette
-  - Dice Game
-- **Admin Panel**: User and Game management
-- **Payment Processing**: Credit purchasing
+- **Authentication**: Login, Register, ProtectedRoute
+- **Games**: Slot Machine, Blackjack, Roulette, Dice Game (modular components)
+- **Admin Panel**: UserManagement
+- **Payment**: CheckoutForm, StripeContainer
+- **Profile**: ProfileHeader, BetHistory, GameStats, BalanceChart
+- **Ranking**: RankingList
+- **Layout**: Navbar
 
 ## Technology Stack
 
-- React for the frontend
-- Bootstrap framework with custom styling
-- RESTful API integration 
+- React (frontend)
+- Bootstrap (with custom styling)
+- Spring Boot (backend)
+- PostgreSQL (database)
+- Stripe (payments)
+- RESTful API 

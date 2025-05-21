@@ -1,5 +1,7 @@
 package udaw.casino.config; // Make sure this package matches your project structure
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod; // Important for specifying HTTP methods
@@ -17,6 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import udaw.casino.security.JwtAuthenticationFilter; // Make sure this path is correct
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
  * Configuration class for Spring Security in the casino system.
@@ -59,7 +64,30 @@ public class SecurityConfig {
         authProvider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(authProvider);
     }
-
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost",
+            "http://localhost:80",
+            "http://localhost:3000",
+            "http://127.0.0.1",
+            "http://127.0.0.1:3000",
+            "http://172.23.72.68",
+            "http://172.23.72.68:3000",
+            "http://172.23.64.1",
+            "http://172.23.64.1:3000",
+            "http://172.19.4.31",
+            "http://172.19.4.31:3000"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
     /**
      * Configures the SecurityFilterChain to define security rules and authentication mechanisms.
      * This method sets up CORS, CSRF, session management, and endpoint access control.
@@ -71,9 +99,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // Enable CORS with default configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use custom CORS configuration
             .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are using JWT (stateless)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // --- PUBLICLY ACCESSIBLE ENDPOINTS (Unauthenticated access) ---
                 .requestMatchers(
                     "/api/users/login",          // User login
@@ -130,4 +159,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }
