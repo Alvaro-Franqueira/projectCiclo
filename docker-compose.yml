@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
 
   backend:
     build:
@@ -26,6 +27,7 @@ services:
       - STRIPE_CURRENCY=eur
       - STRIPE_CREDIT_MULTIPLIER=1000
       - JWT_EXPIRATION=86400000
+      - JWT_SECRET=bm9xdWVyaWFzZWNyZXRvc3NvbmVscHV0b2luZmllcm5v
     depends_on:
       - db
     ports:
