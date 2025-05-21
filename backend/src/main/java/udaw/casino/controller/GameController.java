@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +35,6 @@ public class GameController {
     @Autowired
     private GameService gameService;
 
-    private static final Logger log = LoggerFactory.getLogger(GameController.class);
 
     /**
      * Create a new game.
@@ -54,8 +51,7 @@ public class GameController {
             Game newGame = gameService.createGame(game);
             return ResponseEntity.status(HttpStatus.CREATED).body(newGame);
         } catch (Exception e) {
-            log.error("Error creating game with name: {}", gameDTO.getName(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to create game"));
         }
     }
@@ -69,15 +65,12 @@ public class GameController {
     public ResponseEntity<?> getAllGames() {
         try {
             List<Game> games = gameService.getAllGames();
-            log.info("Retrieved {} games from service.", games.size());
             List<GameDTO> gameDTOs = new ArrayList<>();
             for (Game game : games) {
                 gameDTOs.add(new GameDTO(game));
             }
-            log.debug("Returning {} GameDTOs.", gameDTOs.size());
             return ResponseEntity.ok(gameDTOs);
         } catch (Exception e) {
-            log.error("Error fetching games", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -97,7 +90,6 @@ public class GameController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            log.error("Error fetching game with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to fetch game"));
         }
@@ -130,14 +122,11 @@ public class GameController {
             game.setId(id);
             game.setName(gameDTO.getName());
             game.setDescription(gameDTO.getDescription());
-            log.info("Attempting to update game with ID: {} and name: {}", id, gameDTO.getName());
             Game updatedGame = gameService.updateGame(id, game);
-            log.info("Successfully updated game with ID: {}", updatedGame.getId());
             return ResponseEntity.ok(updatedGame);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            log.warn("Game not found for update with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Failed to update game"));
         }

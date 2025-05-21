@@ -86,7 +86,6 @@ const Register = () => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      console.log('Registration error:', err);
       
       // Handle validation errors from the server
       if (err.response && err.response.data && err.response.data.errors) {

@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Service for calculating user rankings on-demand without persistent storage.
@@ -33,8 +31,6 @@ import org.slf4j.LoggerFactory;
  */
 @Service
 public class RankingCalculationService {
-
-    private static final Logger log = LoggerFactory.getLogger(RankingCalculationService.class);
 
     private final BetRepository betRepository;
     private final UserRepository userRepository;
@@ -74,12 +70,10 @@ public class RankingCalculationService {
      * @return List of RankingEntry objects sorted by score in descending order
      */
     public List<RankingEntry> getRankingByType(RankingType type) {
-        log.info("Calculating on-demand ranking for type: {}", type);
-        
+
         // Validate ranking type
         if (type == RankingType.BY_GAME_AMOUNT || type == RankingType.BY_GAME_WIN_RATE || 
             type == RankingType.BY_GAME_PROFIT || type == RankingType.BY_GAME_LOSSES) {
-            log.warn("Requested game-specific ranking type {} without specifying a game - returning empty list", type);
             return new ArrayList<>();
         }
         
@@ -109,8 +103,6 @@ public class RankingCalculationService {
      * @return List of RankingEntry objects sorted by score in descending order
      */
     public List<RankingEntry> getRankingByGameAndType(RankingType type, Game game) {
-        log.info("Calculating on-demand ranking for type: {} and game: {}", type, game.getName());
-        
         List<User> users = userRepository.findAll();
         List<RankingEntry> rankings = new ArrayList<>();
         
@@ -137,15 +129,12 @@ public class RankingCalculationService {
      * @return List of RankingEntry objects containing all rankings for the user
      */
     public List<RankingEntry> getUserRankings(Long userId) {
-        log.info("Calculating on-demand rankings for user ID: {}", userId);
-        
         // Find user
         User user;
         try {
             user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
         } catch (Exception e) {
-            log.error("Error finding user with ID {}: {}", userId, e.getMessage());
             return new ArrayList<>();
         }
         
@@ -169,10 +158,8 @@ public class RankingCalculationService {
                     }
                     
                     rankings.add(entry);
-                    log.debug("Added global ranking for user {}: type={}, score={}, position={}", 
-                              userId, type, score, entry.getPosition());
                 } catch (Exception e) {
-                    log.error("Error calculating {} ranking for user {}: {}", type, userId, e.getMessage());
+                    // Exception handling without logging
                 }
             }
         }
@@ -181,17 +168,12 @@ public class RankingCalculationService {
         List<Game> games;
         try {
             games = betRepository.findDistinctGamesByUserId(userId);
-            log.info("Found {} distinct games for user {}", games.size(), userId);
         } catch (Exception e) {
-            log.error("Error finding games for user {}: {}", userId, e.getMessage());
             games = new ArrayList<>();
         }
         
         // Calculate rankings for each game
         for (Game game : games) {
-            log.debug("Processing game rankings for user {} and game {} (ID: {})", 
-                      userId, game.getName(), game.getId());
-            
             // Calculate BY_GAME_AMOUNT ranking
             try {
                 Double winsScore = calculateScore(user, RankingType.BY_GAME_AMOUNT, game);
@@ -206,11 +188,8 @@ public class RankingCalculationService {
                     }
                 }
                 rankings.add(winsEntry);
-                log.debug("Added BY_GAME_AMOUNT ranking for user {} and game {}: score={}, position={}", 
-                          userId, game.getName(), winsScore, winsEntry.getPosition());
             } catch (Exception e) {
-                log.error("Error calculating BY_GAME_AMOUNT ranking for user {} and game {}: {}", 
-                          userId, game.getName(), e.getMessage());
+                // Exception handling without logging
             }
             
             // Calculate BY_GAME_LOSSES ranking
@@ -227,11 +206,8 @@ public class RankingCalculationService {
                     }
                 }
                 rankings.add(lossesEntry);
-                log.debug("Added BY_GAME_LOSSES ranking for user {} and game {}: score={}, position={}", 
-                          userId, game.getName(), lossesScore, lossesEntry.getPosition());
             } catch (Exception e) {
-                log.error("Error calculating BY_GAME_LOSSES ranking for user {} and game {}: {}", 
-                          userId, game.getName(), e.getMessage());
+                // Exception handling without logging
             }
             
             // Calculate BY_GAME_WIN_RATE ranking
@@ -248,11 +224,8 @@ public class RankingCalculationService {
                     }
                 }
                 rankings.add(winRateEntry);
-                log.debug("Added BY_GAME_WIN_RATE ranking for user {} and game {}: score={}, position={}", 
-                          userId, game.getName(), winRateScore, winRateEntry.getPosition());
             } catch (Exception e) {
-                log.error("Error calculating BY_GAME_WIN_RATE ranking for user {} and game {}: {}", 
-                          userId, game.getName(), e.getMessage());
+                // Exception handling without logging
             }
             
             // Calculate BY_GAME_PROFIT ranking
@@ -269,11 +242,8 @@ public class RankingCalculationService {
                     }
                 }
                 rankings.add(profitEntry);
-                log.debug("Added BY_GAME_PROFIT ranking for user {} and game {}: score={}, position={}", 
-                          userId, game.getName(), profitScore, profitEntry.getPosition());
             } catch (Exception e) {
-                log.error("Error calculating BY_GAME_PROFIT ranking for user {} and game {}: {}", 
-                          userId, game.getName(), e.getMessage());
+                // Exception handling without logging
             }
         }
         
@@ -341,7 +311,6 @@ public class RankingCalculationService {
                 return gameProfit != null ? gameProfit : 0.0;
 
             default:
-                log.error("Unsupported RankingType encountered: {}", type);
                 throw new IllegalArgumentException("Unsupported ranking type: " + type);
         }
     }

@@ -243,7 +243,6 @@ function Blackjack() {
       const card = deck[randomIndex];
       deck.splice(randomIndex, 1);
       setDeck([...deck]);
-      console.log('Remaining Cards:', deck.length);
       
       const suitSymbol = {
         'spades': '♠',
@@ -379,10 +378,9 @@ function Blackjack() {
         betValue: userScore.toString(),
         winningValue: isWin ? userScore.toString() : dealerScore.toString()
       };
-      
-      console.log('Recording bet:', betData);
+    
       const response = await betService.createBet(betData);
-      console.log('Bet recorded:', response);
+
     } catch (err) {
       console.error('Error recording bet:', err);
       setError(`Failed to record bet: ${err.response?.data?.message || err.message}`);

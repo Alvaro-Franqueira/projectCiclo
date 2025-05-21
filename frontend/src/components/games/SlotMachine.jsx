@@ -316,7 +316,6 @@ const SlotMachine = () => {
    * @param {string[]} symbols - Final symbol combination
    */
   const handleSpinComplete = (symbols) => {
-    console.log('Final symbols:', symbols);
     const result = calculateWinnings(symbols);
     
     if (result.win) {

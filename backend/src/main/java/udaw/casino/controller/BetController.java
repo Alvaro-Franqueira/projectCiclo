@@ -196,9 +196,7 @@ public class BetController {
             System.out.println("Returning response: " + responseDTO);
             
             return ResponseEntity.ok(responseDTO);
-        } catch (Exception e) {
-            // Log the error for debugging
-            System.err.println("Error creating bet: " + e.getMessage());
+        } catch (Exception e) {           
             e.printStackTrace();
             throw e;
         }

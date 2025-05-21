@@ -16,9 +16,7 @@ const ProtectedRoute = ({ requireAdmin = false }) => {
 
   // If admin access is required but user is not admin, redirect to games
   if (requireAdmin) {
-    console.log('Admin route accessed, requireAdmin:', requireAdmin);
-    console.log('Is user admin?', isAdmin);
-    
+
     if (!isAdmin) {
       return <Navigate to="/games" replace />;
     }

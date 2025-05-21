@@ -6,8 +6,6 @@ import udaw.casino.exception.InsufficientBalanceException;
 import udaw.casino.model.Bet;
 import udaw.casino.service.RouletteService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +30,6 @@ import java.util.Random;
 public class RouletteController {
 
     private final RouletteService rouletteService;       
-    private static final Logger log = LoggerFactory.getLogger(RouletteService.class);
 
     /**
      * Endpoint to place a bet and play a round of Roulette, generating a winning number on the server.
@@ -51,9 +48,7 @@ public class RouletteController {
             @RequestParam String betType,
             @RequestParam String betValue
             ) {
-                if (userId == null) {
-                    log.error("User ID is required but not provided.");
-                    throw new IllegalArgumentException("User ID is required but not provided.");
+                if (userId == null) {                    throw new IllegalArgumentException("User ID is required but not provided.");
                 }
                 if (amount <= 0) {
                     log.error("Invalid bet amount: {}. Must be greater than 0.", amount);

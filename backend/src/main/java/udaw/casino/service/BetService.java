@@ -7,8 +7,7 @@ import udaw.casino.model.User;
 import udaw.casino.repository.BetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,8 +20,6 @@ import java.util.List;
  */
 @Service
 public class BetService {
-
-    private static final Logger log = LoggerFactory.getLogger(BetService.class);
 
     private final BetRepository betRepository;
     private final UserService userService;
@@ -60,8 +57,6 @@ public class BetService {
             throw new InsufficientBalanceException("Insufficient balance to place this bet. Current balance: " + user.getBalance());
         }
         
-        log.info("Creating bet for user {} with amount {}", user.getUsername(), bet.getAmount());
-
         // Initialize bet state
         bet.setBetDate(LocalDateTime.now());
         bet.setStatus("PENDING");
@@ -82,7 +77,6 @@ public class BetService {
     public Bet resolveBet(Bet bet) {
         Long betId = bet.getId();
         if (!"PENDING".equals(bet.getStatus())) {
-            log.warn("Attempted to resolve an already resolved bet (ID: {}, Status: {})", betId, bet.getStatus());
             return bet; 
         }
 
@@ -91,7 +85,6 @@ public class BetService {
         bet.setStatus(bet.getWinloss() == 0 ? "TIE" : "UNKNOWN");
         
         Bet resolvedBet = betRepository.save(bet);
-        log.info("Bet {} resolved. Status: {}, Win/Loss: {}", betId, resolvedBet.getStatus(), resolvedBet.getWinloss());
         return resolvedBet;
     }
     
@@ -169,9 +162,6 @@ public class BetService {
     }
 
     /**
-     * Saves a bet with detailed logging and verification.
-     * Includes extensive debug logging for troubleshooting.
-     * 
      * @param bet The bet to save
      * @return The saved bet
      * @throws Exception if save operation fails
@@ -179,29 +169,10 @@ public class BetService {
     @Transactional
     public Bet saveBet(Bet bet) {
         try {
-            // Log bet details
-            log.info("Saving bet with details: User ID: {}, Game ID: {}, Amount: {}, Status: {}, Type: {}", 
-                    bet.getUser().getId(), bet.getGame().getId(), bet.getAmount(), 
-                    bet.getStatus(), bet.getBetType());
-            
-            // Debug logging
-            System.out.println("SAVE BET DETAILS:");
-            System.out.println("- User ID: " + bet.getUser().getId());
-            System.out.println("- Game ID: " + bet.getGame().getId());
-            System.out.println("- Amount: " + bet.getAmount());
-            System.out.println("- Status: " + bet.getStatus());
-            System.out.println("- Type: " + bet.getBetType());
-            System.out.println("- BetValue: " + bet.getBetValue());
-            System.out.println("- WinningValue: " + bet.getWinningValue());
-            System.out.println("- WinLoss: " + bet.getWinloss());
-            System.out.println("- BetDate: " + bet.getBetDate());
-            
-            // Save
             Bet savedBet = betRepository.save(bet);  
                       
             return savedBet;
         } catch (Exception e) {
-            System.err.println("ERROR saving bet: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }

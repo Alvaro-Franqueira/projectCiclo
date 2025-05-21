@@ -43,16 +43,12 @@ public class DiceService {
      */
     @Transactional
     public Bet playDice(Bet bet, int diceSum) {
-        log.info("Processing dice game with bet: {}", bet);
-        log.info("Received dice game request: {}", bet);
 
         // Validate bet parameters
         if (bet.getAmount() <= 0) {
-            log.error("Invalid bet amount: {}. Must be greater than 0.", bet.getAmount());
-            throw new IllegalArgumentException("Invalid bet amount: " + bet.getAmount() + ". Must be greater than 0.");
+             throw new IllegalArgumentException("Invalid bet amount: " + bet.getAmount() + ". Must be greater than 0.");
         }
         if (bet.getBetType() == null || bet.getBetValue() == null) {
-            log.error("Bet type or value is null.");
             throw new IllegalArgumentException("Bet type or value cannot be null.");
         }
 
@@ -60,13 +56,11 @@ public class DiceService {
         User user = userService.getUserById(bet.getUser().getId());
         Game game = gameService.getGameById(bet.getGame().getId());
         if (user == null || game == null) {
-            log.error("User or game not found. User ID: {}, Game ID: {}", bet.getUser().getId(), bet.getGame().getId());
             throw new ResourceNotFoundException("User or game not found.");
         }
 
         // Validate user balance
         if (user.getBalance() < bet.getAmount()) {
-            log.error("Insufficient balance for user ID: {}. Required: {}, Available: {}", user.getId(), bet.getAmount(), user.getBalance());
             throw new InsufficientBalanceException("Insufficient balance to place this bet.");
         }
         
@@ -143,7 +137,6 @@ public class DiceService {
                 return (isEven == choseEven) ? amount * 0.95 : -amount;
 
             default:
-                log.warn("Unknown bet type encountered: {}", type);
                 return null;
         }
     }

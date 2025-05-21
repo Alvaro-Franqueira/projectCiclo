@@ -100,9 +100,6 @@ public class UserController {
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         // Consider using a DTO here to avoid exposing/requiring fields like balance, role, id
         try {
-            // Debug logging for password
-            System.out.println("Received password in controller: '" + user.getPassword() + "', length: " + user.getPassword().length());
-            
             // Manually validate the user before passing to service layer
             jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
             Set<jakarta.validation.ConstraintViolation<User>> violations = validator.validate(user, udaw.casino.validation.ValidPassword.ManualValidationOnly.class);
@@ -124,10 +121,7 @@ public class UserController {
         } catch (UserNotFoundException e) { // Catch specific exception for existing user/email
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) { // Catch other potential errors
-            // Log the full exception details to help diagnose the issue
-            e.printStackTrace();
-            System.err.println("Registration error: " + e.getMessage());
-            
+
             // Return a more detailed error message
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
@@ -271,7 +265,6 @@ public class UserController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-             // Log the exception
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
