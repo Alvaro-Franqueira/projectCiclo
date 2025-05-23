@@ -49,7 +49,7 @@ public class User {
      * Must meet complexity requirements (see @ValidPassword).
      */
     @NotBlank(message = "Password cannot be blank")
-    @ValidPassword(message = "Password must be 8-30 characters and include uppercase, lowercase, digit, and special character", groups = ValidPassword.ManualValidationOnly.class)
+    @ValidPassword(message = "Password must be 8-30 characters and include uppercase, lowercase and digit", groups = ValidPassword.ManualValidationOnly.class)
     @Column(nullable = false)
     private String password;
 

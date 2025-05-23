@@ -73,10 +73,6 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
             validationErrors.add("Password must contain at least one digit");
         }
         
-        // Check for at least one special character
-        if (!containsSpecialChar(password)) {
-            validationErrors.add("Password must contain at least one special character");
-        }
         
         // Check for whitespace
         if (containsWhitespace(password)) {
@@ -123,19 +119,7 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
     private boolean containsDigit(String str) {
         return Pattern.compile("\\d").matcher(str).find();
     }
-    
-    /**
-     * Checks if the string contains at least one special character.
-     * Special characters include: !@#$%^&*()_+-=[]{};':"\|,.<>/?
-     *
-     * @param str The string to check
-     * @return true if the string contains a special character
-     */
-    private boolean containsSpecialChar(String str) {
-        Pattern special = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':'\\\\|,.<>/?]");
-        return special.matcher(str).find();
-    }
-    
+        
     /**
      * Checks if the string contains any whitespace characters.
      *
