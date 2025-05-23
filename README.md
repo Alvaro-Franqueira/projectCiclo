@@ -40,6 +40,10 @@ A full-featured virtual casino application with multiple games, user authenticat
 
 ### Installation
 
+podman run -d --name casinodb -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin123 -e POSTGRES_DB=casinodb docker.io/library/postgres:15
+
+
+
 1. Clone the repository
 ```bash
 git clone <repository-url>
@@ -49,11 +53,11 @@ cd casino-project
 2. Install dependencies
 ```bash
 # Install root dependencies
-npm install
+npm install --legacy-peer-deps
 
 # Install frontend dependencies
 cd frontend
-npm install
+npm install --legacy-peer-deps
 ```
 
 ### Running the Application

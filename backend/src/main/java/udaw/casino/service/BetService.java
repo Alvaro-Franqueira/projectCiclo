@@ -75,18 +75,25 @@ public class BetService {
      */
     @Transactional
     public Bet resolveBet(Bet bet) {
-        Long betId = bet.getId();
         if (!"PENDING".equals(bet.getStatus())) {
-            return bet; 
+            return bet;
         }
 
-        // Update bet status based on win/loss
-        bet.setStatus(bet.getWinloss() > 0 ? "WON" : "LOST");
-        bet.setStatus(bet.getWinloss() == 0 ? "TIE" : "UNKNOWN");
-        
-        Bet resolvedBet = betRepository.save(bet);
-        return resolvedBet;
-    }
+        if (bet.getWinloss() > 0) {
+            bet.setStatus("WON");
+        } else if (bet.getWinloss() < 0) { // Changed from == 0 to < 0 for "LOST"
+            bet.setStatus("LOST");
+        } else if (bet.getWinloss() == 0) {
+            bet.setStatus("TIE");
+        } else {
+            // Handle unexpected winloss values if necessary, e.g., throw an exception
+            // Or set a default status like "UNKNOWN"
+            bet.setStatus("UNKNOWN"); 
+        }
+    Bet resolvedBet = betRepository.save(bet);
+    return resolvedBet;
+}
+    
     
     /**
      * Retrieves a bet by its ID.

@@ -531,17 +531,17 @@ const DiceGame = () => {
                     <div key={bet.id || `bet-${Math.random()}`} className="history-item">
                       <div className="d-flex justify-content-between">
                         <span>
-                          {bet.type || bet.tipo === 'parimpar' 
+                          {bet.type === 'parimpar' 
                             ? (bet.betValue || bet.valorApostado) 
                             : `Number ${bet.betValue || bet.valorApostado}`}
                         </span>
-                        <Badge bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
-                          {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
-                          ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.cantidad.toFixed(2)}
+                        <Badge bg={bet.status === 'WON' ? 'success' : 'danger'}>
+                          {bet.status === 'WON' ? 'WON' : 'LOST'}
+                          ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.amount.toFixed(2)}
                         </Badge>
                       </div>
                       <div className="history-date">
-                        {bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'Unknown date'}
+                        {bet.betDate ? new Date(bet.betDate).toLocaleString() : 'Unknown date'}
                       </div>
                     </div>
                   ))}
