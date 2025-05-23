@@ -51,15 +51,12 @@ public class RouletteController {
                 if (userId == null) {                    throw new IllegalArgumentException("User ID is required but not provided.");
                 }
                 if (amount <= 0) {
-                    log.error("Invalid bet amount: {}. Must be greater than 0.", amount);
                     throw new IllegalArgumentException("Invalid bet amount: " + amount + ". Must be greater than 0.");
                 }   
                 if (betType == null || betType.isEmpty()) {
-                    log.error("Bet type is required but not provided.");
-                    throw new IllegalArgumentException("Bet type is required but not provided.");
+                     throw new IllegalArgumentException("Bet type is required but not provided.");
                 }
                 if (betValue == null || betValue.isEmpty()) {
-                    log.error("Bet value is required but not provided.");
                     throw new IllegalArgumentException("Bet value is required but not provided.");
                 }
 
@@ -143,19 +140,15 @@ public class RouletteController {
 
             for (MultibetRequest request : requests) {
                 if (request.getUserId() == null) {
-                    log.error("User ID is required but not provided.");
                     throw new IllegalArgumentException("User ID is required but not provided.");
                 }
                 if (request.getAmount() <= 0) {
-                    log.error("Invalid bet amount: {}. Must be greater than 0.", request.getAmount());
                     throw new IllegalArgumentException("Invalid bet amount: " + request.getAmount() + ". Must be greater than 0.");
                 }   
                 if (request.getBetType() == null || request.getBetType().isEmpty()) {
-                    log.error("Bet type is required but not provided.");
                     throw new IllegalArgumentException("Bet type is required but not provided.");
                 }
                 if (request.getBetValue() == null || request.getBetValue().isEmpty()) {
-                    log.error("Bet value is required but not provided.");
                     throw new IllegalArgumentException("Bet value is required but not provided.");
                 }
                 Bet resolvedBet = rouletteService.playRoulette(
