@@ -94,9 +94,7 @@ public class RankingCalculationController {
             // Fetch the game entity first
             Game game = gameService.getGameById(gameId);
             
-            // Explicitly log the request for debugging
-            System.out.println("Processing ranking request for game ID: " + gameId + ", type: " + type);
-            
+
             // Get the rankings
             List<RankingEntry> rankings = rankingCalculationService.getRankingByGameAndType(type, game);
             return ResponseEntity.ok(rankings);

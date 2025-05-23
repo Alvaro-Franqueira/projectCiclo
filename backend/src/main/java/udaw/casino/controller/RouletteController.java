@@ -6,8 +6,6 @@ import udaw.casino.exception.InsufficientBalanceException;
 import udaw.casino.model.Bet;
 import udaw.casino.service.RouletteService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +30,6 @@ import java.util.Random;
 public class RouletteController {
 
     private final RouletteService rouletteService;       
-    private static final Logger log = LoggerFactory.getLogger(RouletteService.class);
 
     /**
      * Endpoint to place a bet and play a round of Roulette, generating a winning number on the server.
@@ -52,19 +49,15 @@ public class RouletteController {
             @RequestParam String betValue
             ) {
                 if (userId == null) {
-                    log.error("User ID is required but not provided.");
                     throw new IllegalArgumentException("User ID is required but not provided.");
                 }
                 if (amount <= 0) {
-                    log.error("Invalid bet amount: {}. Must be greater than 0.", amount);
                     throw new IllegalArgumentException("Invalid bet amount: " + amount + ". Must be greater than 0.");
                 }   
                 if (betType == null || betType.isEmpty()) {
-                    log.error("Bet type is required but not provided.");
                     throw new IllegalArgumentException("Bet type is required but not provided.");
                 }
                 if (betValue == null || betValue.isEmpty()) {
-                    log.error("Bet value is required but not provided.");
                     throw new IllegalArgumentException("Bet value is required but not provided.");
                 }
 
@@ -84,11 +77,6 @@ public class RouletteController {
                 winningNumber = String.valueOf(randomNumber);
             }
 
-            // DEVELOPMENT ONLY: Log the generated winning number
-            // This should be removed or replaced with a proper logging mechanism in production
-            System.err.println("Betting number generated: " + betValue); // Log the betting value for debugging
-            System.err.println("BACK Winning number generated: " + winningNumber); // Log the winning number for debugging
-            
 
             Bet resolvedBet = rouletteService.playRoulette(userId, amount, betType, betValue, winningNumber);
 
@@ -111,8 +99,6 @@ public class RouletteController {
              // Catching potential IllegalArgumentException from service (e.g., invalid numeroGanador range, invalid bet type)
              return ResponseEntity.badRequest().body(e.getMessage()); // 400 Bad Request
         } catch (Exception e) {
-             // Log the exception for internal review
-             // logger.error("Unexpected error during /play request", e); // Add proper logging
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred while processing the bet."); // 500 Internal Server Error
         }
     }
@@ -142,25 +128,19 @@ public class RouletteController {
                 winningNumber = String.valueOf(randomNumber);
             }
 
-            // DEVELOPMENT ONLY: Log the generated winning number
-            System.err.println("BACK Winning number generated: " + winningNumber); // Log the winning number for debugging
             List<RouletteResponse> responses = new ArrayList<>();
 
             for (MultibetRequest request : requests) {
                 if (request.getUserId() == null) {
-                    log.error("User ID is required but not provided.");
                     throw new IllegalArgumentException("User ID is required but not provided.");
                 }
                 if (request.getAmount() <= 0) {
-                    log.error("Invalid bet amount: {}. Must be greater than 0.", request.getAmount());
                     throw new IllegalArgumentException("Invalid bet amount: " + request.getAmount() + ". Must be greater than 0.");
                 }   
                 if (request.getBetType() == null || request.getBetType().isEmpty()) {
-                    log.error("Bet type is required but not provided.");
                     throw new IllegalArgumentException("Bet type is required but not provided.");
                 }
                 if (request.getBetValue() == null || request.getBetValue().isEmpty()) {
-                    log.error("Bet value is required but not provided.");
                     throw new IllegalArgumentException("Bet value is required but not provided.");
                 }
                 Bet resolvedBet = rouletteService.playRoulette(

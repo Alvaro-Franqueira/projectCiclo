@@ -535,13 +535,17 @@ const DiceGame = () => {
                             ? (bet.betValue || bet.valorApostado) 
                             : `Number ${bet.betValue || bet.valorApostado}`}
                         </span>
-                        <Badge bg={bet.estado === 'GANADA' ? 'success' : 'danger'}>
-                          {bet.estado === 'GANADA' ? 'WON' : 'LOST'}
-                          ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.cantidad.toFixed(2)}
+                        <Badge bg={
+                                    bet.status === 'WON' ? 'success' :
+                                    bet.status === 'LOST' ? 'danger' : 
+                                    'secondary' 
+                                  }>
+                          {bet.status === 'WON' ? 'WON' : 'LOST'}
+                          ${bet.winloss ? Math.abs(bet.winloss).toFixed(2) : bet.amount.toFixed(2)}
                         </Badge>
                       </div>
                       <div className="history-date">
-                        {bet.fechaApuesta ? new Date(bet.fechaApuesta).toLocaleString() : 'Unknown date'}
+                        {bet.betDate ? new Date(bet.betDate).toLocaleString() : 'Unknown date'}
                       </div>
                     </div>
                   ))}

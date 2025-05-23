@@ -12,11 +12,12 @@
 
 import React from 'react';
 import { Card, Badge, Image } from 'react-bootstrap';
-import { FaUser, FaCalendarAlt, FaCoins, FaTrophy, FaPercentage } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaCoins, FaTrophy, FaPercentage, FaMoneyBillWave, FaMedal} from 'react-icons/fa';
 import { Icon } from '@mdi/react';
 import { mdiEmoticonPoop } from '@mdi/js';
 import kingLogo from '../images/king-logo.png';
 import shitLogo from '../images/shitty-logo.png';
+import { GiCoins } from 'react-icons/gi';
 
 /**
  * ProfileHeader Component

@@ -86,10 +86,18 @@ public class BetService {
             return bet; 
         }
 
-        // Update bet status based on win/loss
-        bet.setStatus(bet.getWinloss() > 0 ? "WON" : "LOST");
-        bet.setStatus(bet.getWinloss() == 0 ? "TIE" : "UNKNOWN");
-        
+       
+        if (bet.getWinloss() > 0) {
+            bet.setStatus("WON");
+        } else if (bet.getWinloss() < 0) {
+            bet.setStatus("LOST");
+        } else if (bet.getWinloss() == 0) { 
+            bet.setStatus("TIE");
+        }else {
+            throw new IllegalArgumentException("Invalid win/loss amount: " + bet.getWinloss());            
+        }
+
+
         Bet resolvedBet = betRepository.save(bet);
         log.info("Bet {} resolved. Status: {}, Win/Loss: {}", betId, resolvedBet.getStatus(), resolvedBet.getWinloss());
         return resolvedBet;

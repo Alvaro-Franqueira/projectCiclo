@@ -59,7 +59,7 @@ public class User {
      */
     @ValidEmail(message = "Please provide a valid email address")
     @NotBlank(message = "Email cannot be blank")
-    @Column(unique = true, nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String email;
 
     /**
@@ -121,3 +121,4 @@ public class User {
                '}';
     }
 }
+ 
