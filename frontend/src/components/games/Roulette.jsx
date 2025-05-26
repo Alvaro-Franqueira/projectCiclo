@@ -16,9 +16,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container, Row, Col, Button, Card, ListGroup, Alert, Spinner, Badge } from 'react-bootstrap';
 // External Components
-import { RouletteTable } from '../../../react-casino-roulette/src/components/RouletteTable';
-import { RouletteWheel } from '../../../react-casino-roulette/src/components/RouletteWheel';
-import '../../../react-casino-roulette/dist/index.css';
+import { RouletteTable , RouletteWheel } from 'react-casino-roulette';
+import 'react-casino-roulette/dist/index.css';
 
 import '../../assets/styles/Roulette.css';
 
