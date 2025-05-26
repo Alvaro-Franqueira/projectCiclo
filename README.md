@@ -38,19 +38,30 @@ A full-featured virtual casino application with multiple games, user authenticat
 
 ## Getting Started
 
+I deployed the project in:
+https://casino-frontend-theta.vercel.app/
+
+It has the database in Supabase, the backend in Render and the frontend in Vercel. I removed the payment part because it's not ready for production
+
+
+
 ### Installation
 
+
+FIRST OPTION
+
+1. Install podman create and run the postgres container
 podman run -d --name casinodb -p 5432:5432 -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin123 -e POSTGRES_DB=casinodb docker.io/library/postgres:15
 
 
 
-1. Clone the repository
+2. Clone the repository
 ```bash
-git clone <repository-url>
-cd casino-project
+git clone https://github.com/Alvaro-Franqueira/projectCiclo.git
+cd projectCiclo
 ```
 
-2. Install dependencies
+3. Install dependencies
 ```bash
 # Install root dependencies
 npm install --legacy-peer-deps
@@ -78,6 +89,12 @@ npm run start:frontend
 ```
 This will start the React app (Vite) on http://localhost:5173/ by default.
 
+or 
+
+```bash
+npm run dev
+```
+
 #### Run the Backend Only
 
 Open a terminal in the project root and run:
@@ -85,12 +102,38 @@ Open a terminal in the project root and run:
 npm run start:backend
 ```
 This will start the Spring Boot backend (Maven) on http://localhost:8080/ by default.
+ 
+or
+
+Start the Springboot service with visual code  
+
+
 
 ### Building for Production
 
 ```bash
 npm run build
 ```
+
+
+
+SECOND OPTION 
+
+1. Install Podman
+
+2. Clone the repository
+```bash
+git clone https://github.com/Alvaro-Franqueira/projectCiclo.git
+cd projectCiclo
+```
+
+3. Checkout podman branch
+
+```bash
+git checkout podman
+```
+
+now you have 3 containers running all 3 services
 
 ## Technologies Used
 
