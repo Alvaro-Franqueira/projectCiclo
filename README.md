@@ -41,7 +41,7 @@ A full-featured virtual casino application with multiple games, user authenticat
 I deployed the project in:
 https://casino-frontend-theta.vercel.app/
 
-It has the database in Supabase, the backend in Render and the frontend in Vercel. I removed the payment part because it's not ready for production
+It has the database in Supabase, the backend in Render (https://github.com/Alvaro-Franqueira/Casino-Backend) and the frontend in Vercel (https://github.com/Alvaro-Franqueira/Casino-Frontend). I removed the payment part because it's not ready for production
 
 
 
